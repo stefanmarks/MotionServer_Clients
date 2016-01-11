@@ -233,8 +233,8 @@ public class NatNetClient implements MoCapClient
             actor.markers  = new Marker[nMarkers];
             for ( int markerIdx = 0 ; markerIdx < nMarkers ; markerIdx++ )
             {   
-                Marker marker = new Marker(); 
-                marker.name = unmarshalString(buf);
+                String name   = unmarshalString(buf);
+                Marker marker = new Marker(name); 
                 actor.markers[markerIdx] = marker;
             }
             actors.add(actor);
@@ -330,7 +330,7 @@ public class NatNetClient implements MoCapClient
                     bone.name = unmarshalString(buf); // Bone name
                 }
 
-                bone.id     = buf.getInt();                     // Bone ID
+                bone.id     = buf.getInt();                 // Bone ID
                 bone.parent = actor.findBone(buf.getInt()); // Skeleton parent ID
                 // update child list
                 if ( bone.parent != null )
@@ -350,9 +350,9 @@ public class NatNetClient implements MoCapClient
         
         private void parseForcePlate(ByteBuffer buf, List<Device> devices)
         {
-            Device device    = new Device(); 
-            device.id        = buf.getInt(); // force plate ID
-            device.name      = unmarshalString(buf); // force plate serial #
+            int    id     = buf.getInt();         // force plate ID
+            String name   = unmarshalString(buf); // force plate serial #
+            Device device = new Device(id, name); 
             
             // skip next 652 bytes 
             // (SDK 2.9 sample code does not explain what this is about)
@@ -362,8 +362,8 @@ public class NatNetClient implements MoCapClient
             device.channels = new Channel[nChannels];
             for ( int channelIdx = 0 ; channelIdx < nChannels ; channelIdx++ )
             {   
-                Channel channel = new Channel(); 
-                channel.name = unmarshalString(buf);
+                name = unmarshalString(buf);
+                Channel channel = new Channel(name); 
                 device.channels[channelIdx] = channel;
             }
             devices.add(device);
@@ -1295,9 +1295,9 @@ public class NatNetClient implements MoCapClient
     private final HashMap<ActorListener, Actor> actorListeners;
     
     private final static Actor  REFRESH_ACTOR = new Actor();
-    private final static Marker DUMMY_MARKER  = new Marker();
+    private final static Marker DUMMY_MARKER  = new Marker("dummy");
     private final static Bone   DUMMY_BONE    = new Bone();
-    private final static Device DUMMY_DEVICE  = new Device();
+    private final static Device DUMMY_DEVICE  = new Device(0, "dummy");
     
     private final static Logger LOG = Logger.getLogger(NatNetClient.class.getName());
 }

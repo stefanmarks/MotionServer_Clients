@@ -1,18 +1,24 @@
 package mocap;
 
 /**
- * Class for holding information about a single MoCap marker.
+ * Class for holding information about a single Interaction Device channel.
  * 
  * @author  Stefan Marks
  */
 public class Channel 
 {
-    public String name;
-    public float  value;
+    public final String name;
+    public       float  value;
 
-    public Channel()
+    
+    /**
+     * Creates a channel instance.
+     * 
+     * @param name the name of the channel
+     */
+    public Channel(String name)
     {
-        name  = "";
+        this.name = name;
         value = 0.0f;
     }
 }

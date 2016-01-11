@@ -7,12 +7,17 @@ package mocap;
  */
 public class Marker 
 {
-    public String name;
-    public float  px, py, pz; // position
+    public final String name;       // name
+    public       float  px, py, pz; // position
 
-    public Marker()
+    /**
+     * Creates a marker instance.
+     * 
+     * @param name the name of the marker
+     */
+    public Marker(String name)
     {
-        name = "";
+        this.name = name;
         px = py = pz = 0.0f;
     }
 }

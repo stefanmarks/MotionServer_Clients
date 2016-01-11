@@ -8,17 +8,20 @@ package mocap;
  */
 public class Device 
 {
-    public int       id;        // Device ID
-    public String    name;      // Device name
-    public Channel[] channels;  // data channels
+    public final int       id;        // Device ID
+    public final String    name;      // Device name
+    public       Channel[] channels;  // Device channels
 
     /**
-     * Default constructor.
+     * Creates a new interaction device
+     * 
+     * @param id    the ID of the device
+     * @param name  the name of the device
      */
-    public Device()
+    public Device(int id, String name)
     {
-        id       = 0;
-        name     = "";
+        this.id   = id;
+        this.name = name;
         channels = new Channel[0];
     }
 
