@@ -40,15 +40,16 @@ void setup()
   client = new NatNetClient("Simple Processing MoCap Test Client", new byte[] {1, 0}); // customising the client data
   
   // try to connect to server
-  List<String> servers = new LinkedList<String>();
-  servers.add("127.0.0.1");
-  servers.add("156.62.159.85");
-  for ( String server : servers )
+  String[] serverAddresses = loadStrings("servers.txt");
+  for ( String serverAddress : serverAddresses )
   {
+    String address = serverAddress.trim();
+    if ( address.startsWith("#") ) continue; // comment line
+  
     try
     {
-        InetAddress addr = InetAddress.getByName(server);
-        System.out.println("Attempting to connect to MoCap server at " + addr);
+        InetAddress addr = InetAddress.getByName(address);
+        println("Attempting to connect to MoCap server at " + addr);
         if ( client.connect(addr) )
         {
             break;
@@ -56,17 +57,13 @@ void setup()
     }
     catch (UnknownHostException e)
     {
-        println("Could not resolve server address " + server);
+        println("Could not resolve server address " + address);
     }
   }
   
-  if ( client.isConnected() )
+  if ( !client.isConnected() )
   {
-    println("Connected to MoCap server '" + client.getServerName() + "'");
-  }
-  else
-  {
-    println("Could not connect to MoCap server.");
+    println("Could not connect to any MoCap server.");
     //exit();
   }
 }

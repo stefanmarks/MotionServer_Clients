@@ -1,0 +1,2 @@
+# list of servers to contact (add your own here)
+127.0.0.1

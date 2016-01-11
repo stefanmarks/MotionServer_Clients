@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 public class NatNetClient implements MoCapClient
 {
     public static final String CLIENT_NAME      = "Java MoCap Client";
-    public static final byte   CLIENT_VERSION[] = { 1, 0, 1, 0 };
+    public static final byte   CLIENT_VERSION[] = { 1, 0, 2, 0 };
     public static final byte   NATNET_VERSION[] = { 2, 9, 0, 0 };
         
     
@@ -67,8 +67,8 @@ public class NatNetClient implements MoCapClient
     private final static short DATASET_TYPE_SKELETON   = 2;
     private final static short DATASET_TYPE_FORCEPLATE = 3;
     
-    private final static int   MAX_NAMELENGTH = 256;
-    private final static int   MAX_PACKETSIZE = 10000;
+    private final static int MAX_NAMELENGTH = 256;
+    private final static int MAX_PACKETSIZE = 10000;
     
     private final Command COMMAND_FRAMEOFDATA = new Command_RequestFrameOfData();
     private final Command COMMAND_MODELDEF    = new Command_RequestModelDefinition();
