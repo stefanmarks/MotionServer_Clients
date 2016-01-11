@@ -427,13 +427,16 @@ public class NatNetClient implements MoCapClient
             {
                 int frameNumber = buf.getInt(); // frame number
                 // check if this is a newer frame
-                if ( frameNumber <= scene.frameNumber ) return; // no, get out
+                // delta < 10: but do consider looping playback 
+                // when frame numbers suddenly differ significantly
+                int deltaFrame = frameNumber - scene.frameNumber;
+                if ( (deltaFrame < 0) && (deltaFrame > -10) ) return; // old frame, get out
 
                 logBufferData(buf, 400);
                 scene.frameNumber = frameNumber;
 
                 // Read actor data
-                int nActors = buf.getInt();       // actor count
+                int nActors = buf.getInt(); // actor count
                 for ( int actorIdx = 0 ; actorIdx < nActors ; actorIdx++ )
                 {
                     String actorName = unmarshalString(buf);
@@ -451,17 +454,16 @@ public class NatNetClient implements MoCapClient
                 }
 
                 // skip unidentified marker data
-                int nUnknownMarkers = buf.getInt();
-                final int unknownMarkerDataSize = 3 * 4; // 3 floats
-                buf.position(buf.position() + unknownMarkerDataSize * nUnknownMarkers);
-                /*
-                for ( int idx = 0 ; idx < nUnknownMarkers ; idx++ )
-                {
-                    buf.getFloat(); // x
-                    buf.getFloat(); // y
-                    buf.getFloat(); // z
-                }
-                */
+                int nUnidentifiedMarkers = buf.getInt();
+                final int unidentifiedMarkerDataSize = 3 * 4; // 3 floats
+                buf.position(buf.position() + unidentifiedMarkerDataSize * nUnidentifiedMarkers);
+                // without skipping:
+                // for ( int idx = 0 ; idx < nUnknownMarkers ; idx++ )
+                // {
+                //     buf.getFloat(); // x
+                //     buf.getFloat(); // y
+                //     buf.getFloat(); // z
+                // }
                 
                 // Read rigid body data
                 int nRigidBodies = buf.getInt(); // bone count
@@ -591,21 +593,20 @@ public class NatNetClient implements MoCapClient
                                 5 * 4 + 1 * 2 : // 1 int, 4 floats, 1 short
                                 5 * 4; // 1 int, 4 floats
                     buf.position(buf.position() + nLabelledMarkers * labelledMarkerDataSize);
-                    /*
-                    for ( int markerIdx = 0; markerIdx  < nLabeledMarkers; markerIdx++ )
-                    {
-                        int   id   = buf.getInt();
-                        float x    = buf.getFloat();
-                        float y    = buf.getFloat();
-                        float z    = buf.getFloat();
-                        float size = buf.getFloat();
+                    // without skipping:
+                    // for ( int markerIdx = 0; markerIdx  < nLabeledMarkers; markerIdx++ )
+                    // {
+                    //     int   id   = buf.getInt();
+                    //     float x    = buf.getFloat();
+                    //     float y    = buf.getFloat();
+                    //     float z    = buf.getFloat();
+                    //     float size = buf.getFloat();
 
-                        if ( includesLabelledMarkerFlags ) 
-                        {
-                            short params = buf.getShort();
-                        }
-                    }
-                    */
+                    //     if ( includesLabelledMarkerFlags ) 
+                    //     {
+                    //         short params = buf.getShort();
+                    //     }
+                    // }
 		}
 
                 // read force plate data
