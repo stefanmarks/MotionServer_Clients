@@ -13,7 +13,7 @@ public class MoCapTest_Console
         Logger logger = Logger.getLogger("");
         logger.removeHandler(logger.getHandlers()[0]);
         logger.addHandler(new CompactLogHandler());     
-        Logger.getLogger(NatNetClient.class.getName()).setLevel(Level.FINE);
+        //Logger.getLogger(NatNetClient.class.getName()).setLevel(Level.FINE);
         
         MoCapClient client = new NatNetClient("MoCap Java Test Client", new byte[] {1, 2, 3, 4});
         
@@ -49,7 +49,7 @@ public class MoCapTest_Console
                     System.out.println("Actors count: " + s.actors.length);
                     for (Actor actor : s.actors)
                     {
-                        System.out.println("Actor " + actor.name);
+                        System.out.println("Actor " + actor.id + " '" + actor.name + "'");
                         for (Marker m : actor.markers)
                         {
                             System.out.println("\t" + m.name + " X=" + m.pz + ", Y=" + m.py + ", Z=" + m.pz);
@@ -57,8 +57,8 @@ public class MoCapTest_Console
                         System.out.println("Bone count: " + actor.bones.length);
                         for (Bone b : actor.bones)
                         {
-                            System.out.println("Bone " + b.name + 
-                                    ": Offset X=" + b.ox + ", Y=" + b.oy + ", Z=" + b.oz + 
+                            System.out.println("Bone " + b.id + " '" + b.name + 
+                                    "': Offset X=" + b.ox + ", Y=" + b.oy + ", Z=" + b.oz + 
                                     " / Pos X=" + b.px + ", Y=" + b.py + ", Z=" + b.pz + 
                                     " / Rot X=" + b.qx + ", Y=" + b.qy + ", Z=" + b.qz + ", W=" + b.qw +
                                     " / Parent = " + ((b.parent == null) ? "---" : b.parent.name));

@@ -10,27 +10,35 @@ import java.util.List;
  */
 public class Bone 
 {
-    public String name;
-    public int    id;
+    public final int    id;       // ID of the bone
+    public final String name;     // name of the bone
+    
     public float  px, py, pz;     // position
     public float  qx, qy, qz, qw; // rotation
     
-    public Bone   parent;   // parent bone
-    public float  ox;       // offset to parent
-    public float  oy;
-    public float  oz;
+    public Bone   parent;         // parent bone
+    public float  ox, oy, oz;     // offset to parent
 
     public final List<Bone> children; // children of this bone
     public final List<Bone> chain;    // chain from root bone to this bone
     
-    public Bone()
+    
+    /**
+     * Creates a new bone.
+     * 
+     * @param id   the ID of the bone
+     * @param name the name of the bone
+     */
+    public Bone(int id, String name)
     {
-        name = "";
-        id   = 0;
+        this.id   = id;
+        this.name = name;
+        
         px = py = pz = 0;         // origin position
         qx = qy = qz = 0; qw = 1; // no rotation
         ox = oy = oz = 0;         // no offset
-        parent = null;            
+        
+        parent   = null;            
         children = new LinkedList<>(); 
         chain    = new LinkedList<>();
         chain.add(this);

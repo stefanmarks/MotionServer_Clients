@@ -7,18 +7,21 @@ package mocap;
  */
 public class Actor 
 {
-    public int      id;       // Actor ID
-    public String   name;     // Actor name
-    public Marker[] markers;  // makers
-    public Bone[]   bones;    // bones
+    public       int      id;       // Actor ID (not final > can be changed by skeleton description)
+    public final String   name;     // Actor name
+    public       Marker[] markers;  // makers
+    public       Bone[]   bones;    // bones
 
     /**
      * Default constructor.
+     * @param id   id of the actor
+     * @param name name of the actor
      */
-    public Actor()
+    public Actor(int id, String name)
     {
-        id      = 0;
-        name    = "";
+        this.id   = id;
+        this.name = name;
+        
         markers = new Marker[0];
         bones   = new Bone[0];
     }
