@@ -30,7 +30,7 @@ void setup()
     " v" + 
       NatNetClient.CLIENT_VERSION[0] + "." + NatNetClient.CLIENT_VERSION[1] + "." +
       NatNetClient.CLIENT_VERSION[2] + "." + NatNetClient.CLIENT_VERSION[3] +
-    ", NatNet Version" + 
+    ", NatNet Version " + 
       NatNetClient.NATNET_VERSION[0] + "." + NatNetClient.NATNET_VERSION[1] + "." +
       NatNetClient.NATNET_VERSION[2] + "." + NatNetClient.NATNET_VERSION[3]
   );
@@ -123,6 +123,8 @@ void draw()
       // draw skeletons
       for ( Bone bone : actor.bones )
       {
+        if ( !bone.tracked ) continue;
+        
         // root bone -> line to floor plane 
         if ( bone.parent == null )
         {
