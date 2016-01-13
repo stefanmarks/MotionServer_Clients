@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 public class NatNetClient implements MoCapClient
 {
     public static final String CLIENT_NAME      = "Java MoCap Client";
-    public static final byte   CLIENT_VERSION[] = { 1, 0, 3, 0 };
+    public static final byte   CLIENT_VERSION[] = { 1, 0, 4, 0 };
     public static final byte   NATNET_VERSION[] = { 2, 9, 0, 0 };
         
     
@@ -521,8 +521,17 @@ public class NatNetClient implements MoCapClient
                     // Tracking state
                     if ( includesTrackingState )
                     {
-                        buf.getShort();
+                        short state = buf.getShort();
                         // 0x01 : rigid body was successfully tracked in this frame
+                        bone.tracked = (state & 0x01) != 0;
+                    }
+                    else
+                    {
+                        // tracking state not sent separately,
+                        // but position = (0,0,0) used as "not tracked" indicator
+                        bone.tracked = (bone.px != 0) ||
+                                       (bone.py != 0) ||
+                                       (bone.pz != 0);
                     }
                 }
 
@@ -541,10 +550,9 @@ public class NatNetClient implements MoCapClient
                             return;
                         }
                         
-                        
                         // # of bones in skeleton
                         int nBones = buf.getInt();
-
+                        // TODO: Number sanity check
                         for ( int nBodyIdx = 0 ; nBodyIdx < nBones ; nBodyIdx++ ) 
                         { 
                             // read bone ID and find bone
@@ -559,7 +567,7 @@ public class NatNetClient implements MoCapClient
                             bone.qy = buf.getFloat();
                             bone.qz = buf.getFloat();
                             bone.qw = buf.getFloat();
-
+                            
                             // read/skip rigid marker data
                             int nMarkers = buf.getInt();
                             for ( int i = 0 ; i < nMarkers ; i++ )
@@ -583,10 +591,18 @@ public class NatNetClient implements MoCapClient
                             // Tracking state
                             if ( includesTrackingState )
                             {
-                                buf.getShort();
+                                short state = buf.getShort();
                                 // 0x01 : rigid body was successfully tracked in this frame
+                                bone.tracked = (state & 0x01) != 0;
                             }
-
+                            else
+                            {
+                                // tracking state not sent separately,
+                                // but position = (0,0,0) used as "not tracked" indicator
+                                bone.tracked = (bone.px != 0) ||
+                                               (bone.py != 0) ||
+                                               (bone.pz != 0);
+                            }
                         } // next rigid body
                     } // next skeleton 
                 }

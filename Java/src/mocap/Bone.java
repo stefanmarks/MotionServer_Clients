@@ -10,14 +10,16 @@ import java.util.List;
  */
 public class Bone 
 {
-    public final int    id;       // ID of the bone
-    public final String name;     // name of the bone
+    public final int    id;        // ID of the bone
+    public final String name;      // name of the bone
     
-    public float  px, py, pz;     // position
-    public float  qx, qy, qz, qw; // rotation
+    public float   px, py, pz;     // position
+    public float   qx, qy, qz, qw; // rotation
+
+    public boolean tracked;        // tracking flag
     
-    public Bone   parent;         // parent bone
-    public float  ox, oy, oz;     // offset to parent
+    public Bone    parent;         // parent bone
+    public float   ox, oy, oz;     // offset to parent
 
     public final List<Bone> children; // children of this bone
     public final List<Bone> chain;    // chain from root bone to this bone
@@ -37,6 +39,8 @@ public class Bone
         px = py = pz = 0;         // origin position
         qx = qy = qz = 0; qw = 1; // no rotation
         ox = oy = oz = 0;         // no offset
+        
+        tracked = true;
         
         parent   = null;            
         children = new LinkedList<>(); 
