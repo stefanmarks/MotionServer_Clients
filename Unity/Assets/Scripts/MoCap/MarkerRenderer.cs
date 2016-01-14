@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using MoCap;
 
 /// <summary>
@@ -27,26 +28,24 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 	{
 		// try to find the client singleton
 		client = FindObjectOfType<MoCapClient>();
-
+		
+		// sanity checks
 		if ( client != null )
 		{
-			if ( client.AddActorListener(this) )
-			{
-				Debug.Log("Marker Renderer " + this.name + " registered with MoCap client.");
-			}
-			else
-			{
-				Debug.LogWarning ("Could not register MoCap actor listener for Marker Renderer " + this.name + ".");
-			}
+			client.AddActorListener(this);
 		}
 		else
 		{
-			Debug.LogWarning("No MoCap client defined anywhere in the scene.");
+			Debug.LogWarning("No MoCapClient Component defined in the scene.");
 		}
 
-		markerParent    = null;
-		markerObjects   = null;
-		markerPositions = null;
+		if (markerTemplate == null)
+		{
+			Debug.LogWarning("No Marker template defined");
+		}
+
+		markerNode    = null;
+		markerObjects = new Dictionary<Marker, GameObject>();
 
 		// let's assume the worst first and check if the actor exists after 1 second
 		actorExists = false;
@@ -62,25 +61,25 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 	private void CreateMarkers(Marker[] markers)
 	{
 		// create node for containing all the marker objects
-		markerParent = new GameObject();
-		markerParent.name = "Markers";
-		markerParent.transform.parent        = this.transform;
-		markerParent.transform.localPosition = Vector3.zero;
-		markerParent.transform.localRotation = Quaternion.identity;
-		markerParent.transform.localScale    = Vector3.one;
+		markerNode = new GameObject();
+		markerNode.name = "Markers";
+		markerNode.transform.parent        = this.transform;
+		markerNode.transform.localPosition = Vector3.zero;
+		markerNode.transform.localRotation = Quaternion.identity;
+		markerNode.transform.localScale    = Vector3.one;
 
-		// create copies of the marker template
-		markerObjects   = new GameObject[markers.Length];
-		markerPositions = new Vector3[markers.Length];
-		for ( int i = 0 ; i < markers.Length ; i++ )
+		if (markerTemplate != null)
 		{
-			markerObjects[i] = (GameObject) GameObject.Instantiate(markerTemplate);
-			markerObjects[i].name = markers[i].name;
-			markerObjects[i].transform.parent = markerParent.transform;
-		}
+			// create copies of the marker template
+			foreach (Marker marker in markers)
+			{
+				GameObject markerRepresentation = GameObject.Instantiate(markerTemplate);
+				markerRepresentation.name             = marker.name;
+				markerRepresentation.transform.parent = markerNode.transform;
 
-		// make sure the template is not used
-		markerTemplate.SetActive(false);
+				markerObjects[marker] = markerRepresentation;
+			}
+		}
 	}
 
 
@@ -90,24 +89,26 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 	/// 
 	void Update() 
 	{
-		if (client == null)
+		if ((client == null) || (markerNode == null))
 			return;
 
 		// update markers
-		if ( (markerPositions != null) && (markerObjects != null) )
+		foreach (KeyValuePair<Marker, GameObject> entry in markerObjects)
 		{
-			for ( int i = 0 ; i < markerPositions.Length ; i++ )
+			Marker     marker = entry.Key;
+			GameObject obj    = entry.Value;
+
+			Vector3 pos = new Vector3(marker.px, marker.py, marker.pz);
+
+			if ( pos.magnitude > 0 )
 			{
-				if ( markerPositions[i].magnitude > 0 )
-				{
-					markerObjects[i].transform.localPosition = markerPositions[i];
-					markerObjects[i].SetActive(true);
-				}
-				else
-				{
-					// marker has vanished
-					markerObjects[i].SetActive(false);
-				}
+				obj.transform.localPosition = pos;
+				obj.SetActive(true);
+			}
+			else
+			{
+				// marker has vanished
+				obj.SetActive(false);
 			}
 		}
 	}
@@ -132,26 +133,16 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 	public void ActorChanged(Actor actor)
 	{
 		// create marker position array if necessary
-		if ( (markerTemplate != null) && (markerParent == null) )
+		if ( (markerTemplate != null) && (markerNode == null) )
 		{
 			CreateMarkers(actor.markers);
-		}
-
-		// copy marker positions if necessary
-		if ( markerPositions != null )
-		{
-			for ( int i = 0 ; i < actor.markers.Length ; i++ )
-			{
-				Marker m = actor.markers[i];
-				markerPositions[i].Set(m.px, m.py, m.pz);
-			}
 		}
 
 		// Entering this callback shows that the actor exists
 		if ( !actorExists )
 		{
 			actorExists = true;
-			Debug.Log("Marker Renderer " + this.name + " controlled by MoCap actor " + actorName + ".");
+			Debug.Log("Marker Renderer '" + this.name + "' controlled by MoCap actor '" + actorName + "'.");
 		}
 	}
 
@@ -173,18 +164,16 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 			// one second has passed since the beginning of the scene
 			// and no MoCap data has been received:
 			// -> The actor does not seem to exist
-			Debug.LogWarning ("No Mocap data received for actor " + actorName + ".");
+			Debug.LogWarning ("No Mocap data received for actor '" + actorName + "'.");
 			client.RemoveActorListener(this);
 			client = null;
 		}
 	}
 
 
-	private MoCapClient  client;
-
-	private GameObject   markerParent;
-	private GameObject[] markerObjects;
-	private Vector3[]    markerPositions;
-
-	private bool         actorExists;
+	private MoCapClient                    client;
+	private bool                           actorExists;
+	private GameObject                     markerNode;
+	private Dictionary<Marker, GameObject> markerObjects;
+	
 }

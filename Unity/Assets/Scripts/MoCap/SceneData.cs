@@ -210,6 +210,7 @@ namespace MoCap
 		public float  ox, oy, oz;     // offset of the bone
 		public float  px, py, pz;     // position of the bone
 		public float  qx, qy, qz, qw; // rotation of the bone
+		public float  length;         // length of the bone
 		public bool   tracked;        // true if bone is tracked, false if tracking was lost
 
 		public List<Bone> children;   // children of this bone

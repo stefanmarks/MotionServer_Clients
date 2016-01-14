@@ -79,20 +79,14 @@ public class MoCapObject : MonoBehaviour, ActorListener
 		// try to find the client singleton
 		client = FindObjectOfType<MoCapClient>();
 
-		if ( client != null )
+		// sanity checks
+		if (client != null)
 		{
-			if ( client.AddActorListener(this) )
-			{
-				Debug.Log("Game object " + this.name + " registered with MoCap client.");
-			}
-			else
-			{
-				Debug.LogWarning ("Could not register MoCap actor listener for game object " + this.name + ".");
-			}
+			client.AddActorListener(this);
 		}
 		else
 		{
-			Debug.LogWarning("No MoCap client defined anywhere in the scene.");
+			Debug.LogWarning("No MoCapClient Component defined in the scene.");
 		}
 
 		position = new Vector3();    position += this.transform.localPosition;

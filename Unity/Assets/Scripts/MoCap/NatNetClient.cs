@@ -558,7 +558,7 @@ namespace MoCap
 						packet.GetFloat(); // Marker size
 					}
 					
-					packet.GetFloat(); // mean error
+					packet.GetFloat(); // Mean error
 				}
 
 				// Tracking state
@@ -629,9 +629,9 @@ namespace MoCap
 						{
 							packet.GetFloat(); // Marker size
 						}
-						
-						// Mean marker error
-						packet.GetFloat();
+
+						// ATTENTION: actually "Mean marker error", but used as bone length
+						bone.length = packet.GetFloat(); 
 
 						// Tracking state
 						if (includesTrackingState)
