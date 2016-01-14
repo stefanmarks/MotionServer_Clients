@@ -52,13 +52,17 @@ public class MoCapTest_Console
                         System.out.println("Actor " + actor.id + " '" + actor.name + "'");
                         for (Marker m : actor.markers)
                         {
-                            System.out.println("\t" + m.name + " X=" + m.pz + ", Y=" + m.py + ", Z=" + m.pz);
+                            System.out.println("\t" + m.name + 
+                                    " X=" + m.pz + ", Y=" + m.py + ", Z=" + m.pz +
+                                    " " + (m.tracked ? "Tracked" : "Not Tracked") );
                         }
                         System.out.println("Bone count: " + actor.bones.length);
                         for (Bone b : actor.bones)
                         {
                             System.out.println("Bone " + b.id + " '" + b.name + 
                                     "': Offset X=" + b.ox + ", Y=" + b.oy + ", Z=" + b.oz + 
+                                    " / Length=" + b.length +
+                                    " / " + (b.tracked ? "Tracked" : "Not Tracked") +
                                     " / Pos X=" + b.px + ", Y=" + b.py + ", Z=" + b.pz + 
                                     " / Rot X=" + b.qx + ", Y=" + b.qy + ", Z=" + b.qz + ", W=" + b.qw +
                                     " / Parent = " + ((b.parent == null) ? "---" : b.parent.name));

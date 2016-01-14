@@ -7,8 +7,9 @@ package mocap;
  */
 public class Marker 
 {
-    public final String name;       // name
-    public       float  px, py, pz; // position
+    public final String  name;       // name
+    public       float   px, py, pz; // position
+    public       boolean tracked;    // tracking state
 
     /**
      * Creates a marker instance.
@@ -19,5 +20,6 @@ public class Marker
     {
         this.name = name;
         px = py = pz = 0.0f;
+        tracked = false;
     }
 }

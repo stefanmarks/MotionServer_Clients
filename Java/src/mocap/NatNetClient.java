@@ -24,11 +24,11 @@ import java.util.logging.Logger;
  */
 public class NatNetClient implements MoCapClient
 {
-    public static final String CLIENT_NAME      = "Java MoCap Client";
-    public static final byte   CLIENT_VERSION[] = { 1, 0, 4, 0 };
+    public static final String CLIENT_NAME      = "Processing MoCap Client";
+    public static final byte   CLIENT_VERSION[] = { 1, 0, 5, 0 };
     public static final byte   NATNET_VERSION[] = { 2, 9, 0, 0 };
-        
-    
+
+
     /**
      * Class for storing the server information.
      */
@@ -449,9 +449,17 @@ public class NatNetClient implements MoCapClient
                     for ( int markerIdx = 0 ; markerIdx < nMarkers ; markerIdx++ )
                     {
                         Marker marker = (actor != null) ? actor.markers[markerIdx] : DUMMY_MARKER;
+
+                        // read coordinate
                         marker.px = buf.getFloat();
                         marker.py = buf.getFloat();
                         marker.pz = buf.getFloat();
+                        
+                        // XYZ == 0 indicates lost tracking
+                        marker.tracked = 
+                                (marker.px != 0) ||
+                                (marker.py != 0) ||
+                                (marker.pz != 0);
                     }        
                 }
 
@@ -515,7 +523,7 @@ public class NatNetClient implements MoCapClient
                             buf.getFloat(); // Marker size
                         } 
 
-                        buf.getFloat(); // mean error
+                        buf.getFloat(); // Mean marker error
                     }
                     
                     // Tracking state
@@ -586,7 +594,8 @@ public class NatNetClient implements MoCapClient
                             }       
 
                             // Mean marker error
-                            buf.getFloat();
+                            // ATTENTION: Used to transmit bone length
+                            bone.length = buf.getFloat();
 
                             // Tracking state
                             if ( includesTrackingState )
