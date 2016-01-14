@@ -113,10 +113,13 @@ void draw()
         fill(100); stroke(128);
         for ( Marker marker : actor.markers )
         {
-          pushMatrix();
-          translate(marker.px, marker.py, marker.pz);
-          box(0.01);
-          popMatrix();
+          if ( marker.tracked ) 
+          {
+            pushMatrix();
+            translate(marker.px, marker.py, marker.pz);
+            box(0.01);
+            popMatrix();
+          }
         }
       }
       
