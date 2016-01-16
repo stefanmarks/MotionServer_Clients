@@ -17,6 +17,9 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 	[Tooltip("A template game object for how to display the markers.")]
 	public GameObject markerTemplate;
 
+	[Tooltip("Delay of the rendering in seconds.")]
+	public float delay = 0;
+
 
 	/// <summary>
 	/// Called at the start of the game.
@@ -44,8 +47,8 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 			Debug.LogWarning("No Marker template defined");
 		}
 
-		markerNode    = null;
-		markerObjects = new Dictionary<Marker, GameObject>();
+		markerNode  = null;
+		dataBuffers = new Dictionary<Marker, MoCapDataBuffer>();
 
 		// let's assume the worst first and check if the actor exists after 1 second
 		actorExists = false;
@@ -77,7 +80,7 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 				markerRepresentation.name             = marker.name;
 				markerRepresentation.transform.parent = markerNode.transform;
 
-				markerObjects[marker] = markerRepresentation;
+				dataBuffers[marker]   = new MoCapDataBuffer(markerRepresentation, delay);
 			}
 		}
 	}
@@ -93,16 +96,19 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 			return;
 
 		// update markers
-		foreach (KeyValuePair<Marker, GameObject> entry in markerObjects)
+		foreach (KeyValuePair<Marker, MoCapDataBuffer> entry in dataBuffers)
 		{
-			Marker     marker = entry.Key;
-			GameObject obj    = entry.Value;
+			Marker          marker = entry.Key;
+			MoCapDataBuffer buffer = entry.Value;
+			GameObject      obj    = buffer.GetGameObject();
 
-			Vector3 pos = new Vector3(marker.px, marker.py, marker.pz);
+			// pump marker data through buffer
+			MoCapDataBuffer.MoCapData data = buffer.Process(marker);
 
-			if ( pos.magnitude > 0 )
+			// update marker object
+			if (data.tracked)
 			{
-				obj.transform.localPosition = pos;
+				obj.transform.localPosition = data.pos;
 				obj.SetActive(true);
 			}
 			else
@@ -171,9 +177,8 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 	}
 
 
-	private MoCapClient                    client;
-	private bool                           actorExists;
-	private GameObject                     markerNode;
-	private Dictionary<Marker, GameObject> markerObjects;
-	
+	private MoCapClient                         client;
+	private bool                                actorExists;
+	private GameObject                          markerNode;
+	private Dictionary<Marker, MoCapDataBuffer> dataBuffers;
 }

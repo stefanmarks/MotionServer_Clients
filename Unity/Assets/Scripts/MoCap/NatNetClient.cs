@@ -505,6 +505,10 @@ namespace MoCap
 					marker.px =  packet.GetFloat();
 					marker.py =  packet.GetFloat();
 					marker.pz = -packet.GetFloat();
+					// marker is tracked when at least one coordinate is not 0
+					marker.tracked = (marker.px != 0) ||
+					                 (marker.py != 0) ||
+					                 (marker.pz != 0);
 				}
 			}
 

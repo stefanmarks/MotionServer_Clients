@@ -17,6 +17,9 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 	[Tooltip("A template game object for how to display the bones. Needs to be one unit long along the Y axis and start at the origin.")]
 	public GameObject boneTemplate;
 
+	[Tooltip("Delay of the rendering in seconds.")]
+	public float delay = 0;
+
 
 	/// <summary>
 	/// Called at the start of the game.
@@ -45,7 +48,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 		}
 
 		skeletonNode = null;
-		boneObjects  = new Dictionary<Bone, GameObject>();
+		dataBuffers  = new Dictionary<Bone, MoCapDataBuffer>();
 
 		// let's assume the worst first and check if the actor exists after 1 second
 		actorExists = false;
@@ -88,7 +91,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 			if (bone.parent != null)
 			{
 				// attach to parent node
-				GameObject parentObject = boneObjects[bone.parent];
+				GameObject parentObject = dataBuffers[bone.parent].GetGameObject();
 				boneNode.transform.parent = parentObject.transform;
 			}
 			else
@@ -97,7 +100,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 				boneNode.transform.parent = skeletonNode.transform;
 			}
 			
-			boneObjects[bone] = boneNode;
+			dataBuffers[bone] = new MoCapDataBuffer(boneNode, delay);
 		}
 	}
 
@@ -112,18 +115,19 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 			return;
 
 		// update bones
-		foreach ( KeyValuePair<Bone, GameObject> entry in boneObjects )
+		foreach ( KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers )
 		{
-			Bone       bone = entry.Key;
-			GameObject obj  = entry.Value;
+			Bone            bone   = entry.Key;
+			MoCapDataBuffer buffer = entry.Value; 
+			GameObject      obj    = buffer.GetGameObject();
 
-			if (bone.tracked)
+			// pump bone data through buffer
+			MoCapDataBuffer.MoCapData data = buffer.Process(bone);
+
+			if (data.tracked)
 			{
-				Vector3    pos = new Vector3(bone.px, bone.py, bone.pz);
-				Quaternion rot = new Quaternion(bone.qx, bone.qy, bone.qz, bone.qw); 
-
-				obj.transform.localPosition = pos;
-				obj.transform.localRotation = rot;
+				obj.transform.localPosition = data.pos;
+				obj.transform.localRotation = data.rot;
 				obj.SetActive(true);
 
 				if (bone.parent != null)
@@ -133,7 +137,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 			}
 			else
 			{
-				// marker has vanished
+				// bone not tracked anymore
 				obj.SetActive(false);
 			}
 		}
@@ -198,8 +202,8 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 	}
 
 
-	private MoCapClient                  client;
-	private bool                         actorExists;
-	private GameObject                   skeletonNode;
-	private Dictionary<Bone, GameObject> boneObjects;
+	private MoCapClient                       client;
+	private bool                              actorExists;
+	private GameObject                        skeletonNode;
+	private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
 }

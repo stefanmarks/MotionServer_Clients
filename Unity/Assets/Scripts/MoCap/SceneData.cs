@@ -183,17 +183,20 @@ namespace MoCap
 	/// 
 	public class Marker
 	{
-		public readonly string name; // name of the marker
-		public          float  px, py, pz;   // position of the marker
-
+		public readonly string name;       // name of the marker
+		public          float  px, py, pz; // position of the marker
+		public          bool   tracked;    // tracking state
+		
 		/// <summary>
-		/// Creates a new marker with a name
+		/// Creates a new marker with a name.
 		/// </summary>
 		/// <param name="name">name of the marker</param>
 		/// 
 		public Marker(string name)
 		{
 			this.name = name;
+			px = py = pz = 0;
+			tracked = false;
 		}
 	}
 
@@ -208,6 +211,7 @@ namespace MoCap
 
 		public Bone   parent;         // parent of the bone (or <code>null</code> if there is no parent)
 		public float  ox, oy, oz;     // offset of the bone
+
 		public float  px, py, pz;     // position of the bone
 		public float  qx, qy, qz, qw; // rotation of the bone
 		public float  length;         // length of the bone
@@ -217,18 +221,27 @@ namespace MoCap
 		public List<Bone> chain;      // chain from root bone to this bone
 
 
+		/// <summary>
+		/// Creates a new bone with a name and ID.
+		/// </summary>
+		/// <param name="in">ID of the bone</param>
+		/// <param name="name">name of the bone</param>
+		/// 
 		public Bone(int id, string name)
 		{
 			this.id   = id;
 			this.name = name;
 
+			ox = oy = oz = 0;  // no offset
+			parent = null;     // no parent
+
 			px = py = pz = 0;         // origin position
 			qx = qy = qz = 0; qw = 1; // no rotation
-			ox = oy = oz = 0;         // no offset
-			parent   = null;
+			length = 0;               // no length
+
 			children = new List<Bone>();
 			chain    = new List<Bone>();
-			chain.Add(this);
+			chain.Add(this); // this bone is part of the chain
 		}
 
 
@@ -240,6 +253,7 @@ namespace MoCap
 		{
 			if (parent != null)
 			{
+				// simply attach the parent chain to the front
 				chain.InsertRange(0, parent.chain);
 			}
 		}
@@ -256,6 +270,7 @@ namespace MoCap
 		/// Gets the name of the actor to monitor.
 		/// </summary>
 		/// <returns>The name of the actor to monitor</returns>
+		/// 
 		string GetActorName();
 
 
@@ -263,6 +278,7 @@ namespace MoCap
 		/// Called when the actor changes.
 		/// </summary>
 		/// <param name="actor">the actor that has changed</param>
+		/// 
 		void ActorChanged(Actor actor);
 	}
 
