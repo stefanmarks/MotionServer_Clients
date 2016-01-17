@@ -11,9 +11,11 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -220,7 +222,7 @@ public class NatNetClient implements MoCapClient
             }
             
             // scene might have changed -> update listeners
-            invalidateActorListeners();
+            refreshActorListeners();
         }
         
         
@@ -825,12 +827,8 @@ public class NatNetClient implements MoCapClient
                             dataStreamAddr.isMulticastAddress() ? "(multicast)" : ""
                         });
 
-                // request first frame of data
-                frameStreaming = false;
-                sendCommandPacket(COMMAND_FRAMEOFDATA);
-                receiveResponsePacket(Response_FrameOfData.class);
-                
                 // start stream receiver thread
+                frameStreaming = false;
                 receiverThread = new ReceiverThread(dataStreamAddr);
                 receiverThread.start();
             }
@@ -1072,6 +1070,12 @@ public class NatNetClient implements MoCapClient
                         break;
                     }
 
+                    case NAT_RESPONSE :
+                    {
+                        response = new Response_Request(bufIn);
+                        break;
+                    }
+                    
                     case NAT_MODELDEF :
                     {
                         response = new Response_ModelDefinition(bufIn, scene);
@@ -1084,12 +1088,6 @@ public class NatNetClient implements MoCapClient
                         break;
                     }
 
-                    case NAT_RESPONSE :
-                    {
-                        response = new Response_Request(bufIn);
-                        break;
-                    }
-                    
                     case NAT_UNRECOGNIZED_REQUEST :
                     {
                         response = new Response_UnrecognizedRequest();
@@ -1126,30 +1124,26 @@ public class NatNetClient implements MoCapClient
     
     private void notifyActorListeners()
     {
-        for ( Map.Entry<ActorListener, Actor> listener : actorListeners.entrySet())
+        for ( Map.Entry<ActorListener, Actor> entry : actorListeners.entrySet())
         {
-            // which actor is that?
-            Actor actor = listener.getValue();
-            if ( actor == REFRESH_ACTOR )
-            {
-                // scene has been refreshed -> seek actor again by name
-                actor = scene.findActor(listener.getKey().getActorName());
-                listener.setValue(actor);
-            }
+            ActorListener listener = entry.getKey();
+            Actor         actor    = entry.getValue();
+            
             if ( actor != null )
             {
-                listener.getKey().actorChanged(actor);
+                listener.actorUpdated(actor);
             }
         }
     }
     
-    
-    private void invalidateActorListeners()
+
+    private void refreshActorListeners()
     {
-        for ( Map.Entry<ActorListener, Actor> listener : actorListeners.entrySet())
+        // this wil change the values, so create a copy of the keys
+        Set<ActorListener> listeners = new HashSet<>(actorListeners.keySet());
+        for ( ActorListener listener : listeners )
         {
-            // force all listeners to refresh their actors next time?
-            listener.setValue(REFRESH_ACTOR);
+            actorListeners.put(listener, scene.findActor(listener.getActorName()));
         }
     }
     
@@ -1327,7 +1321,6 @@ public class NatNetClient implements MoCapClient
 
     private final HashMap<ActorListener, Actor> actorListeners;
     
-    private final static Actor  REFRESH_ACTOR = new Actor(0, "refresh");
     private final static Marker DUMMY_MARKER  = new Marker("dummy");
     private final static Bone   DUMMY_BONE    = new Bone(0, "dummy");
     private final static Device DUMMY_DEVICE  = new Device(0, "dummy");

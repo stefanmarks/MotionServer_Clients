@@ -16,9 +16,9 @@ public interface ActorListener
     
     
     /**
-     * Called when the actor changes.
+     * Called when the actor data has been updated.
      * 
-     * @param actor the actor that has changed
+     * @param actor the actor that has been updated
      */
-    void actorChanged(Actor actor);
+    void actorUpdated(Actor actor);
 }
