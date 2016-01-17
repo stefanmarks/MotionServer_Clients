@@ -10,6 +10,7 @@ import java.util.List;
  */
 public class Bone 
 {
+    public final Actor  actor;        // Actor this bone belongs to
     public final int    id;           // ID of the bone
     public final String name;         // name of the bone
     
@@ -28,13 +29,15 @@ public class Bone
     /**
      * Creates a new bone.
      * 
-     * @param id   the ID of the bone
-     * @param name the name of the bone
+     * @param actor  the actor this bone belongs to
+     * @param id     the ID of the bone
+     * @param name   the name of the bone
      */
-    public Bone(int id, String name)
+    public Bone(Actor actor, int id, String name)
     {
-        this.id   = id;
-        this.name = name;
+        this.actor = actor;
+        this.id    = id;
+        this.name  = name;
 
         ox = oy = oz = 0;         // no offset
         parent = null;            // no parent

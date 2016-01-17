@@ -39,15 +39,21 @@ public class MoCapTest_Console
         {
             System.out.println("Connected to " + client.getServerName());
         
+            // test listeners
+            Scene scene = client.getScene();
+            for ( Actor a : scene.actors )
+            {
+                client.addActorListener(new Listener(a.name));
+            }
+            
             for ( int i = 0 ; i < 10 ; i++)
             {
                 client.update();
-                Scene s = client.getScene();
-                synchronized(s)
+                synchronized(scene)
                 {
-                    System.out.println("Frame " + s.frameNumber);
-                    System.out.println("Actors count: " + s.actors.length);
-                    for (Actor actor : s.actors)
+                    System.out.println("Frame " + scene.frameNumber);
+                    System.out.println("Actors count: " + scene.actors.length);
+                    for (Actor actor : scene.actors)
                     {
                         System.out.println("Actor " + actor.id + " '" + actor.name + "'");
                         for (Marker m : actor.markers)
@@ -68,8 +74,8 @@ public class MoCapTest_Console
                                     " / Parent = " + ((b.parent == null) ? "---" : b.parent.name));
                         }
                     }
-                    System.out.println("Device count: " + s.devices.length);
-                    for (Device d : s.devices)
+                    System.out.println("Device count: " + scene.devices.length);
+                    for (Device d : scene.devices)
                     {
                         System.out.println("Device " + d.name);
                         for (Channel c : d.channels)
@@ -77,11 +83,48 @@ public class MoCapTest_Console
                             System.out.println("\t" + c.name + "=" + c.value);
                         }
                     }
-                    System.out.println("Latency : " + s.latency + "ms");
+                    System.out.println("Latency : " + scene.latency + "ms");
                 }
             }
 
             client.disconnect();
         }
+    }
+
+
+    private static class Listener implements ActorListener
+    {
+        public Listener(String name)
+        {
+            this.name = name;
+        }
+        
+        
+        @Override
+        public String getActorName()
+        {
+            return name;
+        }
+
+        @Override
+        public void actorUpdated(Actor actor)
+        {
+            System.out.println("Actor " + actor.name + " updated.");
+        }
+
+        @Override
+        public void actorChanged(Actor actor)
+        {
+            if ( actor != null )
+            {
+                System.out.println("Actor " + actor.name + " changed.");
+            }
+            else
+            {
+                System.out.println("Actor " + name + " not defined.");
+            }
+        }
+         
+        private final String name;
     }
 }

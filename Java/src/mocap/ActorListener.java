@@ -21,4 +21,13 @@ public interface ActorListener
      * @param actor the actor that has been updated
      */
     void actorUpdated(Actor actor);
+
+
+    /**
+     * Called when the actor has changed because of a new scene definition.
+     * 
+     * @param actor the actor that has been changed 
+     *              (may be <code>null</code> when the actor no longer exists.
+     */
+    void actorChanged(Actor actor);
 }
