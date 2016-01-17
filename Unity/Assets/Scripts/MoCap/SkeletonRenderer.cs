@@ -27,7 +27,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 	/// registers this object as a listener with the client.
 	/// </summary>
 	/// 
-	void Start () 
+	void Start() 
 	{
 		// try to find the client singleton
 		client = FindObjectOfType<MoCapClient>();
@@ -124,6 +124,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 			// pump bone data through buffer
 			MoCapDataBuffer.MoCapData data = buffer.Process(bone);
 
+			// update bone game object
 			if (data.tracked)
 			{
 				obj.transform.localPosition = data.pos;
@@ -158,9 +159,9 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 	/// <summary>
 	/// Callback for the MoCap client when new data has arrived.
 	/// </summary>
-	/// <param name="actor">the actor that has changed</param>
+	/// <param name="actor">the actor that has been updated</param>
 	/// 
-	public void ActorChanged(Actor actor)
+	public void ActorUpdated(Actor actor)
 	{
 		// create marker position array if necessary
 		// but only when tracking is OK, otherwise the bone lengths are undefined

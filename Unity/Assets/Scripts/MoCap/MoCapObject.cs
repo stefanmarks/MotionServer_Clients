@@ -142,9 +142,9 @@ public class MoCapObject : MonoBehaviour, ActorListener
 	/// <summary>
 	/// Callback for the MoCap client when new data has arrived.
 	/// </summary>
-	/// <param name="actor">the actor that has changed</param>
+	/// <param name="actor">the actor that has been updated</param>
 	/// 
-	public void ActorChanged(Actor actor)
+	public void ActorUpdated(Actor actor)
 	{
 		if (bone == null)
 		{

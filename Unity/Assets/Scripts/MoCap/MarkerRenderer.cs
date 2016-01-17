@@ -27,7 +27,7 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 	/// registers this object as a listener with the client.
 	/// </summary>
 	/// 
-	void Start () 
+	void Start() 
 	{
 		// try to find the client singleton
 		client = FindObjectOfType<MoCapClient>();
@@ -105,7 +105,7 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 			// pump marker data through buffer
 			MoCapDataBuffer.MoCapData data = buffer.Process(marker);
 
-			// update marker object
+			// update marker game object
 			if (data.tracked)
 			{
 				obj.transform.localPosition = data.pos;
@@ -134,9 +134,9 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 	/// <summary>
 	/// Callback for the MoCap client when new data has arrived.
 	/// </summary>
-	/// <param name="actor">the actor that has changed</param>
+	/// <param name="actor">the actor that has been updated</param>
 	/// 
-	public void ActorChanged(Actor actor)
+	public void ActorUpdated(Actor actor)
 	{
 		// create marker position array if necessary
 		if ( (markerTemplate != null) && (markerNode == null) )

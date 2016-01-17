@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -99,6 +99,16 @@ namespace MoCap
 						Debug.Log("Devices (" + scene.devices.Length + "): " + deviceNames);
 					}
 
+					// immediately get first packet of frame data
+					GetFrameData();
+
+					// request streaming IP address
+					if (SendRequest("getDataStreamAddress"))
+					{
+						Debug.Log("MoCap data stream address: " + serverResponse);
+						// start streaming receiver thread
+					}
+
 					connected = true;
 				}
 			}
@@ -165,6 +175,7 @@ namespace MoCap
 		{
 			bool success = false;
 
+			// prepare packet to server
 			packetOut.Initialise(NAT_PING);
 
 			// send client name (padded to maximum string length
@@ -183,7 +194,7 @@ namespace MoCap
 			commandClient.Client.ReceiveTimeout = TIMEOUT_COMMAND;
 			if ( packetIn.Receive(commandClient) > 0 )
 			{
-				success = ParsePacket(packetIn, NAT_PINGRESPONSE) ;
+				success = ParsePacket(packetIn, NAT_PINGRESPONSE);
 			}
 			return success;
 		}
@@ -192,7 +203,8 @@ namespace MoCap
 		private bool GetSceneDescription()
 		{
 			bool success = false;
-			
+
+			// prepare packet to server
 			packetOut.Initialise(NAT_REQUEST_MODELDEF);
 			// and send
 			if ( !packetOut.Send(commandClient) )
@@ -205,7 +217,7 @@ namespace MoCap
 			commandClient.Client.ReceiveTimeout = TIMEOUT_COMMAND;
 			if ( packetIn.Receive(commandClient) > 0 )
 			{
-				success = ParsePacket(packetIn, NAT_MODELDEF) ;
+				success = ParsePacket(packetIn, NAT_MODELDEF);
 			}
 			return success;
 		}
@@ -215,6 +227,7 @@ namespace MoCap
 		{
 			bool success = false;
 
+			// prepare packet to server
 			packetOut.Initialise(NAT_REQUEST_FRAMEOFDATA);
 			// and send
 			if ( !packetOut.Send(commandClient) )
@@ -227,7 +240,32 @@ namespace MoCap
 			commandClient.Client.ReceiveTimeout = TIMEOUT_FRAME;
 			if ( packetIn.Receive(commandClient) > 0 )
 			{
-				success = ParsePacket(packetIn, NAT_FRAMEOFDATA) ;
+				success = ParsePacket(packetIn, NAT_FRAMEOFDATA);
+			}
+			return success;
+		}
+
+
+		private bool SendRequest(String command)
+		{
+			bool success = false;
+
+			// prepare packet to server
+			packetOut.Initialise(NAT_REQUEST);
+			packetOut.PutString(command);
+
+			// and send
+			if (!packetOut.Send(commandClient))
+			{
+				Debug.LogWarning("Could not send request to MoCap server.");
+				return false;
+			}
+
+			// wait for answer
+			commandClient.Client.ReceiveTimeout = TIMEOUT_COMMAND;
+			if (packetIn.Receive(commandClient) > 0)
+			{
+				success = ParsePacket(packetIn, NAT_RESPONSE);
 			}
 			return success;
 		}
@@ -254,8 +292,12 @@ namespace MoCap
 				switch ( id )
 				{
 					case NAT_PINGRESPONSE : success = ParsePing(packet); break;
+					case NAT_RESPONSE     : success = ParseResponse(packet); break;
 					case NAT_MODELDEF     : success = ParseModelDefinition(packet); break;
 					case NAT_FRAMEOFDATA  : success = ParseFrameOfData(packet); break;
+					case NAT_UNRECOGNIZED_REQUEST:
+						Debug.LogWarning("Unrecognized request.");
+						break;
 					default:
 						Debug.LogWarning("Received unknown response packet ID " + id + ".)");
 						break;
@@ -280,6 +322,14 @@ namespace MoCap
 			          serverInfo.versionServer[2] + "." + serverInfo.versionServer[3] + " (NatNet version " +
 			          serverInfo.versionNatNet[0] + "." + serverInfo.versionNatNet[1] + "." +
 			          serverInfo.versionNatNet[2] + "." + serverInfo.versionNatNet[3] + ")");
+			return true;
+		}
+
+
+		private bool ParseResponse(NatNetPacket_In packet)
+		{
+			// response from server > unpack into variable
+			serverResponse = packet.GetString();
 			return true;
 		}
 
@@ -310,7 +360,8 @@ namespace MoCap
 			scene.actors = actors.ToArray();
 			scene.devices = devices.ToArray();
 
-			InvalidateActorListeners();
+			RefreshActorListeners();
+
 			return true;
 		}
 
@@ -583,7 +634,7 @@ namespace MoCap
 			}
 
 			// Read skeleton data
-			if ( includesSkeletonData )
+			if (includesSkeletonData)
 			{
 				int nSkeletons = packet.GetInt32();
 				for ( int skeletonIdx = 0 ; skeletonIdx < nSkeletons ; skeletonIdx++ )
@@ -727,32 +778,25 @@ namespace MoCap
 
 		private void NotifyActorListeners()
 		{
-			List<ActorListener> keys = new List<ActorListener>(actorListeners.Keys);
-			foreach ( ActorListener listener in keys )
+			foreach (KeyValuePair<ActorListener, Actor> entry in actorListeners)
 			{
 				// which actor is that?
-				Actor actor = actorListeners[listener];
-				if ( actor == REFRESH_ACTOR )
-				{
-					// scene has been refreshed -> seek actor again by name
-					actor = scene.FindActor(listener.GetActorName());
-					actorListeners[listener] = actor;
-				}
+				ActorListener listener = entry.Key;
+				Actor         actor    = entry.Value;
 				if ( actor != null )
 				{
-					listener.ActorChanged(actor);
+					listener.ActorUpdated(actor);
 				}
 			}
 		}
 
 
-		private void InvalidateActorListeners()
+		private void RefreshActorListeners()
 		{
 			List<ActorListener> keys = new List<ActorListener>(actorListeners.Keys);
-			foreach ( ActorListener listener in keys )
+			foreach (ActorListener listener in keys)
 			{
-				// force all listeners to refresh their actors next time?
-				actorListeners[listener] = REFRESH_ACTOR;
+				actorListeners[listener] = scene.FindActor(listener.GetActorName());
 			}
 		}
 
@@ -764,10 +808,10 @@ namespace MoCap
 		private NatNetPacket_In  packetIn;
 		private NatNetPacket_Out packetOut;
 		private ServerInfo       serverInfo;
+		private String           serverResponse;
 		private bool             connected;
 		private Scene            scene;
 
-		private static Actor  REFRESH_ACTOR = new Actor(0, "refresh");
 		private static Marker DUMMY_MARKER  = new Marker("dummy");
 		private static Bone   DUMMY_BONE    = new Bone(0, "dummy");
 		private static Device DUMMY_DEVICE  = new Device(0, "dummy");

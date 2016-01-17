@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 /// <summary>
 /// Scene description and data.
@@ -275,11 +275,11 @@ namespace MoCap
 
 
 		/// <summary>
-		/// Called when the actor changes.
+		/// Called when the actor data has been updated.
 		/// </summary>
-		/// <param name="actor">the actor that has changed</param>
+		/// <param name="actor">the actor that has been updated</param>
 		/// 
-		void ActorChanged(Actor actor);
+		void ActorUpdated(Actor actor);
 	}
 
 
