@@ -32,7 +32,15 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 		// try to find the client singleton
 		client = FindObjectOfType<MoCapClient>();
 
+		skeletonNode = null;
+		dataBuffers = new Dictionary<Bone, MoCapDataBuffer>();
+
 		// sanity checks
+		if (boneTemplate == null)
+		{
+			Debug.LogWarning("No Bone template defined");
+		}
+
 		if (client != null)
 		{
 			client.AddActorListener(this);
@@ -41,18 +49,6 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 		{
 			Debug.LogWarning("No MoCapClient Component defined in the scene.");
 		}
-
-		if ( boneTemplate == null )
-		{
-			Debug.LogWarning("No Bone template defined");
-		}
-
-		skeletonNode = null;
-		dataBuffers  = new Dictionary<Bone, MoCapDataBuffer>();
-
-		// let's assume the worst first and check if the actor exists after 1 second
-		actorExists = false;
-		StartCoroutine(CheckActorName());
 	}
 
 
@@ -156,11 +152,6 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 	}
 
 
-	/// <summary>
-	/// Callback for the MoCap client when new data has arrived.
-	/// </summary>
-	/// <param name="actor">the actor that has been updated</param>
-	/// 
 	public void ActorUpdated(Actor actor)
 	{
 		// create marker position array if necessary
@@ -169,36 +160,23 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 		{
 			CreateBones(actor.bones);
 		}
-
-		// Entering this callback shows that the actor exists
-		if ( !actorExists )
-		{
-			actorExists = true;
-			Debug.Log("Skeleton Renderer '" + this.name + "' controlled by MoCap actor '" + actorName + "'.");
-		}
 	}
 
 
-	/// <summary>
-	/// Coroutine that checks if any MoCap data was received
-	/// 1 second after start of the program. If not,
-	/// this object unregisters from the client.
-	/// </summary>
-	/// <returns>The coroutine instance</returns>
-	/// 
-	IEnumerator CheckActorName()
+	public void ActorChanged(Actor actor)
 	{
-		// wait 1 second
-		yield return new WaitForSeconds(1);
-		// check
-		if ( !actorExists ) 
+		// definitely re-build the skeleton node with the next update
+		skeletonNode = null;
+
+		if (actor != null)
+		{ 
+			actorExists = true;
+			Debug.Log("Skeleton Renderer '" + this.name + "' controlled by MoCap actor '" + actorName + "'.");
+		}
+		else
 		{
-			// one second has passed since the beginning of the scene
-			// and no MoCap data has been received:
-			// -> The actor does not seem to exist
-			Debug.LogWarning ("No Mocap data received for actor '" + actorName + "'.");
-			client.RemoveActorListener(this);
-			client = null;
+			actorExists = false;
+			Debug.LogWarning("Skeleton Renderer '" + this.name + "' cannot find MoCap actor '" + actorName + "'.");
 		}
 	}
 

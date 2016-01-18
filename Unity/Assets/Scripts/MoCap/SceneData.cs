@@ -280,6 +280,14 @@ namespace MoCap
 		/// <param name="actor">the actor that has been updated</param>
 		/// 
 		void ActorUpdated(Actor actor);
+
+
+		/// <summary>
+		/// Called when the scene definition has changed.
+		/// </summary>
+		/// <param name="actor">the actor that has changed (can be <code>null</code> when the actor is not defined anymore)</param>
+		/// 
+		void ActorChanged(Actor actor);
 	}
 
 

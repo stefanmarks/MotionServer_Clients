@@ -219,6 +219,11 @@ public class MoCapObject : MonoBehaviour, ActorListener
 	}
 
 
+	public void ActorChanged(Actor actor)
+	{
+	}
+
+
 	/// <summary>
 	/// Coroutine that checks if any MoCap data was received
 	/// 1 second after start of the program. If not,

@@ -26,6 +26,8 @@ public class MoCapClient : MonoBehaviour
 
 	/// <summary>
 	/// Gets the internal NatNet client instance singelton.
+	/// When creating the singleton for the first time, 
+	/// tries to connect to a local MoCap server, and if not successful, a remote MoCap server.
 	/// </summary>
 	/// <returns>The NatNet singleton</returns>
 	/// 
@@ -34,33 +36,35 @@ public class MoCapClient : MonoBehaviour
 		if ( client == null )
 		{
 			client = new NatNetClient(clientAppName, clientAppVersion);
+
+			// test a local server first
+			if (client.Connect(IPAddress.Loopback))
+			{
+				Debug.Log("MoCap client connected to local server " + GetClient().GetServerName());
+			}
+			// if not local, is it running remotely?
+			else if (client.Connect(IPAddress.Parse(serverAddress)))
+			{
+				Debug.Log("MoCap client connected to server " + GetClient().GetServerName());
+			}
+			// nope, can't find it
+			else
+			{
+				Debug.LogWarning("Could not connect to MoCap server at " + serverAddress + ".");
+			}
 		}
+
 		return client;
 	}
 
 
 	/// <summary>
 	/// Called at the start of the scene. 
-	/// Tries to connect to the remote (and if not found, a local) MoCap server.
 	/// </summary>
 	/// 
-	public void Start () 
+	public void Start()
 	{
-		// test a local server first
-		if ( GetClient().Connect(IPAddress.Loopback) )
-		{
-			Debug.Log("MoCap client connected to local server " + GetClient().GetServerName());
-		}
-		// if not local, is it running remotely?
-		else if ( GetClient().Connect(IPAddress.Parse(serverAddress)) )
-		{
-			Debug.Log("MoCap client connected to server " + GetClient().GetServerName());
-		}
-		// nope, can't find it
-		else
-		{
-			Debug.LogWarning("Could not connect to MoCap server at " + serverAddress + ".");
-		}
+		GetClient(); // trigger creation of singleton (if not already happened)
 	}
 
 	 
@@ -70,7 +74,7 @@ public class MoCapClient : MonoBehaviour
 	/// TODO: This will have to be replaced by Multicast mechanisms later
 	/// </summary>
 	/// 
-	public void Update ()
+	public void Update()
 	{
 		if ( GetClient().IsConnected() )
 		{

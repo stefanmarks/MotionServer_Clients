@@ -116,9 +116,9 @@ namespace MoCap
 			{
 				Debug.LogWarning("Could not connect to MoCap server " + serverAddress + " (" + e.Message + ").");
 			}
+
 			return connected;
 		}
-
 
 		public bool IsConnected()
 		{
@@ -160,6 +160,8 @@ namespace MoCap
 				Actor actor = scene.FindActor(listener.GetActorName());
 				actorListeners.Add(listener, actor);
 				added = true;
+				// immediately trigger callback
+				listener.ActorChanged(actor);
 			}
 			return added;
 		}
@@ -177,12 +179,12 @@ namespace MoCap
 
 			// prepare packet to server
 			packetOut.Initialise(NAT_PING);
-
 			// send client name (padded to maximum string length
 			packetOut.PutFixedLengthString(clientAppName, MAX_NAMELENGTH);
 			// add version numbers
 			packetOut.PutBytes(clientAppVersion);
 			packetOut.PutBytes(clientNatNetVersion);
+
 			// and send
 			if ( !packetOut.Send(commandClient) )
 			{
@@ -206,6 +208,7 @@ namespace MoCap
 
 			// prepare packet to server
 			packetOut.Initialise(NAT_REQUEST_MODELDEF);
+
 			// and send
 			if ( !packetOut.Send(commandClient) )
 			{
@@ -229,6 +232,7 @@ namespace MoCap
 
 			// prepare packet to server
 			packetOut.Initialise(NAT_REQUEST_FRAMEOFDATA);
+
 			// and send
 			if ( !packetOut.Send(commandClient) )
 			{
@@ -764,7 +768,7 @@ namespace MoCap
 				scene.latency = (int)(packet.GetFloat() * 1000);
 			}
 
-			NotifyActorListeners();
+			NotifyActorListeners_Update();
 
 			return true;
 		}
@@ -776,7 +780,7 @@ namespace MoCap
 		}
 
 
-		private void NotifyActorListeners()
+		private void NotifyActorListeners_Update()
 		{
 			foreach (KeyValuePair<ActorListener, Actor> entry in actorListeners)
 			{
@@ -796,7 +800,9 @@ namespace MoCap
 			List<ActorListener> keys = new List<ActorListener>(actorListeners.Keys);
 			foreach (ActorListener listener in keys)
 			{
-				actorListeners[listener] = scene.FindActor(listener.GetActorName());
+				Actor actor = scene.FindActor(listener.GetActorName());
+				actorListeners[listener] = actor;
+				listener.ActorChanged(actor);
 			}
 		}
 

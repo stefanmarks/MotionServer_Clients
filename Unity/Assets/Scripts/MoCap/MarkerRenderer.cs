@@ -131,11 +131,6 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 	}
 
 
-	/// <summary>
-	/// Callback for the MoCap client when new data has arrived.
-	/// </summary>
-	/// <param name="actor">the actor that has been updated</param>
-	/// 
 	public void ActorUpdated(Actor actor)
 	{
 		// create marker position array if necessary
@@ -150,6 +145,11 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 			actorExists = true;
 			Debug.Log("Marker Renderer '" + this.name + "' controlled by MoCap actor '" + actorName + "'.");
 		}
+	}
+
+
+	public void ActorChanged(Actor actor)
+	{
 	}
 
 
