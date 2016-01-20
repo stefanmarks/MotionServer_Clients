@@ -11,10 +11,10 @@ using MoCap;
 public class MoCapObject : MonoBehaviour, ActorListener
 {
 	[Tooltip("The name of the MoCap actor to link to this game object.")]
-	public string actorName;
+	public string actorName = "";
 
 	[Tooltip("The name of the bone to link to this game object (Empty: Use root bone)")]
-	public string boneName;
+	public string boneName = "";
 
 	[Tooltip("What components of the MoCap data stream to use.")]
 	public TrackingUsage trackingUsage = TrackingUsage.PositionAndRotation;
@@ -74,7 +74,7 @@ public class MoCapObject : MonoBehaviour, ActorListener
 	/// registers this object as a listener with the client.
 	/// </summary>
 	/// 
-	void Start () 
+	void Start()
 	{
 		// try to find the client singleton
 		client = FindObjectOfType<MoCapClient>();
@@ -104,7 +104,7 @@ public class MoCapObject : MonoBehaviour, ActorListener
 	/// Called once per frame.
 	/// </summary>
 	/// 
-	void Update() 
+	void Update()
 	{
 		if (client == null || bone == null)
 			return;
@@ -160,7 +160,14 @@ public class MoCapObject : MonoBehaviour, ActorListener
 
 			if (!actorExists && (bone != null))
 			{
-				Debug.Log("Unity object " + this.name + " controlled by MoCap actor/bone " + actorName + "/" + bone.name + ".");
+				if (actorName == bone.name)
+				{
+					Debug.Log("Unity object '" + this.name + "' controlled by MoCap actor '" + actorName + "'.");
+				}
+				else
+				{
+					Debug.Log("Unity object '" + this.name + "' controlled by MoCap actor/bone '" + actorName + "/" + bone.name + "'.");
+				}
 			}
 		}
 
