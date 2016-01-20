@@ -47,7 +47,7 @@ namespace MoCap
 			{
 				if (errorCounter == 0)
 				{
-					Debug.LogWarning("Exception while waiting for MoCap server response: " + e.Message);
+					Debug.LogWarning("Exception while waiting for MoCap server response (Time: " + Time.timeSinceLevelLoad + "s): " + e.Message);
 				}
 				errorCounter++;
 			}
