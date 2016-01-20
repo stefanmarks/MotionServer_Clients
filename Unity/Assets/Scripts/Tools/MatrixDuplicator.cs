@@ -1,0 +1,42 @@
+﻿using UnityEngine;
+
+/// <summary>
+/// Class for creating copies of a GameObject arranged in a matrix.
+/// </summary>
+/// 
+[DisallowMultipleComponent]
+[AddComponentMenu("Tools/Matrix Duplicator")]
+public class MatrixDuplicator : Duplicator
+{
+	[Tooltip("The amount of rows to form.")]
+	[Range(1, 100)]
+	public int numberOfColumns = 1;
+
+	[Tooltip("The amount of columns to form.")]
+	[Range(1, 100)]
+	public int numberOfRows = 1;
+
+	[Tooltip("The size of the matrix array in X/Z direction.")]
+	public Vector2 matrixDimension = new Vector2(1, 1);
+
+
+	public override void ModifyDuplicate(GameObject copy, int counter, float fParameter, out float delay)
+	{
+		// matrix placement > calculate position x/z within [-0.5...0.5]
+		float x = (counter % numberOfColumns) / (float) Mathf.Max(1, numberOfColumns - 1) - 0.5f;
+		float z = (counter / numberOfColumns) / (float) Mathf.Max(1, numberOfRows    - 1) - 0.5f;
+
+		copy.transform.localPosition = new Vector3(x * matrixDimension.x, 0, z * matrixDimension.y);
+
+		// delay grows from the centre and reaches maximum at axis extremes
+		// (so diagonal elements are delayed by maximumDelay * 1.414)
+		delay = Mathf.Sqrt(x * x + z * z) * 4;
+	}
+
+
+	protected override int GetNumberOfCopies()
+	{
+		return numberOfColumns * numberOfRows;
+	}
+
+}

@@ -7,9 +7,8 @@ using MoCap;
 /// Class for rendering skeletons for a Motion Capture actor.
 /// </summary>
 ///
-[DisallowMultipleComponent]
 [AddComponentMenu("Motion Capture/Skeleton Renderer")]
-public class SkeletonRenderer : MonoBehaviour, ActorListener
+public class SkeletonRenderer : MonoBehaviour, ActorListener, IDelay
 {
 	[Tooltip("The name of the MoCap actor to link to this renderer.")]
 	public string actorName;
@@ -29,18 +28,12 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 	/// 
 	void Start() 
 	{
-		// try to find the client singleton
-		client = FindObjectOfType<MoCapClient>();
-
+		// initialise variables
 		skeletonNode = null;
 		dataBuffers = new Dictionary<Bone, MoCapDataBuffer>();
 
-		// sanity checks
-		if (boneTemplate == null)
-		{
-			Debug.LogWarning("No Bone template defined");
-		}
-
+		// try to find the client singleton
+		client = FindObjectOfType<MoCapClient>();
 		if (client != null)
 		{
 			client.AddActorListener(this);
@@ -48,6 +41,12 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 		else
 		{
 			Debug.LogWarning("No MoCapClient Component defined in the scene.");
+		}
+
+		// sanity checks
+		if (boneTemplate == null)
+		{
+			Debug.LogWarning("No Bone template defined");
 		}
 	}
 
@@ -170,19 +169,28 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 
 		if (actor != null)
 		{ 
-			actorExists = true;
 			Debug.Log("Skeleton Renderer '" + this.name + "' controlled by MoCap actor '" + actorName + "'.");
 		}
 		else
 		{
-			actorExists = false;
 			Debug.LogWarning("Skeleton Renderer '" + this.name + "' cannot find MoCap actor '" + actorName + "'.");
 		}
 	}
 
 
+	public float GetDelay()
+	{
+		return delay;
+	}
+
+
+	public void SetDelay(float value)
+	{
+		delay = Mathf.Max(0, value);
+	}
+
+
 	private MoCapClient                       client;
-	private bool                              actorExists;
 	private GameObject                        skeletonNode;
 	private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
 }

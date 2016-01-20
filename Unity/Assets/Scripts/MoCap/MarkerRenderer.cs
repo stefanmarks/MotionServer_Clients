@@ -7,9 +7,8 @@ using MoCap;
 /// Class for rendering markers for a Motion Capture actor.
 /// </summary>
 ///
-[DisallowMultipleComponent]
 [AddComponentMenu("Motion Capture/Marker Renderer")]
-public class MarkerRenderer : MonoBehaviour, ActorListener
+public class MarkerRenderer : MonoBehaviour, ActorListener, IDelay
 {
 	[Tooltip("The name of the MoCap actor to link to this renderer.")]
 	public string actorName;
@@ -29,26 +28,26 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 	/// 
 	void Start() 
 	{
+		// initialise variables
+		markerNode = null;
+		dataBuffers = new Dictionary<Marker, MoCapDataBuffer>();
+
 		// try to find the client singleton
 		client = FindObjectOfType<MoCapClient>();
-		
-		// sanity checks
 		if ( client != null )
 		{
 			client.AddActorListener(this);
 		}
 		else
 		{
-			Debug.LogWarning("No MoCapClient Component defined in the scene.");
+			Debug.LogWarning("No MoCapClient component defined in the scene.");
 		}
 
+		// sanity checks
 		if (markerTemplate == null)
 		{
 			Debug.LogWarning("No Marker template defined");
 		}
-
-		markerNode  = null;
-		dataBuffers = new Dictionary<Marker, MoCapDataBuffer>();
 
 		// let's assume the worst first and check if the actor exists after 1 second
 		actorExists = false;
@@ -79,8 +78,7 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 				GameObject markerRepresentation = GameObject.Instantiate(markerTemplate);
 				markerRepresentation.name             = marker.name;
 				markerRepresentation.transform.parent = markerNode.transform;
-
-				dataBuffers[marker]   = new MoCapDataBuffer(markerRepresentation, delay);
+				dataBuffers[marker] = new MoCapDataBuffer(markerRepresentation, delay);
 			}
 		}
 	}
@@ -150,6 +148,18 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 
 	public void ActorChanged(Actor actor)
 	{
+	}
+
+
+	public float GetDelay()
+	{
+		return delay;
+	}
+
+
+	public void SetDelay(float value)
+	{
+		delay = Mathf.Max(0, value);
 	}
 
 
