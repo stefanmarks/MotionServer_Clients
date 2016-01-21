@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Net;
+using System.Threading;
 using MoCap;
 
 /// <summary>
@@ -33,6 +34,7 @@ public class MoCapClient : MonoBehaviour
 	/// 
 	private NatNetClient GetClient()
 	{
+		clientMutex.WaitOne();
 		if ( client == null )
 		{
 			client = new NatNetClient(clientAppName, clientAppVersion);
@@ -40,12 +42,12 @@ public class MoCapClient : MonoBehaviour
 			// test a local server first
 			if (client.Connect(IPAddress.Loopback))
 			{
-				Debug.Log("MoCap client connected to local server " + GetClient().GetServerName());
+				Debug.Log("MoCap client connected to local MotionServer '" + GetClient().GetServerName() + "'.");
 			}
 			// if not local, is it running remotely?
 			else if (client.Connect(IPAddress.Parse(serverAddress)))
 			{
-				Debug.Log("MoCap client connected to server " + GetClient().GetServerName());
+				Debug.Log("MoCap client connected to MotionServer '" + GetClient().GetServerName() + "'.");
 			}
 			// nope, can't find it
 			else
@@ -53,7 +55,7 @@ public class MoCapClient : MonoBehaviour
 				Debug.LogWarning("Could not connect to MoCap server at " + serverAddress + ".");
 			}
 		}
-
+		clientMutex.ReleaseMutex();
 		return client;
 	}
 
@@ -67,19 +69,39 @@ public class MoCapClient : MonoBehaviour
 		GetClient(); // trigger creation of singleton (if not already happened)
 	}
 
-	 
+
 	/// <summary>
-	/// Called once per frame.
-	/// Polls a new frame description.
-	/// TODO: This will have to be replaced by Multicast mechanisms later
+	/// Called once per physics engine frame and before Update().
+	/// Tries to get new frame data.
+	/// </summary>
+	/// 
+	public void FixedUpdate()
+	{
+		// ideally, we want the updated scene data before Update()
+		if (readyForNextFrame && GetClient().IsConnected())
+		{
+			GetClient().Update();
+		}
+		readyForNextFrame = false;
+	}
+
+
+	/// <summary>
+	/// Called once per rendered frame. 
+	/// If FixedUpdate() somehow wasn't called, tries to get new frame data now.
 	/// </summary>
 	/// 
 	public void Update()
 	{
-		if ( GetClient().IsConnected() )
-		{
-			GetClient().Update();
-		}
+		// If we get the update here, it is not ideal, but better than nothing
+		FixedUpdate();
+	}
+
+
+	public void LateUpdate()
+	{
+		// signal preparedness for next update
+		readyForNextFrame = true;
 	}
 
 
@@ -107,5 +129,7 @@ public class MoCapClient : MonoBehaviour
 	}
 
 
-	private NatNetClient client = null;
+	private static NatNetClient client      = null;
+	private static Mutex        clientMutex = new Mutex();
+	private        bool         readyForNextFrame;
 }

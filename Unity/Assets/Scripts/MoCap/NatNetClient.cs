@@ -55,6 +55,7 @@ namespace MoCap
 			this.actorListeners = new Dictionary<ActorListener, Actor>();
 
 			serverInfo.serverName = "";
+			multicastAddress      = null;
 			scene                 = new Scene();
 			connected             = false;
 		}
@@ -65,7 +66,6 @@ namespace MoCap
 			try
 			{
 				IPEndPoint commandEndpoint = new IPEndPoint(serverAddress, PORT_COMMAND);
-				// IPEndPoint dataEndpoint    = new IPEndPoint(serverAddress, PORT_DATA);
 
 				packetOut = new NatNetPacket_Out(commandEndpoint);
 				packetIn  = new NatNetPacket_In();
@@ -76,7 +76,7 @@ namespace MoCap
 				{
 					GetSceneDescription();
 
-					Debug.Log("Connected to MotionServer");
+					Debug.Log("Connected to NatNet server '" + serverInfo.serverName + "'.");
 					// print list of actor and device names
 					if (scene.actors.Length > 0)
 					{
@@ -101,20 +101,41 @@ namespace MoCap
 
 					// immediately get first packet of frame data
 					GetFrameData();
-
-					// request streaming IP address
-					if (SendRequest("getDataStreamAddress"))
-					{
-						Debug.Log("MoCap data stream address: " + serverResponse);
-						// start streaming receiver thread
-					}
-
 					connected = true;
 				}
 			}
 			catch (Exception e)
 			{
-				Debug.LogWarning("Could not connect to MoCap server " + serverAddress + " (" + e.Message + ").");
+				Debug.LogWarning("Could not connect to NatNet server " + serverAddress + " (" + e.Message + ").");
+			}
+
+			// request streaming IP address
+			if (connected)
+			{
+				try
+				{
+					if (SendRequest("getDataStreamAddress"))
+					{
+						multicastAddress = IPAddress.Parse(serverResponse);
+						Debug.Log("Data stream address: " + multicastAddress);
+
+						// Prepare multicast data reception
+						dataClient = new UdpClient();
+						dataClient.ExclusiveAddressUse = false;
+						dataClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+						dataClient.Client.Bind(new IPEndPoint(IPAddress.Any, PORT_DATA));
+						dataClient.JoinMulticastGroup(multicastAddress);
+
+						dataClient.Client.ReceiveTimeout = 100;
+						Debug.Log("Data streaming enabled.");
+					}
+				}
+				catch (Exception e)
+				{
+					Debug.LogWarning("Could not establish data streaming (" + e.Message + ").");
+					dataClient.Close();
+					dataClient = null;
+				}
 			}
 
 			return connected;
@@ -128,9 +149,14 @@ namespace MoCap
 
 		public void Disconnect()
 		{
+			if (dataClient != null)
+			{
+				dataClient.DropMulticastGroup(multicastAddress);
+				dataClient.Close();
+			}
+
 			commandClient.Close();
 			connected = false;
-			//dataClient.Close();
 		}
 		
 		
@@ -143,11 +169,32 @@ namespace MoCap
 		}
 
 
+		/// <summary>
+		/// Gets the latest frame data either via the multicast channel
+		/// or via polling.
+		/// </summary>
 		public void Update()
 		{
-			if ( connected )
+			if (connected)
 			{
-				GetFrameData();
+				if (dataClient != null)
+				{
+					int maxIterations = 5;
+					while ( (dataClient.Available > 0) && 
+					        (maxIterations-- > 0) )
+					{
+						// data streaming > just see what has arrived, no polling necessary
+						if (packetIn.Receive(dataClient) > 0)
+						{
+							ParsePacket(packetIn, NAT_FRAMEOFDATA);
+						}
+					}
+				}
+				else
+				{
+					// no data streaming > get frame per polling
+					GetFrameData();
+				}
 			}
 		}
 
@@ -188,7 +235,7 @@ namespace MoCap
 			// and send
 			if ( !packetOut.Send(commandClient) )
 			{
-				Debug.LogWarning("Could not send ping request to MoCap server.");
+				Debug.LogWarning("Could not send ping request to NatNet server.");
 				return false;
 			}
 
@@ -212,7 +259,7 @@ namespace MoCap
 			// and send
 			if ( !packetOut.Send(commandClient) )
 			{
-				Debug.LogWarning("Could not send definitions request to MoCap server.");
+				Debug.LogWarning("Could not send definitions request to NatNet server.");
 				return false;
 			}
 
@@ -236,7 +283,7 @@ namespace MoCap
 			// and send
 			if ( !packetOut.Send(commandClient) )
 			{
-				Debug.LogWarning("Could not send frame data request to MoCap server.");
+				Debug.LogWarning("Could not send frame data request to NatNet server.");
 				return false;
 			}
 
@@ -261,7 +308,7 @@ namespace MoCap
 			// and send
 			if (!packetOut.Send(commandClient))
 			{
-				Debug.LogWarning("Could not send request to MoCap server.");
+				Debug.LogWarning("Could not send request to NatNet server.");
 				return false;
 			}
 
@@ -288,7 +335,7 @@ namespace MoCap
 			int id = packet.GetID();
 			if ( (expectedId >= 0) && (id != expectedId) )
 			{
-				Debug.LogWarning("Unexpected response received from MoCap server (expected " + expectedId + ", received " + id + ").");
+				Debug.LogWarning("Unexpected response received from NatNet server (expected " + expectedId + ", received " + id + ").");
 				return false;
 			}
 			else
@@ -321,7 +368,7 @@ namespace MoCap
 			serverInfo.versionNatNet = new byte[4];
 			packet.GetBytes(ref serverInfo.versionNatNet);
 
-			Debug.Log("Received ping response from MoCap server " + serverInfo.serverName + " v" +
+			Debug.Log("Received ping response from NatNet server '" + serverInfo.serverName + "' v" +
 			          serverInfo.versionServer[0] + "." + serverInfo.versionServer[1] + "." +
 			          serverInfo.versionServer[2] + "." + serverInfo.versionServer[3] + " (NatNet version " +
 			          serverInfo.versionNatNet[0] + "." + serverInfo.versionNatNet[1] + "." +
@@ -814,7 +861,8 @@ namespace MoCap
 		private NatNetPacket_In  packetIn;
 		private NatNetPacket_Out packetOut;
 		private ServerInfo       serverInfo;
-		private String           serverResponse;
+		private IPAddress        multicastAddress;
+		private string           serverResponse;
 		private bool             connected;
 		private Scene            scene;
 

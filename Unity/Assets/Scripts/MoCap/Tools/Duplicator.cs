@@ -6,6 +6,12 @@
 /// 
 public abstract class Duplicator : MonoBehaviour
 {
+	[Tooltip("The GameObject to duplicate.")]
+	public GameObject template;
+
+	[Tooltip("The minimum delay of the clones in seconds.")]
+	public float minimumDelay = 0;
+
 	[Tooltip("The maximum delay of the clones in seconds.")]
 	public float maximumDelay = 0;
 
@@ -16,26 +22,14 @@ public abstract class Duplicator : MonoBehaviour
 	// Use this for initialization
 	void Start()
 	{
-		// create container element
-		container = new GameObject();
-		container.name = this.name + " Duplicates";
-		container.transform.parent = this.transform.parent;
-
-		// create initial copy...
-		initialCopy = GameObject.Instantiate<GameObject>(this.gameObject);
-		initialCopy.name = this.name + "_dup";
-		initialCopy.transform.parent = container.transform;
-		//...without any duplicators (recursion explosion)
-		foreach (Duplicator duplicator in initialCopy.GetComponents<Duplicator>())
+		if (template != null)
 		{
-			GameObject.Destroy(duplicator);
-		}
-		// set inactive so that no scripts are running and produce duplicate geometries
-		initialCopy.SetActive(false);
-
+			// deactivate to make sure the original doesn't show
+			template.SetActive(false);
+		}	
 		counter = 0;
 	}
-	
+
 
 	/// <summary>
 	/// Every frame, create a new copy until the desired amount is achieved.
@@ -45,10 +39,12 @@ public abstract class Duplicator : MonoBehaviour
 	/// 
 	void Update ()
 	{
-		if ( (initialCopy != null) && (counter < GetNumberOfCopies()) )
+		if ( (template != null) && (counter < GetNumberOfCopies()) )
 		{
-			GameObject copy = GameObject.Instantiate<GameObject>(initialCopy);
-			copy.name = initialCopy.name + "_" + counter;
+			GameObject copy = GameObject.Instantiate<GameObject>(template);
+			copy.name = template.name + "_" + counter;
+			copy.transform.parent = this.transform;
+			copy.SetActive(true);
 
 			// generate parameter that goes from 0 to 1 and initialise delay variable
 			float fParam = (float) counter / GetNumberOfCopies();
@@ -58,19 +54,21 @@ public abstract class Duplicator : MonoBehaviour
 			ModifyDuplicate(copy, counter, fParam, out delay);
 
 			// apply randomness
-			delay *= maximumDelay;
+			delay  = minimumDelay + (maximumDelay - minimumDelay) * delay;
 			delay += Random.Range(0.0f, randomDelayAmount);
 
 			// apply delay to clone (if applicable)
-			MoCap.IDelay[] arrDelayable = copy.GetComponents<MoCap.IDelay>();
-			foreach (MoCap.IDelay delayable in arrDelayable)
+			MoCapData_Delay[] arrDelayable = copy.GetComponents<MoCapData_Delay>();
+			if ( arrDelayable.Length == 0 && (delay > 0) )
 			{
-				delayable.SetDelay(delay);
+				// no delay modifier > add one (if necessary)
+				copy.AddComponent<MoCapData_Delay>();
+				arrDelayable = copy.GetComponents<MoCapData_Delay>();
 			}
-
-			// add into scene
-			copy.transform.parent = container.transform;
-			copy.SetActive(true);
+			foreach (MoCapData_Delay delayable in arrDelayable)
+			{
+				delayable.delay = delay;
+			}
 
 			counter++;
 		}
@@ -96,7 +94,5 @@ public abstract class Duplicator : MonoBehaviour
 	protected abstract int GetNumberOfCopies();
 
 
-	private GameObject container;
-	private GameObject initialCopy;
-	private int        counter;
+	private int counter;
 }

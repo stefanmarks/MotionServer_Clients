@@ -19,9 +19,10 @@ namespace MoCap
 		/// 
 		public class MoCapData
 		{
-			public Vector3 pos;
-			public Quaternion rot;
-			public bool tracked;
+			public Vector3    pos; // position of marker or bone
+			public Quaternion rot; // orientation of bone
+			public bool  tracked;  // tracking flag
+			public float length;   // length of bone
 
 
 			/// <summary>
@@ -33,6 +34,7 @@ namespace MoCap
 				pos = new Vector3();
 				rot = new Quaternion();
 				tracked = false;
+				length  = 0;
 			}
 
 
@@ -58,27 +60,49 @@ namespace MoCap
 				pos.Set(bone.px, bone.py, bone.pz);
 				rot.Set(bone.qx, bone.qy, bone.qz, bone.qw);
 				tracked = bone.tracked;
+				length  = bone.length;
 			}
+		}
+
+
+		/// <summary>
+		/// Interface for components that influence MoCap data, e.g., scaling, mirroring
+		/// </summary>
+		/// 
+		public interface Manipulator
+		{
+			/// <summary>
+			/// Processes a MoCap data point.
+			/// </summary>
+			/// <param name="data">data point to be modified</param>
+			/// 
+			void Process(ref MoCapData data);
 		}
 
 
 		/// <summary>
 		/// Creates a new MoCap data buffer object
 		/// </summary>
+		/// <param name="owner">game object that owns this buffer</param>
 		/// <param name="obj">game object to associate with this buffer</param>
-		/// <param name="delay">the delay in seconds to implement with the buffer</param>
 		/// 
-		public MoCapDataBuffer(GameObject obj, float delay)
+		public MoCapDataBuffer(GameObject owner, GameObject obj)
 		{
-			int delayInFrames = Mathf.Max(1, 1 + (int)(delay * 60)); // TODO: Find out or define framerate somewhere central
+			// find any manipulators and store them
+			manipulators = owner.GetComponents<Manipulator>();
+
+			// specifically find the delay manipulator and set the FIFO size accordingly
+			MoCapData_Delay delayComponent = owner.GetComponent<MoCapData_Delay>();
+			float delay = (delayComponent != null) ? delayComponent.delay : 0;
+			int   delayInFrames = Mathf.Max(1, 1 + (int)(delay * 60)); // TODO: Find out or define framerate somewhere central
 			pipeline = new MoCapData[delayInFrames];
 			for (int i = 0; i < pipeline.Length; i++)
 			{
 				pipeline[i] = new MoCapData();
 			}
 			index = 0;
-			firstPush = true;
 
+			firstPush = true;
 			gameObject = obj;
 		}
 
@@ -106,7 +130,15 @@ namespace MoCap
 				pipeline[index].Store(marker);
 			}
 			index = (index + 1) % pipeline.Length;
-			return pipeline[index];
+
+			// manipulate data before returning
+			MoCapData retValue = pipeline[index];
+			foreach ( Manipulator m in manipulators )
+			{
+				m.Process(ref retValue);
+			}
+
+			return retValue;
 		}
 
 
@@ -133,7 +165,15 @@ namespace MoCap
 				pipeline[index].Store(bone);
 			}
 			index = (index + 1) % pipeline.Length;
-			return pipeline[index];
+
+			// manipulate data before returning
+			MoCapData retValue = pipeline[index];
+			foreach (Manipulator m in manipulators)
+			{
+				m.Process(ref retValue);
+			}
+
+			return retValue;
 		}
 
 
@@ -148,9 +188,10 @@ namespace MoCap
 		}
 
 
-		private MoCapData[] pipeline;   // pipeline for the bone data
-		private int         index;      // current buffer index for writing, index-1 for reading
-		private bool        firstPush;  // first push of data flag
-		private GameObject  gameObject; // game object associated with this buffer
+		private MoCapData[]   pipeline;     // pipeline for the bone data
+		private Manipulator[] manipulators; // list of manipulators for this buffer
+		private int           index;        // current buffer index for writing, index-1 for reading
+		private bool          firstPush;    // first push of data flag
+		private GameObject    gameObject;   // game object associated with this buffer
 	}
 }

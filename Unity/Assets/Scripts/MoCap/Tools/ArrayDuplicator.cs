@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 
 /// <summary>
-/// Class for creating copies of a GameObject arranged in a matrix.
+/// Class for creating copies of a GameObject arranged in an array.
 /// </summary>
 /// 
 [DisallowMultipleComponent]
-[AddComponentMenu("Tools/Matrix Duplicator")]
-public class MatrixDuplicator : Duplicator
+[AddComponentMenu("Motion Capture/Tools/Array Duplicator")]
+public class ArrayDuplicator : Duplicator
 {
 	[Tooltip("The amount of rows to form.")]
 	[Range(1, 100)]
@@ -30,7 +30,7 @@ public class MatrixDuplicator : Duplicator
 
 		// delay grows from the centre and reaches maximum at axis extremes
 		// (so diagonal elements are delayed by maximumDelay * 1.414)
-		delay = Mathf.Sqrt(x * x + z * z) * 4;
+		delay = Mathf.Sqrt(x * x + z * z) * 2;
 	}
 
 

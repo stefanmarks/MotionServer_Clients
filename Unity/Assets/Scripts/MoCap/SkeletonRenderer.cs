@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using MoCap;
 
@@ -8,16 +7,13 @@ using MoCap;
 /// </summary>
 ///
 [AddComponentMenu("Motion Capture/Skeleton Renderer")]
-public class SkeletonRenderer : MonoBehaviour, ActorListener, IDelay
+public class SkeletonRenderer : MonoBehaviour, ActorListener
 {
-	[Tooltip("The name of the MoCap actor to link to this renderer.")]
+	[Tooltip("The name of the MoCap actor to render.")]
 	public string actorName;
 
 	[Tooltip("A template game object for how to display the bones. Needs to be one unit long along the Y axis and start at the origin.")]
 	public GameObject boneTemplate;
-
-	[Tooltip("Delay of the rendering in seconds.")]
-	public float delay = 0;
 
 
 	/// <summary>
@@ -40,13 +36,13 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener, IDelay
 		}
 		else
 		{
-			Debug.LogWarning("No MoCapClient Component defined in the scene.");
+			Debug.LogWarning("No MoCapClient component defined in the scene.");
 		}
 
 		// sanity checks
 		if (boneTemplate == null)
 		{
-			Debug.LogWarning("No Bone template defined");
+			Debug.LogWarning("No bone template defined");
 		}
 	}
 
@@ -66,6 +62,10 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener, IDelay
 		skeletonNode.transform.localRotation = Quaternion.identity;
 		skeletonNode.transform.localScale    = Vector3.one;
 
+		// find scale modifier
+		MoCapData_Scale scaleModifier = GetComponent<MoCapData_Scale>();
+		float scaleFactor = (scaleModifier != null) ? scaleModifier.scaleFactor : 1;
+
 		// create copies of the marker template
 		foreach ( Bone bone in bones )
 		{
@@ -75,10 +75,14 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener, IDelay
 
 			if (boneTemplate != null)
 			{
+				float scale = bone.length;
+				if ( scale <= 0 ) { scale = 1; }
+				scale *= scaleFactor;
+
 				// add subnode for visual that can be scaled
 				GameObject boneRepresentation = GameObject.Instantiate(boneTemplate);
-				boneRepresentation.transform.parent = boneNode.transform;
-				boneRepresentation.transform.localScale = bone.length * Vector3.one;
+				boneRepresentation.transform.parent        = boneNode.transform;
+				boneRepresentation.transform.localScale    = scale * Vector3.one;
 				boneRepresentation.transform.localRotation = new Quaternion();
 				boneRepresentation.name = bone.name + "_visual";
 			}
@@ -95,7 +99,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener, IDelay
 				boneNode.transform.parent = skeletonNode.transform;
 			}
 			
-			dataBuffers[bone] = new MoCapDataBuffer(boneNode, delay);
+			dataBuffers[bone] = new MoCapDataBuffer(this.gameObject, boneNode);
 		}
 	}
 
@@ -164,8 +168,13 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener, IDelay
 
 	public void ActorChanged(Actor actor)
 	{
-		// definitely re-build the skeleton node with the next update
-		skeletonNode = null;
+		// actor has changed > rebuild skeleton on next update
+		if (skeletonNode != null)
+		{
+			// if necessary, destroy old container
+			GameObject.Destroy(skeletonNode);
+			skeletonNode = null;
+		}
 
 		if (actor != null)
 		{ 
@@ -175,18 +184,6 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener, IDelay
 		{
 			Debug.LogWarning("Skeleton Renderer '" + this.name + "' cannot find MoCap actor '" + actorName + "'.");
 		}
-	}
-
-
-	public float GetDelay()
-	{
-		return delay;
-	}
-
-
-	public void SetDelay(float value)
-	{
-		delay = Mathf.Max(0, value);
 	}
 
 

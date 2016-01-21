@@ -1,7 +1,11 @@
 ﻿using MoCap;
 using System.Collections.Generic;
 using UnityEngine;
+
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
+
 
 [System.Serializable]
 public class BoneNameTranslationEntry
@@ -17,16 +21,13 @@ public class BoneNameTranslationEntry
 ///
 [DisallowMultipleComponent]
 [AddComponentMenu("Motion Capture/MoCap Model")]
-public class MoCapModel : MonoBehaviour, ActorListener, IDelay
+public class MoCapModel : MonoBehaviour, ActorListener
 {
 	[Tooltip("The name of the MoCap actor to link to this model.")]
 	public string actorName;
 
 	[Tooltip("What components of the MoCap data stream to use.")]
 	public TrackingUsage trackingUsage = TrackingUsage.RotationOnly;
-
-	[Tooltip("Delay of the rendering in seconds.")]
-	public float delay = 0;
 
 	[Tooltip("Table for translating MoCap bone names to Model bone names.")]
 	public BoneNameTranslationEntry[] boneNameTranslationTable = new BoneNameTranslationEntry[0];
@@ -92,7 +93,7 @@ public class MoCapModel : MonoBehaviour, ActorListener, IDelay
 			Transform boneNode = FindInHierarchy(boneName, transform);
 			if (boneNode != null)
 			{
-				dataBuffers[bone] = new MoCapDataBuffer(boneNode.gameObject, delay);
+				dataBuffers[bone] = new MoCapDataBuffer(this.gameObject, boneNode.gameObject);
 			}
 			else
 			{
@@ -233,23 +234,13 @@ public class MoCapModel : MonoBehaviour, ActorListener, IDelay
 	}
 
 
-	public float GetDelay()
-	{
-		return delay;
-	}
-
-
-	public void SetDelay(float value)
-	{
-		delay = Mathf.Max(0, value);
-	}
-
-
 	private MoCapClient                       client;
 	private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
 }
 
 
+
+#if UNITY_EDITOR
 
 /// <summary>
 /// Class for rendering a bone translation entry in the editor
@@ -287,4 +278,5 @@ public class BoneNameTranslationEntryDrawer : PropertyDrawer
 	}
 }
 
+#endif
 

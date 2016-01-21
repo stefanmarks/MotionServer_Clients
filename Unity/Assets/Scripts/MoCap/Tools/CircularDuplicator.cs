@@ -5,7 +5,7 @@
 /// </summary>
 /// 
 [DisallowMultipleComponent]
-[AddComponentMenu("Tools/Circular Duplicator")]
+[AddComponentMenu("Motion Capture/Tools/Circular Duplicator")]
 public class CircularDuplicator : Duplicator
 {
 	[Tooltip("The amount of copies to make of this game object.")]
@@ -17,6 +17,8 @@ public class CircularDuplicator : Duplicator
 	{
 		// circular placement
 		copy.transform.localRotation = Quaternion.AngleAxis(fParameter * 360.0f, Vector3.up);
+		copy.transform.localPosition = Vector3.zero;
+
 		// delay follows a sine motion
 		delay = (float) (0.5 * (1 - Mathf.Cos(Mathf.PI * 2 * fParameter)));
 	}
