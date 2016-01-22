@@ -15,6 +15,9 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 	[Tooltip("A template game object for how to display the bones. Needs to be one unit long along the Y axis and start at the origin.")]
 	public GameObject boneTemplate;
 
+	[Tooltip("A list of bone names that should not be rendered.")]
+	public string[] ignoreList;
+
 
 	/// <summary>
 	/// Called at the start of the game.
@@ -73,7 +76,14 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 			GameObject boneNode = new GameObject();
 			boneNode.name = bone.name;
 
-			if (boneTemplate != null)
+			// is this bone on the ignore list? if so, don't render
+			bool ignore = false;
+			foreach ( string name in ignoreList )
+			{
+				if ( bone.name.Equals(name) ) { ignore = true; }
+			}
+
+			if ( (boneTemplate != null) && !ignore )
 			{
 				float scale = bone.length;
 				if ( scale <= 0 ) { scale = 1; }
@@ -128,6 +138,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 			{
 				obj.transform.localPosition = data.pos;
 				obj.transform.localRotation = data.rot;
+
 				obj.SetActive(true);
 
 				if (bone.parent != null)
