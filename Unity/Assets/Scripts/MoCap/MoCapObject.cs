@@ -204,6 +204,13 @@ public class MoCapObject : MonoBehaviour, ActorListener
 		{
 			CreateHierarchy(actor);
 		}
+		if ( !this.gameObject.activeInHierarchy )
+		{
+			// game object is inactive, so Update() doesn't get called any more
+			// which would mean once deactivated, the object stays hidden forever
+			// Workaround > call from here
+			Update();
+		}
 	}
 
 
