@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 public class NatNetClient implements MoCapClient
 {
     public static final String CLIENT_NAME      = "Java MoCap Client";
-    public static final byte   CLIENT_VERSION[] = { 1, 0, 6, 0 };
+    public static final byte   CLIENT_VERSION[] = { 1, 0, 7, 0 };
     public static final byte   NATNET_VERSION[] = { 2, 9, 0, 0 };
 
 
@@ -222,7 +222,7 @@ public class NatNetClient implements MoCapClient
             }
             
             // scene might have changed -> update listeners
-            refreshActorListeners();
+            refreshListeners();
         }
         
         
@@ -677,7 +677,7 @@ public class NatNetClient implements MoCapClient
                 scene.latency = (int) (buf.getFloat() * 1000);
             }
             
-            notifyActorListeners_Update();
+            notifyListeners_Update();
         }
     }
     
@@ -772,7 +772,8 @@ public class NatNetClient implements MoCapClient
         this.bufOut     = ByteBuffer.allocate(MAX_PACKETSIZE).order(ByteOrder.LITTLE_ENDIAN);
         this.serverInfo = new ServerInfo();   
         
-        this.actorListeners = new HashMap<>();
+        this.actorListeners  = new HashMap<>();
+        this.deviceListeners = new HashMap<>();
     }
     
     
@@ -965,6 +966,36 @@ public class NatNetClient implements MoCapClient
     }
     
     
+    @Override
+    public boolean addDeviceListener(DeviceListener listener)
+    {
+        boolean added = false;
+        if ( !deviceListeners.containsKey(listener) )
+        {
+            Device device = getScene().findDevice(listener.getDeviceName());
+            deviceListeners.put(listener, device);
+            added = true;
+            
+            // immediately notify
+            listener.deviceChanged(device);
+        }
+        return added;
+    }
+    
+
+    @Override
+    public boolean removeDeviceListener(DeviceListener listener)
+    {
+        boolean removed = false;
+        if ( deviceListeners.containsKey(listener) )
+        {
+            deviceListeners.remove(listener);
+            removed = true;
+        }
+        return removed;
+    }
+
+
     private boolean checkActorId(int actorId)
     {
         boolean valid = (actorId >= 0) && (actorId < scene.actors.length);
@@ -1127,9 +1158,9 @@ public class NatNetClient implements MoCapClient
     
     
     /**
-     * Notifies all actor listeners about the update of the actor data.
+     * Notifies all actor and device listeners about the update of the scene data.
      */
-    private void notifyActorListeners_Update()
+    private void notifyListeners_Update()
     {
         for ( Map.Entry<ActorListener, Actor> entry : actorListeners.entrySet())
         {
@@ -1141,6 +1172,16 @@ public class NatNetClient implements MoCapClient
                 listener.actorUpdated(actor);
             }
         }
+        for ( Map.Entry<DeviceListener, Device> entry : deviceListeners.entrySet())
+        {
+            DeviceListener listener = entry.getKey();
+            Device         device   = entry.getValue();
+            
+            if ( device != null )
+            {
+                listener.deviceUpdated(device);
+            }
+        }
     }
     
 
@@ -1148,12 +1189,12 @@ public class NatNetClient implements MoCapClient
      * Refreshes the associations between listeners and actors.
      * This also notifies the listeners of the change
      */
-    private void refreshActorListeners()
+    private void refreshListeners()
     {
         // this will change the hashmap values, so create a copy of the keys first
-        Set<ActorListener> listeners = new HashSet<>(actorListeners.keySet());
         
-        for ( ActorListener listener : listeners )
+        Set<ActorListener> actorListenerSet = new HashSet<>(actorListeners.keySet());
+        for ( ActorListener listener : actorListenerSet )
         {
             // find actor
             Actor actor = scene.findActor(listener.getActorName());
@@ -1161,6 +1202,17 @@ public class NatNetClient implements MoCapClient
             actorListeners.put(listener, actor);
             // notify
             listener.actorChanged(actor);
+        }
+        
+        Set<DeviceListener> deviceListenerSet = new HashSet<>(deviceListeners.keySet());
+        for ( DeviceListener listener : deviceListenerSet )
+        {
+            // find device
+            Device device = scene.findDevice(listener.getDeviceName());
+            // re-define association
+            deviceListeners.put(listener, device);
+            // notify
+            listener.deviceChanged(device);
         }
     }
     
@@ -1336,7 +1388,8 @@ public class NatNetClient implements MoCapClient
     private final ServerInfo      serverInfo;
     private       ReceiverThread  receiverThread;
 
-    private final HashMap<ActorListener, Actor> actorListeners;
+    private final HashMap<ActorListener, Actor>   actorListeners;
+    private final HashMap<DeviceListener, Device> deviceListeners;
     
     private final static Marker DUMMY_MARKER  = new Marker("dummy");
     private final static Bone   DUMMY_BONE    = new Bone(null, 0, "dummy");
