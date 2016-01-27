@@ -26,6 +26,9 @@ public class MoCapModel : MonoBehaviour, ActorListener
 	[Tooltip("The name of the MoCap actor to link to this model.")]
 	public string actorName;
 
+	[Tooltip("Prefix to add to the bone names before searching in the hierarchy.")]
+	public string boneNamePrefix = "";
+
 	[Tooltip("What components of the MoCap data stream to use.")]
 	public TrackingUsage trackingUsage = TrackingUsage.RotationOnly;
 
@@ -87,8 +90,7 @@ public class MoCapModel : MonoBehaviour, ActorListener
 		// create copies of the marker template
 		foreach (Bone bone in bones)
 		{
-			string boneName = TranslateBoneName(bone.name);
-
+			string boneName = boneNamePrefix + TranslateBoneName(bone.name);
 			// find the child in the model with the given bone name
 			Transform boneNode = FindInHierarchy(boneName, transform);
 			if (boneNode != null)
@@ -163,7 +165,7 @@ public class MoCapModel : MonoBehaviour, ActorListener
 
 
 	//// <summary>
-	/// Called once per frame.
+	/// Called once per frame. Updates the model based on the bone rotations and positions.
 	/// </summary>
 	/// 
 	void Update() 
@@ -172,6 +174,7 @@ public class MoCapModel : MonoBehaviour, ActorListener
 			return;
 
 		// update bones
+		// Quaternion rot = new Quaternion();
 		foreach ( KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers )
 		{
 			Bone            bone   = entry.Key;
@@ -190,6 +193,9 @@ public class MoCapModel : MonoBehaviour, ActorListener
 					// change position only when desired, or when a root bone
 					obj.transform.localPosition = data.pos;
 				}
+
+				//rot.Set(data.rot.x, data.rot.y, data.rot.z, data.rot.w);
+				//rot.Set(-rot.y, -rot.x, rot.z, rot.w);
 				obj.transform.localRotation = data.rot;
 			}
 		}
