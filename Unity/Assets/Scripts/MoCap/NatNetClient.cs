@@ -52,7 +52,8 @@ namespace MoCap
 			this.clientAppVersion    = clientAppVersion;
 			this.clientNatNetVersion = new byte[] {2, 9, 0, 0};
 
-			this.actorListeners = new Dictionary<ActorListener, Actor>();
+			this.actorListeners  = new Dictionary<ActorListener, Actor>();
+			this.deviceListeners = new Dictionary<DeviceListener, Device>();
 
 			serverInfo.serverName = "";
 			multicastAddress      = null;
@@ -102,6 +103,7 @@ namespace MoCap
 					// immediately get first packet of frame data
 					GetFrameData();
 					connected = true;
+					streamingEnabled = false;
 				}
 			}
 			catch (Exception e)
@@ -127,7 +129,6 @@ namespace MoCap
 						dataClient.JoinMulticastGroup(multicastAddress);
 
 						dataClient.Client.ReceiveTimeout = 100;
-						Debug.Log("Data streaming enabled.");
 					}
 				}
 				catch (Exception e)
@@ -187,10 +188,16 @@ namespace MoCap
 						if (packetIn.Receive(dataClient) > 0)
 						{
 							ParsePacket(packetIn, NAT_FRAMEOFDATA);
+							if (!streamingEnabled)
+							{
+								Debug.Log("Data streaming enabled.");
+								streamingEnabled = true;
+							}
 						}
 					}
 				}
-				else
+
+				if ( !streamingEnabled )
 				{
 					// no data streaming > get frame per polling
 					GetFrameData();
@@ -217,6 +224,27 @@ namespace MoCap
 		public bool RemoveActorListener(ActorListener listener)
 		{
 			return actorListeners.Remove(listener);
+		}
+
+
+		public bool AddDeviceListener(DeviceListener listener)
+		{
+			bool added = false;
+			if (!deviceListeners.ContainsKey(listener))
+			{
+				Device device = scene.FindDevice(listener.GetDeviceName());
+				deviceListeners.Add(listener, device);
+				added = true;
+				// immediately trigger callback
+				listener.DeviceChanged(device);
+			}
+			return added;
+		}
+
+
+		public bool RemoveDeviceListener(DeviceListener listener)
+		{
+			return deviceListeners.Remove(listener);
 		}
 
 
@@ -408,10 +436,11 @@ namespace MoCap
 				}
 			}
 
-			scene.actors = actors.ToArray();
+			scene.actors  = actors.ToArray();
 			scene.devices = devices.ToArray();
 
-			RefreshActorListeners();
+			// scene description has possibly changed > update device and actor listeners
+			RefreshListeners();
 
 			return true;
 		}
@@ -602,11 +631,12 @@ namespace MoCap
 				for ( int markerIdx = 0 ; markerIdx < nMarkers ; markerIdx++ )
 				{
 					Marker marker = (actor != null) ? actor.markers[markerIdx] : DUMMY_MARKER;
-					// Read position and convert from the MoCap right-handed coordinate system 
-					// into Unity's left-handed coordinates
-					marker.px =  packet.GetFloat();
-					marker.py =  packet.GetFloat();
-					marker.pz = -packet.GetFloat();
+					// Read position
+					marker.px = packet.GetFloat();
+					marker.py = packet.GetFloat();
+					marker.pz = packet.GetFloat();
+					TransformToUnity(ref marker);
+
 					// marker is tracked when at least one coordinate is not 0
 					marker.tracked = (marker.px != 0) ||
 					                 (marker.py != 0) ||
@@ -633,15 +663,15 @@ namespace MoCap
 					bone = scene.actors[rigidBodyID].bones[0];
 				}
 
-				// Read pos/rot and convert from the MoCap right-handed coordinate system 
-				// into Unity's left-handed coordinates
-				bone.px =  packet.GetFloat(); // position
-				bone.py =  packet.GetFloat();
-				bone.pz = -packet.GetFloat(); 
-				bone.qx = -packet.GetFloat(); // rotation
-				bone.qy = -packet.GetFloat();
-				bone.qz =  packet.GetFloat();
-				bone.qw =  packet.GetFloat();
+				// Read position/rotation 
+				bone.px = packet.GetFloat(); // position
+				bone.py = packet.GetFloat();
+				bone.pz = packet.GetFloat(); 
+				bone.qx = packet.GetFloat(); // rotation
+				bone.qy = packet.GetFloat();
+				bone.qz = packet.GetFloat();
+				bone.qw = packet.GetFloat();
+				TransformToUnity(ref bone);
 
 				int nMarkers = packet.GetInt32();
 				for ( int i = 0 ; i < nMarkers ; i++ )
@@ -709,15 +739,15 @@ namespace MoCap
 						Bone bone = actor.FindBone(boneId);
 						if ( bone == null ) bone = DUMMY_BONE;
 
-						// Read pos/rot and convert from the MoCap right-handed coordinate system 
-						// into Unity's left-handed coordinates
-						bone.px =  packet.GetFloat(); // position
-						bone.py =  packet.GetFloat();
-						bone.pz = -packet.GetFloat();
-						bone.qx = -packet.GetFloat(); // rotation
-						bone.qy = -packet.GetFloat();
-						bone.qz =  packet.GetFloat();
-						bone.qw =  packet.GetFloat();
+						// Read position/rotation
+						bone.px = packet.GetFloat(); // position
+						bone.py = packet.GetFloat();
+						bone.pz = packet.GetFloat();
+						bone.qx = packet.GetFloat(); // rotation
+						bone.qy = packet.GetFloat();
+						bone.qz = packet.GetFloat();
+						bone.qw = packet.GetFloat();
+						TransformToUnity(ref bone);
 
 						// read/skip rigid marker data
 						int nMarkers = packet.GetInt32();
@@ -815,9 +845,66 @@ namespace MoCap
 				scene.latency = (int)(packet.GetFloat() * 1000);
 			}
 
-			NotifyActorListeners_Update();
+			NotifyListeners_Update();
 
 			return true;
+		}
+
+
+		/// <summary>
+		/// Converts a marker position from a right handed coordinate to a left handed (Unity).
+		/// </summary>
+		/// <param name="pos">the marker to convert</param>
+		/// 
+		private void TransformToUnity(ref Marker marker)
+		{
+			marker.pz *= -1; // flip Z
+		}
+
+
+		/// <summary>
+		/// Converts a bone from a right handed rotation to a left handed (Unity).
+		/// </summary>
+		/// <param name="bone">the bone to convert</param>
+		/// 
+		private void TransformToUnity(ref Bone bone)
+		{
+			bone.pz *= -1; // flip Z pos
+
+			/*
+			Quaternion q = new Quaternion(bone.qx, bone.qy, bone.qz, bone.qw);
+			Vector3 e = q.eulerAngles;
+			Quaternion x = Quaternion.AngleAxis( e.x, Vector3.right);
+			Quaternion y = Quaternion.AngleAxis(-e.y + 180, Vector3.up);
+			Quaternion z = Quaternion.AngleAxis( e.z, Vector3.forward);
+			q = (z * y * x);
+
+			bone.qx = q.x;
+			bone.qy = q.y;
+			bone.qz = q.z;
+			bone.qw = q.w;
+			*/
+			
+			bone.qx *= -1;
+			bone.qy *= -1;
+			
+			/*
+			Quaternion q = new Quaternion(bone.qx, bone.qy, bone.qz, bone.qw);
+			float   angle = 0.0f;
+			Vector3 axis = Vector3.zero;
+			q.ToAngleAxis(out angle, out axis);
+			axis.z = -axis.z;
+			q = Quaternion.AngleAxis(-angle, axis);
+
+			Debug.Log(
+				"from X=" + bone.qx + ",Y=" + bone.qy + ",Z=" + bone.qz + ",W=" + bone.qw +
+				"  to  X=" + q.x + ",Y=" + q.y + ",Z=" + q.z + ",W=" + q.w);				
+
+			bone.qx = q.x;
+			bone.qy = q.y;
+			bone.qz = q.z;
+			bone.qw = q.w;
+			*/
 		}
 
 
@@ -827,7 +914,7 @@ namespace MoCap
 		}
 
 
-		private void NotifyActorListeners_Update()
+		private void NotifyListeners_Update()
 		{
 			foreach (KeyValuePair<ActorListener, Actor> entry in actorListeners)
 			{
@@ -839,17 +926,35 @@ namespace MoCap
 					listener.ActorUpdated(actor);
 				}
 			}
+			foreach (KeyValuePair<DeviceListener, Device> entry in deviceListeners)
+			{
+				// which device is that?
+				DeviceListener listener = entry.Key;
+				Device         device = entry.Value;
+				if (device != null)
+				{
+					listener.DeviceUpdated(device);
+				}
+			}
 		}
 
 
-		private void RefreshActorListeners()
+		private void RefreshListeners()
 		{
-			List<ActorListener> keys = new List<ActorListener>(actorListeners.Keys);
-			foreach (ActorListener listener in keys)
+			List<ActorListener> actorKeys = new List<ActorListener>(actorListeners.Keys);
+			foreach (ActorListener listener in actorKeys)
 			{
 				Actor actor = scene.FindActor(listener.GetActorName());
 				actorListeners[listener] = actor;
 				listener.ActorChanged(actor);
+			}
+
+			List<DeviceListener> deviceKeys = new List<DeviceListener>(deviceListeners.Keys);
+			foreach (DeviceListener listener in deviceKeys)
+			{
+				Device device = scene.FindDevice(listener.GetDeviceName());
+				deviceListeners[listener] = device;
+				listener.DeviceChanged(device);
 			}
 		}
 
@@ -863,14 +968,15 @@ namespace MoCap
 		private ServerInfo       serverInfo;
 		private IPAddress        multicastAddress;
 		private string           serverResponse;
-		private bool             connected;
+		private bool             connected, streamingEnabled;
 		private Scene            scene;
 
 		private static Marker DUMMY_MARKER  = new Marker("dummy");
 		private static Bone   DUMMY_BONE    = new Bone(0, "dummy");
 		private static Device DUMMY_DEVICE  = new Device(0, "dummy");
 
-		private Dictionary<ActorListener, Actor> actorListeners;
+		private Dictionary<ActorListener, Actor>   actorListeners;
+		private Dictionary<DeviceListener, Device> deviceListeners;
 
 	}
 }

@@ -350,4 +350,36 @@ namespace MoCap
 			this.name = name;
 		}
 	}
+
+
+	/// <summary>
+	/// Listener interface for reacting to changes in interaction device data.
+	/// </summary>
+	/// 
+	public interface DeviceListener
+	{
+		/// <summary>
+		/// Gets the name of the device to monitor.
+		/// </summary>
+		/// <returns>The name of the device to monitor</returns>
+		/// 
+		string GetDeviceName();
+
+
+		/// <summary>
+		/// Called when the interaction device data has been updated.
+		/// </summary>
+		/// <param name="device">the interaction device that has been updated</param>
+		/// 
+		void DeviceUpdated(Device device);
+
+
+		/// <summary>
+		/// Called when the scene and device definition has changed.
+		/// </summary>
+		/// <param name="device">the interaction device that has changed (can be <code>null</code> when the device is not defined anymore)</param>
+		/// 
+		void DeviceChanged(Device device);
+	}
+
 }

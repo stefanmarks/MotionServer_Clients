@@ -19,7 +19,7 @@ public class MoCapClient : MonoBehaviour
 	public string clientAppName = "Unity MoCap Client";
 
 	[Tooltip("Version number of this client")]
-	public byte[] clientAppVersion = new byte[] { 1, 0, 1, 0 };
+	public byte[] clientAppVersion = new byte[] { 1, 0, 2, 0 };
 
 	[Tooltip("Scale factor for all translation units coming from the MoCap system")]
 	public float unitScaleFactor = 1.0f;
@@ -126,6 +126,30 @@ public class MoCapClient : MonoBehaviour
 	public bool RemoveActorListener(ActorListener listener)
 	{
 		return GetClient().RemoveActorListener(listener);
+	}
+
+
+	/// <summary>
+	/// Adds an interaction device data listener.
+	/// </summary>
+	/// <param name="listener">The listener to add</param>
+	/// <returns><c>true</c>, if the actor listener was added, <c>false</c> otherwise.</returns>
+	/// 
+	public bool AddDeviceListener(DeviceListener listener)
+	{
+		return GetClient().AddDeviceListener(listener);
+	}
+
+
+	/// <summary>
+	/// Removes an interaction device data listener.
+	/// </summary>
+	/// <param name="listener">The listener to remove</param>
+	/// <returns><c>true</c>, if the actor listener was removed, <c>false</c> otherwise.</returns>
+	/// 
+	public bool RemoveDeviceListener(DeviceListener listener)
+	{
+		return GetClient().RemoveDeviceListener(listener);
 	}
 
 
