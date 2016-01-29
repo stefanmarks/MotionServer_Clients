@@ -1,10 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// FIFO storage structure for delaying MoCap data.
-/// </summary>
-/// 
 namespace MoCap
 {
 	/// <summary>
@@ -85,8 +81,9 @@ namespace MoCap
 		/// </summary>
 		/// <param name="owner">game object that owns this buffer</param>
 		/// <param name="obj">game object to associate with this buffer</param>
+		/// <param name="data">arbitrary object to associate with this buffer</param>
 		/// 
-		public MoCapDataBuffer(GameObject owner, GameObject obj)
+		public MoCapDataBuffer(GameObject owner, GameObject obj, System.Object data = null)
 		{
 			// find any manipulators and store them
 			manipulators = owner.GetComponents<Manipulator>();
@@ -104,6 +101,7 @@ namespace MoCap
 
 			firstPush = true;
 			gameObject = obj;
+			dataObject = data;
 		}
 
 
@@ -188,10 +186,22 @@ namespace MoCap
 		}
 
 
+		/// <summary>
+		/// Gets the associated data object.
+		/// </summary>
+		/// <returns>the associated data object</returns>
+		/// 
+		public System.Object GetDataObject()
+		{
+			return dataObject;
+		}
+
+
 		private MoCapData[]   pipeline;     // pipeline for the bone data
 		private Manipulator[] manipulators; // list of manipulators for this buffer
 		private int           index;        // current buffer index for writing, index-1 for reading
 		private bool          firstPush;    // first push of data flag
 		private GameObject    gameObject;   // game object associated with this buffer
+		private System.Object dataObject;   // arbitrary object associated with this buffer
 	}
 }

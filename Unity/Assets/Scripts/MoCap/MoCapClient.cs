@@ -19,7 +19,7 @@ public class MoCapClient : MonoBehaviour
 	public string clientAppName = "Unity MoCap Client";
 
 	[Tooltip("Version number of this client")]
-	public byte[] clientAppVersion = new byte[] { 1, 0, 2, 0 };
+	public byte[] clientAppVersion = new byte[] { 1, 0, 3, 0 };
 
 	[Tooltip("Scale factor for all translation units coming from the MoCap system")]
 	public float unitScaleFactor = 1.0f;
