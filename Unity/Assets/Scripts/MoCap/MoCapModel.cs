@@ -12,6 +12,7 @@ public class BoneNameTranslationEntry
 {
 	public string nameMocap; // name of the bone in the MoCap skeleton
 	public string nameModel; // name of the bone in the Model
+	public string axisTransformation;  // axis transformation to be applied
 }
 
 
@@ -90,12 +91,13 @@ public class MoCapModel : MonoBehaviour, ActorListener
 		// create copies of the marker template
 		foreach (Bone bone in bones)
 		{
-			string boneName = boneNamePrefix + TranslateBoneName(bone.name);
+			BoneNameTranslationEntry entry = null;
+			string boneName = boneNamePrefix + TranslateBoneName(bone.name, ref entry);
 			// find the child in the model with the given bone name
 			Transform boneNode = FindInHierarchy(boneName, transform);
 			if (boneNode != null)
 			{
-				dataBuffers[bone] = new MoCapDataBuffer(this.gameObject, boneNode.gameObject);
+				dataBuffers[bone] = new MoCapDataBuffer(this.gameObject, boneNode.gameObject, entry);
 			}
 			else
 			{
@@ -121,17 +123,26 @@ public class MoCapModel : MonoBehaviour, ActorListener
 	/// <param name="name">the name in the MoCap scene</param>
 	/// <returns>the translated name for the model</returns>
 	/// 
-	private string TranslateBoneName(string name)
+	private string TranslateBoneName(string name, ref BoneNameTranslationEntry actualEntry)
 	{
+		string translatedName = "undefined";
 		foreach (BoneNameTranslationEntry entry in boneNameTranslationTable)
 		{
 			if (name == entry.nameMocap)
 			{
-				name = entry.nameModel;
+				if (entry.nameModel.Length > 0)
+				{
+					translatedName = entry.nameModel;
+				}
+				else
+				{
+					translatedName = name;
+				}
+				actualEntry = entry;
 				break;
 			}
 		}
-		return name;
+		return translatedName;
 	}
 
 	/// <summary>
@@ -174,7 +185,7 @@ public class MoCapModel : MonoBehaviour, ActorListener
 			return;
 
 		// update bones
-		// Quaternion rot = new Quaternion();
+		Quaternion rot = new Quaternion();
 		foreach ( KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers )
 		{
 			Bone            bone   = entry.Key;
@@ -182,7 +193,7 @@ public class MoCapModel : MonoBehaviour, ActorListener
 			GameObject      obj    = buffer.GetGameObject();
 
 			// pump bone data through buffer
-			MoCapDataBuffer.MoCapData data = buffer.Process(bone);
+			MoCapData data = buffer.Process(bone);
 
 			// update bone game object
 			if (data.tracked)
@@ -191,12 +202,27 @@ public class MoCapModel : MonoBehaviour, ActorListener
 					 (bone.parent == null) )
 				{
 					// change position only when desired, or when a root bone
+					obj.transform.localRotation = Quaternion.identity;
 					obj.transform.localPosition = data.pos;
 				}
 
-				//rot.Set(data.rot.x, data.rot.y, data.rot.z, data.rot.w);
-				//rot.Set(-rot.y, -rot.x, rot.z, rot.w);
-				obj.transform.localRotation = data.rot;
+				rot = Quaternion.identity;
+
+				string transforms = ((BoneNameTranslationEntry) buffer.GetDataObject()).axisTransformation;
+				foreach ( char c in transforms )
+				{
+					switch ( c )
+					{
+						case 'X': rot *= Quaternion.Euler( 90, 0, 0); break;
+						case 'x': rot *= Quaternion.Euler(-90, 0, 0); break;
+						case 'Y': rot *= Quaternion.Euler(0,  90, 0); break;
+						case 'y': rot *= Quaternion.Euler(0, -90, 0); break;
+						case 'Z': rot *= Quaternion.Euler(0, 0,  90); break;
+						case 'z': rot *= Quaternion.Euler(0, 0, -90); break;
+					}
+				}
+
+				obj.transform.localRotation = data.rot * rot;
 			}
 		}
 	}
@@ -266,16 +292,24 @@ public class BoneNameTranslationEntryDrawer : PropertyDrawer
 		EditorGUI.indentLevel = 0;
 
 		// Calculate field positions
-		float labelWidth = 20;
-		float w = (position.width - labelWidth) / 2;
-		Rect mocapRect = new Rect(position.x + 0, position.y, w, position.height);
-		Rect arrowRect = new Rect(position.x + w, position.y, labelWidth, position.height);
-		Rect modelRect = new Rect(position.x + w + labelWidth, position.y, w, position.height);
+		float labelWidth1 = 20;
+		float labelWidth2 = 5;
+		float space = (position.width - labelWidth1 - labelWidth2) / 5;
+		float x = position.x;
+		float w = space * 2;
+		Rect mocapRect = new Rect(x, position.y, w, position.height);
+		x += w; w = labelWidth1;
+		Rect arrowRect = new Rect(x, position.y, w, position.height);
+		x += w; w = space * 2;
+		Rect modelRect = new Rect(x, position.y, w, position.height);
+		x += w + labelWidth2; w = space; 
+		Rect axisRect  = new Rect(x, position.y, w, position.height);
 
 		// Draw fields - passs GUIContent.none to each so they are drawn without labels
 		EditorGUI.PropertyField(mocapRect, property.FindPropertyRelative("nameMocap"), GUIContent.none);
 		EditorGUI.LabelField(arrowRect, " →");
 		EditorGUI.PropertyField(modelRect, property.FindPropertyRelative("nameModel"), GUIContent.none);
+		EditorGUI.PropertyField(axisRect, property.FindPropertyRelative("axisTransformation"), GUIContent.none);
 
 		// restore indent level
 		EditorGUI.indentLevel = oldIndent;
