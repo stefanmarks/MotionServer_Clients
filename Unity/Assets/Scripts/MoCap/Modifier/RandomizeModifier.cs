@@ -5,8 +5,8 @@ using MoCap;
 /// Component for adding random noise to MoCap data.
 /// </summary>
 ///
-[AddComponentMenu("Motion Capture/Data/Randomize")]
-public class MoCapData_Randomize : MonoBehaviour, MoCapDataBuffer.Manipulator
+[AddComponentMenu("Motion Capture/Modifier/Randomize")]
+public class RandomizeModifier : MonoBehaviour, IModifier
 {
 	public enum Influence
 	{
@@ -20,11 +20,18 @@ public class MoCapData_Randomize : MonoBehaviour, MoCapDataBuffer.Manipulator
 	public float amount = 0;
 
 
-	public void Process(ref MoCapDataBuffer.MoCapData data)
+	public void Start()
 	{
+		// empty, but necessary to get the "Enable" button in the inspector
+	}
+
+
+	public void Process(ref MoCapData data)
+	{
+		if (!enabled) return;
 		switch (influence)
 		{
-			case Influence.Position:
+			case Influence.Position: // TODO: Not ver nice implementation so far
 				data.pos.x += amount * Mathf.PerlinNoise(data.pos.y, data.pos.z);
 				data.pos.y += amount * Mathf.PerlinNoise(data.pos.x, data.pos.z);
 				data.pos.z += amount * Mathf.PerlinNoise(data.pos.x, data.pos.y);

@@ -37,7 +37,7 @@ public abstract class Duplicator : MonoBehaviour
 	/// causing a long startup delay.
 	/// </summary>
 	/// 
-	void Update ()
+	void Update()
 	{
 		if ( (template != null) && (counter < GetNumberOfCopies()) )
 		{
@@ -58,14 +58,14 @@ public abstract class Duplicator : MonoBehaviour
 			delay += Random.Range(0.0f, randomDelayAmount);
 
 			// apply delay to clone (if applicable)
-			MoCapData_Delay[] arrDelayable = copy.GetComponents<MoCapData_Delay>();
+			DelayModifier[] arrDelayable = copy.GetComponents<DelayModifier>();
 			if ( arrDelayable.Length == 0 && (delay > 0) )
 			{
 				// no delay modifier > add one (if necessary)
-				copy.AddComponent<MoCapData_Delay>();
-				arrDelayable = copy.GetComponents<MoCapData_Delay>();
+				copy.AddComponent<DelayModifier>();
+				arrDelayable = copy.GetComponents<DelayModifier>();
 			}
-			foreach (MoCapData_Delay delayable in arrDelayable)
+			foreach (DelayModifier delayable in arrDelayable)
 			{
 				delayable.delay = delay;
 			}

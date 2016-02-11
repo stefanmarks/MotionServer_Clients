@@ -151,7 +151,7 @@ public class MoCapObject : MonoBehaviour, ActorListener
 			GameObject      obj    = buffer.GetGameObject();
 
 			// pump data through buffer
-			MoCapDataBuffer.MoCapData data = buffer.Process(bone);
+			MoCapData data = buffer.Process(bone);
 
 			// update hierarchy object
 			if (data.tracked)

@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 namespace MoCap
 {
@@ -10,73 +9,6 @@ namespace MoCap
 	public class MoCapDataBuffer
 	{
 		/// <summary>
-		/// Class for buffering MoCap data (e.g., .
-		/// </summary>
-		/// 
-		public class MoCapData
-		{
-			public Vector3    pos; // position of marker or bone
-			public Quaternion rot; // orientation of bone
-			public bool  tracked;  // tracking flag
-			public float length;   // length of bone
-
-
-			/// <summary>
-			/// Creates a new MoCap data object.
-			/// </summary>
-			/// 
-			public MoCapData()
-			{
-				pos = new Vector3();
-				rot = new Quaternion();
-				tracked = false;
-				length  = 0;
-			}
-
-
-			/// <summary>
-			/// Stores marker data.
-			/// </summary>
-			/// <param name="marker">the marker to store data of</param>
-			/// 
-			public void Store(Marker marker)
-			{
-				pos.Set(marker.px, marker.py, marker.pz);
-				tracked = marker.tracked;
-			}
-
-
-			/// <summary>
-			/// Stores bone data.
-			/// </summary>
-			/// <param name="bone">the bone to store data of</param>
-			/// 
-			public void Store(Bone bone)
-			{
-				pos.Set(bone.px, bone.py, bone.pz);
-				rot.Set(bone.qx, bone.qy, bone.qz, bone.qw);
-				tracked = bone.tracked;
-				length  = bone.length;
-			}
-		}
-
-
-		/// <summary>
-		/// Interface for components that influence MoCap data, e.g., scaling, mirroring
-		/// </summary>
-		/// 
-		public interface Manipulator
-		{
-			/// <summary>
-			/// Processes a MoCap data point.
-			/// </summary>
-			/// <param name="data">data point to be modified</param>
-			/// 
-			void Process(ref MoCapData data);
-		}
-
-
-		/// <summary>
 		/// Creates a new MoCap data buffer object
 		/// </summary>
 		/// <param name="owner">game object that owns this buffer</param>
@@ -86,10 +18,10 @@ namespace MoCap
 		public MoCapDataBuffer(GameObject owner, GameObject obj, System.Object data = null)
 		{
 			// find any manipulators and store them
-			manipulators = owner.GetComponents<Manipulator>();
+			modifiers = owner.GetComponents<IModifier>();
 
 			// specifically find the delay manipulator and set the FIFO size accordingly
-			MoCapData_Delay delayComponent = owner.GetComponent<MoCapData_Delay>();
+			DelayModifier delayComponent = owner.GetComponent<DelayModifier>();
 			float delay = (delayComponent != null) ? delayComponent.delay : 0;
 			int   delayInFrames = Mathf.Max(1, 1 + (int)(delay * 60)); // TODO: Find out or define framerate somewhere central
 			pipeline = new MoCapData[delayInFrames];
@@ -131,7 +63,7 @@ namespace MoCap
 
 			// manipulate data before returning
 			MoCapData retValue = pipeline[index];
-			foreach ( Manipulator m in manipulators )
+			foreach (IModifier m in modifiers)
 			{
 				m.Process(ref retValue);
 			}
@@ -166,7 +98,7 @@ namespace MoCap
 
 			// manipulate data before returning
 			MoCapData retValue = pipeline[index];
-			foreach (Manipulator m in manipulators)
+			foreach (IModifier m in modifiers)
 			{
 				m.Process(ref retValue);
 			}
@@ -198,7 +130,7 @@ namespace MoCap
 
 
 		private MoCapData[]   pipeline;     // pipeline for the bone data
-		private Manipulator[] manipulators; // list of manipulators for this buffer
+		private IModifier[]   modifiers;    // list of modifiers for this buffer
 		private int           index;        // current buffer index for writing, index-1 for reading
 		private bool          firstPush;    // first push of data flag
 		private GameObject    gameObject;   // game object associated with this buffer

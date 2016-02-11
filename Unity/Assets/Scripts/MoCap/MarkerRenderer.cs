@@ -93,7 +93,7 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 			GameObject      obj    = buffer.GetGameObject();
 
 			// pump marker data through buffer
-			MoCapDataBuffer.MoCapData data = buffer.Process(marker);
+			MoCapData data = buffer.Process(marker);
 
 			// update marker game object
 			if (data.tracked)

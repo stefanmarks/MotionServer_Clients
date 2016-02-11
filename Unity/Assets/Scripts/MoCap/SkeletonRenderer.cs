@@ -66,7 +66,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 		skeletonNode.transform.localScale    = Vector3.one;
 
 		// find scale modifier
-		MoCapData_Scale scaleModifier = GetComponent<MoCapData_Scale>();
+		ScaleModifier scaleModifier = GetComponent<ScaleModifier>();
 		float scaleFactor = (scaleModifier != null) ? scaleModifier.scaleFactor : 1;
 
 		// create copies of the marker template
@@ -131,7 +131,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 			GameObject      obj    = buffer.GetGameObject();
 
 			// pump bone data through buffer
-			MoCapDataBuffer.MoCapData data = buffer.Process(bone);
+			MoCapData data = buffer.Process(bone);
 
 			// update bone game object
 			if (data.tracked)

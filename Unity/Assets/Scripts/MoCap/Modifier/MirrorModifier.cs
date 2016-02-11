@@ -1,14 +1,13 @@
 using UnityEngine;
 using MoCap;
-using System;
 
 /// <summary>
 /// Component for mirroring MoCap data along a principal axis.
 /// </summary>
 ///
-[AddComponentMenu("Motion Capture/Data/Mirror")]
+[AddComponentMenu("Motion Capture/Modifier/Mirror")]
 [DisallowMultipleComponent]
-public class MoCapData_Mirror : MonoBehaviour, MoCapDataBuffer.Manipulator
+public class MirrorModifier : MonoBehaviour, IModifier
 {
 	public enum Axis
 	{
@@ -19,8 +18,16 @@ public class MoCapData_Mirror : MonoBehaviour, MoCapDataBuffer.Manipulator
 	public Axis axis = Axis.Z_Axis;
 
 
-	public void Process(ref MoCapDataBuffer.MoCapData data)
+	public void Start()
 	{
+		// empty, but necessary to get the "Enable" button in the inspector
+	}
+
+
+	public void Process(ref MoCapData data)
+	{
+		if (!enabled) return;
+
 		switch (axis)
 		{
 			case Axis.X_Axis:
@@ -29,8 +36,9 @@ public class MoCapData_Mirror : MonoBehaviour, MoCapDataBuffer.Manipulator
 				data.rot.w = -data.rot.w;
 				break;
 
-			case Axis.Y_Axis:
+			case Axis.Y_Axis: 
 				data.pos.y = -data.pos.y;
+				// TODO: not fully functional with rotation. Why?
 				//data.rot.y = -data.rot.y;
 				//data.rot.w = -data.rot.w;
 				break;

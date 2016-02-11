@@ -1,22 +1,29 @@
 using UnityEngine;
 using MoCap;
-using System;
 
 /// <summary>
 /// Component for adding delay to MoCap data.
 /// </summary>
 ///
-[AddComponentMenu("Motion Capture/Data/Delay")]
+[AddComponentMenu("Motion Capture/Modifier/Delay")]
 [DisallowMultipleComponent]
-public class MoCapData_Delay : MonoBehaviour, MoCapDataBuffer.Manipulator
+public class DelayModifier : MonoBehaviour, IModifier
 {
 	[Tooltip("Delay of the MoCap data in seconds.")]
 	[Range(0.0f, 10.0f)]
 	public float delay = 0;
 
 
-	public void Process(ref MoCapDataBuffer.MoCapData data)
+	public void Start()
 	{
+		// empty, but necessary to get the "Enable" button in the inspector
+	}
+
+
+	public void Process(ref MoCapData data)
+	{
+		// if (!enabled) return;
+
 		// The actual delay happens in the MoCapDataBuffer class
 		// by storing the data in a FIFO the length of which
 		// is determined by the "delay" value of this component

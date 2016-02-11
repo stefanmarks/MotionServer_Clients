@@ -1,21 +1,27 @@
 using UnityEngine;
 using MoCap;
-using System;
 
 /// <summary>
 /// Component for scaline MoCap data.
 /// </summary>
 ///
-[AddComponentMenu("Motion Capture/Data/Scale")]
+[AddComponentMenu("Motion Capture/Modifier/Scale")]
 [DisallowMultipleComponent]
-public class MoCapData_Scale : MonoBehaviour, MoCapDataBuffer.Manipulator
+public class ScaleModifier : MonoBehaviour, IModifier
 {
 	[Tooltip("Homogeneous scale factor.")]
 	public float scaleFactor = 1.0f;
 
 
-	public void Process(ref MoCapDataBuffer.MoCapData data)
+	public void Start()
 	{
+		// empty, but necessary to get the "Enable" button in the inspector
+	}
+
+
+	public void Process(ref MoCapData data)
+	{
+		if (!enabled) return;
 		data.pos    *= scaleFactor;
 		data.length *= scaleFactor;
 	}
