@@ -11,7 +11,9 @@ MoCapClient client;
 float cameraRadius = 400;         // distance of camera from centre
 
 boolean displayMarkers   = true;  // flag for showing markers as little grey boxes
+boolean displayBones     = true;  // flag for showing bones
 boolean displayBoneNames = false; // flag for showing bone names
+boolean displayCoordSys  = false; // flag for showing coordinate systems of the bones
 
 final int GRID_SIZE = 5;          // size of the floor grid in units
 
@@ -132,24 +134,31 @@ void draw()
         if ( bone.parent == null )
         {
           strokeWeight(0.01);
-          stroke(255);
+          stroke(160);
           line(bone.px, bone.py, bone.pz,
                bone.px, 0,       bone.pz);
         }
         
         strokeWeight(0.02);
         pushMatrix();
+          // prepare transformation chain
           for ( Bone b : bone.chain )
           {
             translate(b.px, b.py, b.pz);
             float[] rot = MathUtil.getAxisAngle(b);
             rotate(rot[3], rot[0], rot[1], rot[2]);
           }
-          // draw axes
-          stroke(255, 0, 0); line(0, 0, 0, 0.1, 0, 0);
-          stroke(0, 255, 0); line(0, 0, 0, 0, 0.1, 0);
-          stroke(0, 0, 255); line(0, 0, 0, 0, 0, 0.1);
-          
+          if ( displayBones )
+          {
+            stroke(200); line(0, 0, 0, 0, bone.length, 0);
+          }
+          if ( displayCoordSys )
+          {
+            // draw axes
+            stroke(255, 0, 0); line(0, 0, 0, 0.1, 0, 0);
+            stroke(0, 255, 0); line(0, 0, 0, 0, 0.1, 0);
+            stroke(0, 0, 255); line(0, 0, 0, 0, 0, 0.1);
+          }
           if ( displayBoneNames )
           {
             // draw bone name
@@ -187,6 +196,8 @@ void keyPressed()
   {
     case 'm' : displayMarkers   = !displayMarkers;   break;
     case 'n' : displayBoneNames = !displayBoneNames; break;
+    case 'b' : displayBones     = !displayBones;     break;
+    case 'c' : displayCoordSys  = !displayCoordSys;  break;
     default: break;
   }
 }
