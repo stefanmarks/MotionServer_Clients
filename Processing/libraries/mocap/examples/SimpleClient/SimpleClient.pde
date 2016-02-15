@@ -21,6 +21,8 @@ final int GRID_SIZE = 5;          // size of the floor grid in units
 void setup()
 {
   size(800, 600, P3D);
+  frameRate(60);
+
   textSize(32);
   textAlign(CENTER, CENTER);
   
