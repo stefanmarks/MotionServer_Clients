@@ -70,7 +70,7 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 				GameObject markerRepresentation = GameObject.Instantiate(markerTemplate);
 				markerRepresentation.name             = marker.name;
 				markerRepresentation.transform.parent = markerNode.transform;
-				dataBuffers[marker] = new MoCapDataBuffer(this.gameObject, markerRepresentation);
+				dataBuffers[marker] = new MoCapDataBuffer(marker.name, this.gameObject, markerRepresentation);
 			}
 		}
 	}
@@ -90,7 +90,7 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 		{
 			Marker          marker = entry.Key;
 			MoCapDataBuffer buffer = entry.Value;
-			GameObject      obj    = buffer.GetGameObject();
+			GameObject      obj    = buffer.GameObject;
 
 			// pump marker data through buffer
 			MoCapData data = buffer.Process(marker);

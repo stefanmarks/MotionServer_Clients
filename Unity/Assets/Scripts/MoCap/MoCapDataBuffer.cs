@@ -8,14 +8,24 @@ namespace MoCap
 	/// 
 	public class MoCapDataBuffer
 	{
+		/// name of this buffer (= marker or bone name)
+		public readonly string Name;
+
+		/// game object associated with this buffer
+		public readonly GameObject GameObject;
+
+		/// arbitrary object associated with this buffer
+		public readonly System.Object DataObject;
+
 		/// <summary>
 		/// Creates a new MoCap data buffer object
 		/// </summary>
+		/// <param name="name">name of this buffer</param>
 		/// <param name="owner">game object that owns this buffer</param>
 		/// <param name="obj">game object to associate with this buffer</param>
 		/// <param name="data">arbitrary object to associate with this buffer</param>
 		/// 
-		public MoCapDataBuffer(GameObject owner, GameObject obj, System.Object data = null)
+		public MoCapDataBuffer(string name, GameObject owner, GameObject obj, System.Object data = null)
 		{
 			// find any manipulators and store them
 			modifiers = owner.GetComponents<IModifier>();
@@ -27,13 +37,14 @@ namespace MoCap
 			pipeline = new MoCapData[delayInFrames];
 			for (int i = 0; i < pipeline.Length; i++)
 			{
-				pipeline[i] = new MoCapData();
+				pipeline[i] = new MoCapData(this);
 			}
 			index = 0;
 
-			firstPush = true;
-			gameObject = obj;
-			dataObject = data;
+			firstPush       = true;
+			this.Name       = name;
+			this.GameObject = obj;
+			this.DataObject = data;
 		}
 
 
@@ -107,33 +118,9 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Gets the associated game object.
-		/// </summary>
-		/// <returns>the associated game object</returns>
-		/// 
-		public GameObject GetGameObject()
-		{
-			return gameObject;
-		}
-
-
-		/// <summary>
-		/// Gets the associated data object.
-		/// </summary>
-		/// <returns>the associated data object</returns>
-		/// 
-		public System.Object GetDataObject()
-		{
-			return dataObject;
-		}
-
-
 		private MoCapData[]   pipeline;     // pipeline for the bone data
 		private IModifier[]   modifiers;    // list of modifiers for this buffer
 		private int           index;        // current buffer index for writing, index-1 for reading
 		private bool          firstPush;    // first push of data flag
-		private GameObject    gameObject;   // game object associated with this buffer
-		private System.Object dataObject;   // arbitrary object associated with this buffer
 	}
 }

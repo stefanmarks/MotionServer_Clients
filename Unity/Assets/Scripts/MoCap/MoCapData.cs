@@ -8,6 +8,7 @@ namespace MoCap
 	/// 
 	public class MoCapData
 	{
+		public readonly MoCapDataBuffer buffer; // buffer that owns this data point
 		public Vector3    pos; // position of marker or bone
 		public Quaternion rot; // orientation of bone
 		public bool  tracked;  // tracking flag
@@ -18,8 +19,9 @@ namespace MoCap
 		/// Creates a new MoCap data object.
 		/// </summary>
 		/// 
-		public MoCapData()
+		public MoCapData(MoCapDataBuffer buffer)
 		{
+			this.buffer = buffer;
 			pos = new Vector3();
 			rot = new Quaternion();
 			tracked = false;

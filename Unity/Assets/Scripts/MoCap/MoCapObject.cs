@@ -114,7 +114,7 @@ public class MoCapObject : MonoBehaviour, ActorListener
 			if (bone.parent != null)
 			{
 				// attach to parent node
-				GameObject parentObject = dataBuffers[bone.parent].GetGameObject();
+				GameObject parentObject = dataBuffers[bone.parent].GameObject;
 				boneNode.transform.parent = parentObject.transform;
 			}
 			else
@@ -124,7 +124,7 @@ public class MoCapObject : MonoBehaviour, ActorListener
 			}
 			boneNode.transform.localScale = Vector3.one;
 
-			dataBuffers[bone] = new MoCapDataBuffer(this.gameObject, boneNode);
+			dataBuffers[bone] = new MoCapDataBuffer(bone.name, this.gameObject, boneNode);
 		}
 		
 		// move this transform to the end of the hierarchy
@@ -148,7 +148,7 @@ public class MoCapObject : MonoBehaviour, ActorListener
 		{
 			Bone            bone   = entry.Key;
 			MoCapDataBuffer buffer = entry.Value;
-			GameObject      obj    = buffer.GetGameObject();
+			GameObject      obj    = buffer.GameObject;
 
 			// pump data through buffer
 			MoCapData data = buffer.Process(bone);

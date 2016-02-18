@@ -94,10 +94,10 @@ public class MoCapModel : MonoBehaviour, ActorListener
 			BoneNameTranslationEntry entry = null;
 			string boneName = boneNamePrefix + TranslateBoneName(bone.name, ref entry);
 			// find the child in the model with the given bone name
-			Transform boneNode = FindInHierarchy(boneName, transform);
+			Transform boneNode = Utilities.FindInHierarchy(boneName, transform);
 			if (boneNode != null)
 			{
-				dataBuffers[bone] = new MoCapDataBuffer(this.gameObject, boneNode.gameObject, entry);
+				dataBuffers[bone] = new MoCapDataBuffer(bone.name, this.gameObject, boneNode.gameObject, entry);
 			}
 			else
 			{
@@ -145,35 +145,6 @@ public class MoCapModel : MonoBehaviour, ActorListener
 		return translatedName;
 	}
 
-	/// <summary>
-	/// Finds a transform by name within a hierarchy starting at a specific base transform.
-	/// </summary>
-	/// <param name="name">the name of the Transform to find</param>
-	/// <param name="baseTransform">the Transform instance to start the search at</param>
-	/// <returns>the Transform with the given name, or <code>null</code> if if doesn't exist</returns>
-	/// 
-	private Transform FindInHierarchy(string name, Transform baseTransform)
-	{
-		Transform result = null;
-
-		if (baseTransform.name == name)
-		{
-			// it's the baseObject itself
-			result = baseTransform;
-		}
-		else
-		{
-			// let's look in all the children recursively
-			foreach (Transform child in baseTransform)
-			{
-				result = FindInHierarchy(name, child);
-				if (result != null) break; // found it > get me out here
-			}
-		}
-
-		return result;
-	}
-
 
 	//// <summary>
 	/// Called once per frame. Updates the model based on the bone rotations and positions.
@@ -190,7 +161,7 @@ public class MoCapModel : MonoBehaviour, ActorListener
 		{
 			Bone            bone   = entry.Key;
 			MoCapDataBuffer buffer = entry.Value; 
-			GameObject      obj    = buffer.GetGameObject();
+			GameObject      obj    = buffer.GameObject;
 
 			// pump bone data through buffer
 			MoCapData data = buffer.Process(bone);
@@ -208,7 +179,7 @@ public class MoCapModel : MonoBehaviour, ActorListener
 
 				rot = Quaternion.identity;
 
-				string transforms = ((BoneNameTranslationEntry) buffer.GetDataObject()).axisTransformation;
+				string transforms = ((BoneNameTranslationEntry) buffer.DataObject).axisTransformation;
 				foreach ( char c in transforms )
 				{
 					switch ( c )
@@ -268,6 +239,7 @@ public class MoCapModel : MonoBehaviour, ActorListener
 
 	private MoCapClient                       client;
 	private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
+
 }
 
 

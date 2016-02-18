@@ -15,9 +15,6 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 	[Tooltip("A template game object for how to display the bones. Needs to be one unit long along the Y axis and start at the origin.")]
 	public GameObject boneTemplate;
 
-	[Tooltip("A list of bone names that should not be rendered.")]
-	public string[] ignoreList;
-
 
 	/// <summary>
 	/// Called at the start of the game.
@@ -65,10 +62,6 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 		skeletonNode.transform.localRotation = Quaternion.identity;
 		skeletonNode.transform.localScale    = Vector3.one;
 
-		// find scale modifier
-		ScaleModifier scaleModifier = GetComponent<ScaleModifier>();
-		float scaleFactor = (scaleModifier != null) ? scaleModifier.scaleFactor : 1;
-
 		// create copies of the marker template
 		foreach ( Bone bone in bones )
 		{
@@ -76,31 +69,26 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 			GameObject boneNode = new GameObject();
 			boneNode.name = bone.name;
 
-			// is this bone on the ignore list? if so, don't render
-			bool ignore = false;
-			foreach ( string name in ignoreList )
-			{
-				if ( bone.name.Equals(name) ) { ignore = true; }
-			}
+			GameObject boneRepresentation = null;
 
-			if ( (boneTemplate != null) && !ignore )
+			if (boneTemplate != null)
 			{
 				float scale = bone.length;
 				if ( scale <= 0 ) { scale = 1; }
-				scale *= scaleFactor;
 
 				// add subnode for visual that can be scaled
-				GameObject boneRepresentation = GameObject.Instantiate(boneTemplate);
+				boneRepresentation = GameObject.Instantiate(boneTemplate);
 				boneRepresentation.transform.parent        = boneNode.transform;
 				boneRepresentation.transform.localScale    = scale * Vector3.one;
 				boneRepresentation.transform.localRotation = new Quaternion();
 				boneRepresentation.name = bone.name + "_visual";
+				boneRepresentation.SetActive(true);
 			}
 
 			if (bone.parent != null)
 			{
 				// attach to parent node
-				GameObject parentObject = dataBuffers[bone.parent].GetGameObject();
+				GameObject parentObject = dataBuffers[bone.parent].GameObject;
 				boneNode.transform.parent = parentObject.transform;
 			}
 			else
@@ -109,7 +97,8 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 				boneNode.transform.parent = skeletonNode.transform;
 			}
 			
-			dataBuffers[bone] = new MoCapDataBuffer(this.gameObject, boneNode);
+			dataBuffers[bone] = new MoCapDataBuffer(bone.name, this.gameObject, boneNode, boneRepresentation);
+			boneTemplate.SetActive(false);
 		}
 	}
 
@@ -128,7 +117,7 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 		{
 			Bone            bone   = entry.Key;
 			MoCapDataBuffer buffer = entry.Value; 
-			GameObject      obj    = buffer.GetGameObject();
+			GameObject      obj    = buffer.GameObject;
 
 			// pump bone data through buffer
 			MoCapData data = buffer.Process(bone);
@@ -138,6 +127,13 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 			{
 				obj.transform.localPosition = data.pos;
 				obj.transform.localRotation = data.rot;
+
+				// update length of representation
+				GameObject boneRepresentation = (GameObject)buffer.DataObject;
+				if (boneRepresentation != null)
+				{
+					boneRepresentation.transform.localScale = data.length * Vector3.one;
+				}
 
 				obj.SetActive(true);
 
