@@ -2,7 +2,7 @@ using UnityEngine;
 using MoCap;
 
 /// <summary>
-/// Component for scaline MoCap data.
+/// Component for scaling MoCap data.
 /// </summary>
 ///
 [AddComponentMenu("Motion Capture/Modifier/Scale")]
