@@ -17,7 +17,7 @@ public class MoCapTest_Console
         
         MoCapClient client = new NatNetClient("MoCap Java Test Client", new byte[] {1, 2, 3, 4});
         
-        String[] servers = new String[] {"127.0.0.1", "156.62.159.85"};
+        String[] servers = new String[] {"127.0.0.1", "156.62.159.85", "10.1.1.199"};
         for ( String server : servers )
         {
             try
@@ -65,12 +65,14 @@ public class MoCapTest_Console
                         System.out.println("Bone count: " + actor.bones.length);
                         for (Bone b : actor.bones)
                         {
+                            float[] aa = b.getAxisAngle();
                             System.out.println("Bone " + b.id + " '" + b.name + 
                                     "': Offset X=" + b.ox + ", Y=" + b.oy + ", Z=" + b.oz + 
                                     " / Length=" + b.length +
                                     " / " + (b.tracked ? "Tracked" : "Not Tracked") +
                                     " / Pos X=" + b.px + ", Y=" + b.py + ", Z=" + b.pz + 
                                     " / Rot X=" + b.qx + ", Y=" + b.qy + ", Z=" + b.qz + ", W=" + b.qw +
+                                    " / RotAA X=" + aa[0] + ", Y=" + aa[1] + ", Z=" + aa[2] + ", A=" + aa[3] +
                                     " / Parent = " + ((b.parent == null) ? "---" : b.parent.name));
                         }
                     }

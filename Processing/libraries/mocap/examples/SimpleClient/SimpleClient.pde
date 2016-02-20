@@ -1,5 +1,8 @@
 /**
  * Simple client drawing the MoCap data in a simplified 3D space.
+ *
+ * @author Stefan Marks, AUT University, Auckland, NZ
+ * @date   18.2.2016
  */
  
 import java.util.*;
@@ -8,6 +11,8 @@ import mocap.*;
 
 MoCapClient client;
 
+float cameraRotX   = -30;         // rotation around X axis
+float cameraRotY   = -45;         // rotation around Y axis
 float cameraRadius = 400;         // distance of camera from centre
 
 boolean displayMarkers   = true;  // flag for showing markers as little grey boxes
@@ -79,8 +84,8 @@ void draw()
   background(0);
   
   // position camera (mouse acts as turntable control)
-  float rotY = map(mouseX, 0,  width, PI, -PI);
-  float rotX = map(mouseY, 0, height, PI / 2, -PI / 2);
+  float rotY = radians(cameraRotY);
+  float rotX = radians(cameraRotX);
   float r    = cameraRadius;
   float r2   = r * cos(rotX);
   camera(r2 * sin(rotY), r * sin(rotX), r2 * cos(rotY), 
@@ -147,7 +152,8 @@ void draw()
           for ( Bone b : bone.chain )
           {
             translate(b.px, b.py, b.pz);
-            float[] rot = MathUtil.getAxisAngle(b);
+            // get axis/angle rotation representation
+            float[] rot = b.getAxisAngle();
             rotate(rot[3], rot[0], rot[1], rot[2]);
           }
           if ( displayBones )
@@ -171,23 +177,39 @@ void draw()
     }  
     
     // Example for reading values from interaction devices,
-    // in this case the Y axis of the thumbstick on any joystick
+    // in this case button1 and the Y axis of the thumbstick on a joystick
     Device device = scene.findDevice("Joystick.");
     if ( device != null )
     {
-      Channel c = device.findChannel("axis2"); // Y axis
-      if ( c != null )
+      Channel chnButton = device.findChannel("button1"); // button 1 (Fire)
+      if ( (chnButton != null) && (chnButton.value > 0) )
       {
-        cameraRadius -= c.value;
+        background(255, 0, 0);      
+      }
+      
+      Channel chnY_Axis = device.findChannel("axis2"); // Y axis
+      if ( chnY_Axis != null )
+      {
+        // move in.out
+        cameraRadius -= chnY_Axis.value;
       }
     }
   }
 }
 
 
+void mouseDragged(MouseEvent event)
+{
+  // change camera rotation by dragging
+  cameraRotX += map(mouseY - pmouseY, 0, height,  0, -180);
+  cameraRotX  = constrain(cameraRotX, -89.9, 89.9);
+  cameraRotY -= map(mouseX - pmouseX, 0,  width,  0,  180);
+}
+
+
 void mouseWheel(MouseEvent event) 
 {
-  // zoom
+  // zoom with mouse wheel
   cameraRadius = constrain(cameraRadius + event.getCount() * 10, 50, 1000);
 }
 

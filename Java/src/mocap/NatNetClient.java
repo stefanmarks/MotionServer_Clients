@@ -26,8 +26,8 @@ import java.util.logging.Logger;
  */
 public class NatNetClient implements MoCapClient
 {
-    public static final String CLIENT_NAME      = "Java MoCap Client";
-    public static final byte   CLIENT_VERSION[] = { 1, 0, 7, 0 };
+    public static final String CLIENT_NAME      = "Processing MoCap Client";
+    public static final byte   CLIENT_VERSION[] = { 1, 0, 8, 0 };
     public static final byte   NATNET_VERSION[] = { 2, 9, 0, 0 };
 
 
@@ -277,7 +277,7 @@ public class NatNetClient implements MoCapClient
             
             Bone bone = new Bone(actor, id, name);
 
-                           buf.getInt();         // Parent ID (ignore for rigid body)
+                           buf.getInt();         // Parent ID (ignore for rigid body - will be -1)
             bone.parent  = null;                 // rigid bodies should not have a parent
             bone.ox      = buf.getFloat();       // X offset
             bone.oy      = buf.getFloat();       // Y offset
@@ -1148,6 +1148,13 @@ public class NatNetClient implements MoCapClient
     }
     
     
+    /**
+     * Extracts a null-terminated string from the buffer.
+     * 
+     * @param buf the buffer to extract the string from
+     * 
+     * @return  the extracted string
+     */
     private String unmarshalString(ByteBuffer buf)
     {
         StringBuilder s = new StringBuilder();

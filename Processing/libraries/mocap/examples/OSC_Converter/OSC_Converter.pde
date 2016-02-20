@@ -1,5 +1,8 @@
 /**
  * Convert MoCap Actor bone positions and rotations into OSC packages.
+ *
+ * @author Stefan Marks, AUT University, Auckland, NZ
+ * @date   18.2.2016
  */
  
 import java.util.*;
@@ -8,11 +11,12 @@ import oscP5.*;
 import netP5.*;
 import mocap.*;
 
-final static String[] OSC_RECEIVERS = { "127.0.0.1" };
-final static int      OSC_PORT      = 57120;
+final static int OSC_PORT = 57120;
 
-MoCapClient client;
-OscP5       osc;
+MoCapClient    client;
+OscP5          osc;
+NetAddressList receivers;
+
 
 void setup()
 {
@@ -64,7 +68,25 @@ void setup()
   if ( client.isConnected() )
   {
     // create a new instance of oscP5 
-    osc = new OscP5("10.1.1.180", OSC_PORT);
+    osc = new OscP5(this, OSC_PORT);
+    
+    // create list of OSC packet receivers
+    receivers = new NetAddressList();
+    String[] receiverAddresses = loadStrings("receivers.txt");
+    for ( String address : receiverAddresses )
+    {
+      if ( address.startsWith("#") ) continue; // comment line
+      
+      String[] parts = address.split(""); // split IP address and port
+      int port = OSC_PORT;
+      if ( parts.length >= 1 )
+      {
+        port =  Integer.parseInt(parts[1]);
+      }
+      
+      // add to receiver list
+      receivers.add(parts[0], port);
+    }
   }
   else
   {
@@ -103,7 +125,7 @@ void draw()
           OscMessage msgY = new OscMessage(name + "y"); msgY.add(bone.py);
           OscMessage msgZ = new OscMessage(name + "z"); msgZ.add(bone.pz);
           // ...and bone rotation
-          float[] axisAngle = MathUtil.getAxisAngle(bone);
+          float[] axisAngle = bone.getAxisAngle();
           OscMessage msgA = new OscMessage(name + "a"); msgA.add(axisAngle[3]);
           // wrap messages in a bundle
           bundle.add(msgX); bundle.add(msgY); bundle.add(msgZ); bundle.add(msgA);
@@ -111,12 +133,8 @@ void draw()
           text(name + " > " + bundle.toString(), 10, yPos, 0);
           yPos += 10;
 
-          // and send/broadcast
-          for ( String receiver : OSC_RECEIVERS )
-          {
-            NetAddress addr = new NetAddress(receiver, OSC_PORT);
-            osc.send(bundle, addr);     
-          }
+          // and send to receivers
+          osc.send(bundle, receivers);     
         }
       }  
     }
