@@ -26,7 +26,7 @@ import java.util.logging.Logger;
  */
 public class NatNetClient implements MoCapClient
 {
-    public static final String CLIENT_NAME      = "Processing MoCap Client";
+    public static final String CLIENT_NAME      = "Java MoCap Client";
     public static final byte   CLIENT_VERSION[] = { 1, 0, 8, 0 };
     public static final byte   NATNET_VERSION[] = { 2, 9, 0, 0 };
 
