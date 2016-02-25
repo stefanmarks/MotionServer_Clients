@@ -212,7 +212,7 @@ public class MoCapObject : MonoBehaviour, ActorListener
 	/// 
 	public void ActorUpdated(Actor actor)
 	{
-		// create node hierarchy if not al
+		// create node hierarchy if not already built.
 		// but only when tracking is OK, otherwise the bone lengths are undefined
 		if (rootNode == null)
 		{

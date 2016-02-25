@@ -150,6 +150,8 @@ namespace MoCap
 
 		public void Disconnect()
 		{
+			RemoveAllListeners();
+
 			if (dataClient != null)
 			{
 				dataClient.DropMulticastGroup(multicastAddress);
@@ -245,6 +247,13 @@ namespace MoCap
 		public bool RemoveDeviceListener(DeviceListener listener)
 		{
 			return deviceListeners.Remove(listener);
+		}
+
+
+		public void RemoveAllListeners()
+		{
+			actorListeners.Clear();
+			deviceListeners.Clear();
 		}
 
 

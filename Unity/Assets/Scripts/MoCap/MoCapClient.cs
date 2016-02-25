@@ -71,6 +71,17 @@ public class MoCapClient : MonoBehaviour
 
 
 	/// <summary>
+	/// Called when object is about to be destroyed.
+	/// Unregisters all listeners.
+	/// </summary>
+	/// 
+	void OnDestroy()
+	{
+		GetClient().RemoveAllListeners();
+	}
+
+
+	/// <summary>
 	/// Called once per physics engine frame and before Update().
 	/// Tries to get new frame data.
 	/// </summary>
