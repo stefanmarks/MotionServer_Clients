@@ -79,6 +79,20 @@ public class MoCapModel : MonoBehaviour, ActorListener
 
 
 	/// <summary>
+	/// Called when object is about to be destroyed.
+	/// Unregisters as listener from the MoCap client.
+	/// </summary>
+	/// 
+	void OnDestroy()
+	{
+		if (client != null)
+		{
+			client.RemoveActorListener(this);
+		}
+	}
+
+
+	/// <summary>
 	/// Finds the rigging in the model and matches it to the MoCap bone system.
 	/// </summary>
 	/// <param name="bones">bone data from the MoCap system</param>

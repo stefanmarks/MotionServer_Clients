@@ -48,6 +48,20 @@ public class SkeletonRenderer : MonoBehaviour, ActorListener
 
 
 	/// <summary>
+	/// Called when object is about to be destroyed.
+	/// Unregisters as listener from the MoCap client.
+	/// </summary>
+	/// 
+	void OnDestroy()
+	{
+		if (client != null)
+		{
+			client.RemoveActorListener(this);
+		}
+	}
+
+
+	/// <summary>
 	/// Creates copies of the bone template for all bones.
 	/// </summary>
 	/// <param name="bones">bone data from the MoCap system</param>

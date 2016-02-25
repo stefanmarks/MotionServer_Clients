@@ -48,6 +48,20 @@ public class MarkerRenderer : MonoBehaviour, ActorListener
 
 
 	/// <summary>
+	/// Called when object is about to be destroyed.
+	/// Unregisters as listener from the MoCap client.
+	/// </summary>
+	/// 
+	void OnDestroy()
+	{
+		if (client != null)
+		{
+			client.RemoveActorListener(this);
+		}
+	}
+
+
+	/// <summary>
 	/// Creates copies of the marker template for all markers.
 	/// </summary>
 	/// <param name="markers">marker data from the MoCap system</param>

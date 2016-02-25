@@ -89,6 +89,20 @@ public class MoCapObject : MonoBehaviour, ActorListener
 
 
 	/// <summary>
+	/// Called when object is about to be destroyed.
+	/// Unregisters as listener from the MoCap client.
+	/// </summary>
+	/// 
+	void OnDestroy()
+	{
+		if (client != null)
+		{
+			client.RemoveActorListener(this);
+		}
+	}
+
+
+	/// <summary>
 	/// Creates a hierarchy of a selected bone of an actor.
 	/// </summary>
 	/// <param name="actor">actor to use</param>
