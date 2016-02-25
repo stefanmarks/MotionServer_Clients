@@ -41,7 +41,9 @@ namespace MoCap
 		private const short DATASET_TYPE_SKELETON   = 2;
 		private const short DATASET_TYPE_FORCEPLATE = 3;
 
-		private const int MAX_NAMELENGTH = 256;
+		private const int MAX_NAMELENGTH    = 256;
+		private const int MAX_RETRY_COMMAND = 10;
+		private const int MAX_RETRY_DATA    = 3;
 
 		private const int TIMEOUT_COMMAND = 1000;
 		private const int TIMEOUT_FRAME   = 100;
@@ -116,7 +118,7 @@ namespace MoCap
 			{
 				try
 				{
-					if (SendRequest("getDataStreamAddress"))
+					if (SendRequest("getDataStreamAddress") && (serverResponse.Length > 0))
 					{
 						multicastAddress = IPAddress.Parse(serverResponse);
 						Debug.Log("Data stream address: " + multicastAddress);
@@ -134,8 +136,11 @@ namespace MoCap
 				catch (Exception e)
 				{
 					Debug.LogWarning("Could not establish data streaming (" + e.Message + ").");
-					dataClient.Close();
-					dataClient = null;
+					if (dataClient != null)
+					{
+						dataClient.Close();
+						dataClient = null;
+					}
 				}
 			}
 
@@ -156,9 +161,15 @@ namespace MoCap
 			{
 				dataClient.DropMulticastGroup(multicastAddress);
 				dataClient.Close();
+				dataClient = null;
 			}
 
-			commandClient.Close();
+			if (commandClient != null)
+			{
+				commandClient.Close();
+				commandClient = null;
+			}
+
 			connected = false;
 		}
 		
@@ -278,10 +289,8 @@ namespace MoCap
 
 			// wait for answer
 			commandClient.Client.ReceiveTimeout = TIMEOUT_COMMAND;
-			if ( packetIn.Receive(commandClient) > 0 )
-			{
-				success = ParsePacket(packetIn, NAT_PINGRESPONSE);
-			}
+			success = WaitForSpecificPacket(NAT_PINGRESPONSE, MAX_RETRY_COMMAND);
+
 			return success;
 		}
 
@@ -302,10 +311,8 @@ namespace MoCap
 
 			// wait for answer
 			commandClient.Client.ReceiveTimeout = TIMEOUT_COMMAND;
-			if ( packetIn.Receive(commandClient) > 0 )
-			{
-				success = ParsePacket(packetIn, NAT_MODELDEF);
-			}
+			success = WaitForSpecificPacket(NAT_MODELDEF, MAX_RETRY_COMMAND);
+
 			return success;
 		}
 
@@ -326,10 +333,8 @@ namespace MoCap
 
 			// wait for answer
 			commandClient.Client.ReceiveTimeout = TIMEOUT_FRAME;
-			if ( packetIn.Receive(commandClient) > 0 )
-			{
-				success = ParsePacket(packetIn, NAT_FRAMEOFDATA);
-			}
+			success = WaitForSpecificPacket(NAT_FRAMEOFDATA, MAX_RETRY_DATA);
+
 			return success;
 		}
 
@@ -351,17 +356,41 @@ namespace MoCap
 
 			// wait for answer
 			commandClient.Client.ReceiveTimeout = TIMEOUT_COMMAND;
-			if (packetIn.Receive(commandClient) > 0)
-			{
-				success = ParsePacket(packetIn, NAT_RESPONSE);
-			}
+			success = WaitForSpecificPacket(NAT_RESPONSE, MAX_RETRY_COMMAND);
+
 			return success;
 		}
 
 
-		private bool ParsePacket(NatNetPacket_In packet)
+		private bool WaitForSpecificPacket(int expectedId, int maxRetries)
 		{
-			return ParsePacket(packet, -1);
+			int retries  = 0;
+			bool success = false;
+			while (!success && (retries < maxRetries))
+			{
+				if (packetIn.Receive(commandClient) > 0)
+				{
+					if (packetIn.GetID() == expectedId)
+					{
+						success = ParsePacket(packetIn, expectedId);
+					}
+					else
+					{
+						// received something, but wrong ID, try again
+						retries++;
+					}
+				}
+				else
+				{
+					// not received anything > get out here
+					break;
+				}
+			}
+			if (!success)
+			{
+				Debug.LogWarning("Did not receive expected response " + expectedId + " from NatNet server.");
+			}
+			return success;
 		}
 
 
@@ -370,7 +399,7 @@ namespace MoCap
 			bool success = false;
 
 			int id = packet.GetID();
-			if ( (expectedId >= 0) && (id != expectedId) )
+			if ( id != expectedId )
 			{
 				Debug.LogWarning("Unexpected response received from NatNet server (expected " + expectedId + ", received " + id + ").");
 				return false;

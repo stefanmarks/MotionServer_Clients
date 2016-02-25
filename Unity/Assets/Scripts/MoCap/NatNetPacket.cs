@@ -150,10 +150,14 @@ namespace MoCap
 		private int        idx;
 		private int        id, length;
 		private IPEndPoint source;
-        private int        errorCounter;
+		private int        errorCounter;
 	}
 
 
+	/// <summary>
+	/// Class for a NatNet data packet to be sent with its marshalling methods.
+	/// </summary>
+	///
 	public class NatNetPacket_Out
 	{
 		public const int MAX_PACKETSIZE = 10000;
@@ -182,7 +186,7 @@ namespace MoCap
 			// fill in packet length by current index position
 			int    len     = idx;
 			byte[] lenBuf  = BitConverter.GetBytes((short) len - 4); // don't consider packet ID and length bytes in length
-       		System.Array.Copy (lenBuf, 0, data, 2, 2);
+			System.Array.Copy(lenBuf, 0, data, 2, 2);
 
 			// send
 			try

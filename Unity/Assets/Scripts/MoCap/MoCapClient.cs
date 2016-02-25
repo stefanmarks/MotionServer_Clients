@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Net;
 using System.Threading;
+using System.Collections.Generic;
 using MoCap;
 
 /// <summary>
@@ -12,14 +13,14 @@ using MoCap;
 [AddComponentMenu("Motion Capture/MoCap Client")]
 public class MoCapClient : MonoBehaviour
 {
-	[Tooltip("IP address of the Motion Server")]
-	public string serverAddress = "127.0.0.1";
+	[Tooltip("Name of the file with MotionServer IP Addresses to query")]
+	public TextAsset serverAddressFile = null;
 
 	[Tooltip("The name of this application")]
 	public string clientAppName = "Unity MoCap Client";
 
 	[Tooltip("Version number of this client")]
-	public byte[] clientAppVersion = new byte[] { 1, 0, 4, 0 };
+	public byte[] clientAppVersion = new byte[] { 1, 0, 5, 0 };
 
 	[Tooltip("Scale factor for all translation units coming from the MoCap system")]
 	public float unitScaleFactor = 1.0f;
@@ -39,20 +40,22 @@ public class MoCapClient : MonoBehaviour
 		{
 			client = new NatNetClient(clientAppName, clientAppVersion);
 
-			// test a local server first
-			if (client.Connect(IPAddress.Loopback))
-			{
-				Debug.Log("MoCap client connected to local MotionServer '" + GetClient().GetServerName() + "'.");
+			// build list of server addresses
+			ICollection<IPAddress> serverAddresses = GetServerAddresses();
+			// run through the list
+			foreach ( IPAddress address in serverAddresses )
+			{ 
+				if (client.Connect(address))
+				{
+					Debug.Log("MoCap client connected to MotionServer '" + GetClient().GetServerName() + "' on " + address + ".");
+					break;
+				}
 			}
-			// if not local, is it running remotely?
-			else if (client.Connect(IPAddress.Parse(serverAddress)))
-			{
-				Debug.Log("MoCap client connected to MotionServer '" + GetClient().GetServerName() + "'.");
-			}
+
 			// nope, can't find it
-			else
+			if (!client.IsConnected())
 			{
-				Debug.LogWarning("Could not connect to MoCap server at " + serverAddress + ".");
+				Debug.LogWarning("Could not connect to any MotionServer.");
 			}
 		}
 		clientMutex.ReleaseMutex();
@@ -72,12 +75,12 @@ public class MoCapClient : MonoBehaviour
 
 	/// <summary>
 	/// Called when object is about to be destroyed.
-	/// Unregisters all listeners.
+	/// Disconnects from the NatNet server.
 	/// </summary>
 	/// 
 	void OnDestroy()
 	{
-		GetClient().RemoveAllListeners();
+		GetClient().Disconnect();
 	}
 
 
@@ -161,6 +164,43 @@ public class MoCapClient : MonoBehaviour
 	public bool RemoveDeviceListener(DeviceListener listener)
 	{
 		return GetClient().RemoveDeviceListener(listener);
+	}
+
+
+	/// <summary>
+	/// Reads the MotionServer address file asset and constructs a list of IP addresses to query.
+	/// </summary>
+	/// <returns>List of IP addresses to query</returns>
+	/// 
+	private ICollection<IPAddress> GetServerAddresses()
+	{
+		LinkedList<IPAddress> addresses = new LinkedList<IPAddress>();
+
+		string[] lineEndings = { "\r\n", "\r", "\n" };
+		string[] lines       = serverAddressFile.text.Split(lineEndings, System.StringSplitOptions.RemoveEmptyEntries);
+		foreach (string rawLine in lines)
+		{
+			string line = rawLine.Trim();
+			if ( !line.StartsWith("//") ) // not a comment
+			{
+				// parse the line
+				IPAddress address;
+				if ( IPAddress.TryParse(line, out address) )
+				{
+					// success > add to list
+					addresses.AddLast(address);
+				}
+				
+			}
+		}
+
+		// if localhost is not part of the list at all, add it at the beginning
+		if (!addresses.Contains(IPAddress.Loopback))
+		{
+			addresses.AddFirst(IPAddress.Loopback);
+		}
+
+		return addresses;
 	}
 
 
