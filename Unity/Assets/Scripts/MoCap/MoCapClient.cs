@@ -20,10 +20,7 @@ public class MoCapClient : MonoBehaviour
 	public string clientAppName = "Unity MoCap Client";
 
 	[Tooltip("Version number of this client")]
-	public byte[] clientAppVersion = new byte[] { 1, 0, 5, 0 };
-
-	[Tooltip("Scale factor for all translation units coming from the MoCap system")]
-	public float unitScaleFactor = 1.0f;
+	public byte[] clientAppVersion = new byte[] { 1, 0, 6, 0 };
 
 
 	/// <summary>
@@ -75,12 +72,18 @@ public class MoCapClient : MonoBehaviour
 
 	/// <summary>
 	/// Called when object is about to be destroyed.
-	/// Disconnects from the NatNet server.
+	/// Disconnects from the NatNet server and destroys the NatNet client.
 	/// </summary>
 	/// 
 	void OnDestroy()
 	{
-		GetClient().Disconnect();
+		if (client != null)
+		{
+			clientMutex.WaitOne();
+			client.Disconnect();
+			client = null;
+			clientMutex.ReleaseMutex();
+		}
 	}
 
 
