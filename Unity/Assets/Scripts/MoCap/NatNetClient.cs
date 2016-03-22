@@ -864,16 +864,18 @@ namespace MoCap
 						// channel count
 						int nChannels = packet.GetInt32();
 						// channel data
-						for (int i = 0; i < nChannels; i++)
+						for (int chn = 0; chn < nChannels; chn++)
 						{
-							int nFrames = packet.GetInt32();
+							int   nFrames = packet.GetInt32();
+							float value   = 0;
 							for (int frameIdx = 0; frameIdx < nFrames; frameIdx++)
 							{
-								float value = packet.GetFloat();
-								if (frameIdx < device.channels.Length)
-								{
-									device.channels[i].value = value;
-								}
+								value = packet.GetFloat();
+							}
+							if (chn < device.channels.Length)
+							{
+								// effectively only keep the last (or only) value
+								device.channels[chn].value = value;
 							}
 						}
 					}

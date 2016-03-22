@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 public class NatNetClient implements MoCapClient
 {
     public static final String CLIENT_NAME      = "Java MoCap Client";
-    public static final byte   CLIENT_VERSION[] = { 1, 0, 8, 0 };
+    public static final byte   CLIENT_VERSION[] = { 1, 0, 9, 0 };
     public static final byte   NATNET_VERSION[] = { 2, 9, 0, 0 };
 
 
@@ -660,14 +660,18 @@ public class NatNetClient implements MoCapClient
                         // channel data
                         for (int i = 0; i < nChannels; i++)
                         {
-                            int nFrames = buf.getInt(); 
+                            // frame count
+                            int   nFrames = buf.getInt();
+                            float value   = 0;
                             for (int frameIdx = 0; frameIdx < nFrames; frameIdx++)
                             {
-                                float value = buf.getFloat();
-                                if ( frameIdx < device.channels.length )
-                                {
-                                    device.channels[i].value = value;
-                                }
+                                // frame data
+                                value = buf.getFloat();
+                            }
+                            if ( i < device.channels.length )
+                            {
+                                // effectively only read the last (or only) value
+                                device.channels[i].value = value;
                             }
                         }
                     }
