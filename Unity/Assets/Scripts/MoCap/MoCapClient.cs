@@ -20,7 +20,7 @@ public class MoCapClient : MonoBehaviour
 	public string clientAppName = "Unity MoCap Client";
 
 	[Tooltip("Version number of this client")]
-	public byte[] clientAppVersion = new byte[] { 1, 0, 6, 0 };
+	public byte[] clientAppVersion = new byte[] { 1, 0, 7, 0 };
 
 
 	/// <summary>
@@ -36,24 +36,6 @@ public class MoCapClient : MonoBehaviour
 		if ( client == null )
 		{
 			client = new NatNetClient(clientAppName, clientAppVersion);
-
-			// build list of server addresses
-			ICollection<IPAddress> serverAddresses = GetServerAddresses();
-			// run through the list
-			foreach ( IPAddress address in serverAddresses )
-			{ 
-				if (client.Connect(address))
-				{
-					Debug.Log("MoCap client connected to MotionServer '" + GetClient().GetServerName() + "' on " + address + ".");
-					break;
-				}
-			}
-
-			// nope, can't find it
-			if (!client.IsConnected())
-			{
-				Debug.LogWarning("Could not connect to any MotionServer.");
-			}
 		}
 		clientMutex.ReleaseMutex();
 		return client;
@@ -61,12 +43,34 @@ public class MoCapClient : MonoBehaviour
 
 
 	/// <summary>
-	/// Called once at the very start of the scene. 
+	/// Called once at the start of the scene. 
 	/// </summary>
 	/// 
-	public void Awake()
+	public void Start()
 	{
 		GetClient(); // trigger creation of singleton (if not already happened)
+
+		// build list of server addresses
+		ICollection<IPAddress> serverAddresses = GetServerAddresses();
+
+		clientMutex.WaitOne();
+		// run through the list
+		foreach (IPAddress address in serverAddresses)
+		{
+			
+			if (client.Connect(address))
+			{
+				Debug.Log("MoCap client connected to MotionServer '" + client.GetServerName() + "' on " + address + ".");
+				break;
+			}
+		}
+
+		// nope, can't find it
+		if (!client.IsConnected())
+		{
+			Debug.LogWarning("Could not connect to any MotionServer.");
+		}
+		clientMutex.WaitOne();
 	}
 
 
