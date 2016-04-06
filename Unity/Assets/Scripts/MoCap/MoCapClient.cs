@@ -35,8 +35,28 @@ public class MoCapClient : MonoBehaviour
 		clientMutex.WaitOne();
 		if ( client == null )
 		{
-			client = new NatNetClient(clientAppName, clientAppVersion);
-		}
+            // create singleton
+            client = new NatNetClient(clientAppName, clientAppVersion);
+
+            // build list of server addresses
+            ICollection<IPAddress> serverAddresses = GetServerAddresses();
+
+            // run through the list
+            foreach (IPAddress address in serverAddresses)
+            {
+                if (client.Connect(address))
+                {
+                    Debug.Log("MoCap client connected to MotionServer '" + client.GetServerName() + "' on " + address + ".");
+                    break;
+                }
+            }
+
+            // nope, can't find it
+            if (!client.IsConnected())
+            {
+                Debug.LogWarning("Could not connect to any MotionServer.");
+            }
+        }
 		clientMutex.ReleaseMutex();
 		return client;
 	}
@@ -49,28 +69,6 @@ public class MoCapClient : MonoBehaviour
 	public void Start()
 	{
 		GetClient(); // trigger creation of singleton (if not already happened)
-
-		// build list of server addresses
-		ICollection<IPAddress> serverAddresses = GetServerAddresses();
-
-		clientMutex.WaitOne();
-		// run through the list
-		foreach (IPAddress address in serverAddresses)
-		{
-			
-			if (client.Connect(address))
-			{
-				Debug.Log("MoCap client connected to MotionServer '" + client.GetServerName() + "' on " + address + ".");
-				break;
-			}
-		}
-
-		// nope, can't find it
-		if (!client.IsConnected())
-		{
-			Debug.LogWarning("Could not connect to any MotionServer.");
-		}
-		clientMutex.WaitOne();
 	}
 
 
