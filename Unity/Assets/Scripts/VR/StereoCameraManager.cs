@@ -9,6 +9,9 @@ using System;
 /// will be duplicated and configured for left/right eye rendering.
 /// </summary>
 /// 
+
+[AddComponentMenu("VR/Stereo Camera Manager")]
+
 public class StereoCameraManager : MonoBehaviour 
 {
 	[Tooltip("VR Display Profile to use")] 

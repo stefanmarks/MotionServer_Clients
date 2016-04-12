@@ -1,11 +1,16 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-// https://forums.oculus.com/community/discussion/3413/calculating-the-distortion-shader-parameters
+/// <summary>
+/// Script for applying parameters to the shader that simulates the in-built lens distortion of the Oculus Rift.
+/// 
+/// https://forums.oculus.com/community/discussion/3413/calculating-the-distortion-shader-parameters
+/// </summary>
 
 [ExecuteInEditMode]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Camera))]
+
+[AddComponentMenu("VR/Lens Distortion")]
 
 public class LensDistortion : MonoBehaviour
 {
@@ -53,7 +58,5 @@ public class LensDistortion : MonoBehaviour
             ChromaticAberration[i + 0] = config.ChromaticAberrationParametersRed[i];
             ChromaticAberration[i + 2] = config.ChromaticAberrationParametersBlue[i];
         }
-
-
     }
 }
