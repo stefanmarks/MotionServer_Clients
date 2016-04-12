@@ -75,16 +75,9 @@ public class MoCapObject : MonoBehaviour, ActorListener
 		rootNode = null;
 		dataBuffers = new Dictionary<Bone, MoCapDataBuffer>();
 
-		// try to find the client singleton
-		client = FindObjectOfType<MoCapClient>();
-		if (client != null)
-		{
-			client.AddActorListener(this);
-		}
-		else
-		{
-			Debug.LogWarning("No MoCapClient component defined in the scene.");
-		}
+		// get the client singleton and register as listener
+		client = MoCapClient.GetInstance();
+		client.AddActorListener(this);
 	}
 
 

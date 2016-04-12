@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Assertions;
 using System.Net;
 using System.Threading;
 using System.Collections.Generic;
@@ -38,24 +39,27 @@ public class MoCapClient : MonoBehaviour
             // create singleton
             client = new NatNetClient(clientAppName, clientAppVersion);
 
-            // build list of server addresses
-            ICollection<IPAddress> serverAddresses = GetServerAddresses();
+			if (this.isActiveAndEnabled)
+			{
+				// build list of server addresses
+				ICollection<IPAddress> serverAddresses = GetServerAddresses();
 
-            // run through the list
-            foreach (IPAddress address in serverAddresses)
-            {
-                if (client.Connect(address))
-                {
-                    Debug.Log("MoCap client connected to MotionServer '" + client.GetServerName() + "' on " + address + ".");
-                    break;
-                }
-            }
+				// run through the list
+				foreach (IPAddress address in serverAddresses)
+				{
+					if (client.Connect(address))
+					{
+						Debug.Log("MoCap client connected to MotionServer '" + client.GetServerName() + "' on " + address + ".");
+						break;
+					}
+				}
 
-            // nope, can't find it
-            if (!client.IsConnected())
-            {
-                Debug.LogWarning("Could not connect to any MotionServer.");
-            }
+				// nope, can't find it
+				if (!client.IsConnected())
+				{
+					Debug.LogWarning("Could not connect to any MotionServer.");
+				}
+			}
         }
 		clientMutex.ReleaseMutex();
 		return client;
@@ -206,6 +210,21 @@ public class MoCapClient : MonoBehaviour
 		}
 
 		return addresses;
+	}
+
+
+	/// <summary>
+	/// Searches for the MoCapClient instance in the scene and returns it
+	/// or quits if it is not defined.
+	/// </summary>
+	/// <returns>the MoCapClient instance</returns>
+	/// 
+	public static MoCapClient GetInstance()
+	{
+		// try to find the client instance 
+		MoCapClient client = FindObjectOfType<MoCapClient>();
+		Assert.IsNotNull(client, "No MoCapClient component defined in the scene.");
+		return client;
 	}
 
 
