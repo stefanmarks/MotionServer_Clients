@@ -128,13 +128,37 @@ public class MoCapClient : MonoBehaviour
 	}
 
 
-	/// <summary>
-	/// Adds an actor data listener.
-	/// </summary>
-	/// <param name="listener">The listener to add</param>
-	/// <returns><c>true</c>, if the actor listener was added, <c>false</c> otherwise.</returns>
-	/// 
-	public bool AddActorListener(ActorListener listener)
+    /// <summary>
+    /// Adds a scene data listener.
+    /// </summary>
+    /// <param name="listener">The listener to add</param>
+    /// <returns><c>true</c>, if the scene listener was added, <c>false</c> otherwise.</returns>
+    /// 
+    public bool AddSceneListener(SceneListener listener)
+    {
+        return GetClient().AddSceneListener(listener);
+    }
+
+
+    /// <summary>
+    /// Removes a scene data listener.
+    /// </summary>
+    /// <param name="listener">The listener to remove</param>
+    /// <returns><c>true</c>, if the actor listener was removed, <c>false</c> otherwise.</returns>
+    /// 
+    public bool RemoveSceneListener(SceneListener listener)
+    {
+        return GetClient().RemoveSceneListener(listener);
+    }
+
+
+    /// <summary>
+    /// Adds an actor data listener.
+    /// </summary>
+    /// <param name="listener">The listener to add</param>
+    /// <returns><c>true</c>, if the actor listener was added, <c>false</c> otherwise.</returns>
+    /// 
+    public bool AddActorListener(ActorListener listener)
 	{
 		return GetClient().AddActorListener(listener);
 	}

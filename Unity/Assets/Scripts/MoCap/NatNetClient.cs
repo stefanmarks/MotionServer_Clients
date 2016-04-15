@@ -54,6 +54,7 @@ namespace MoCap
 			this.clientAppVersion    = clientAppVersion;
 			this.clientNatNetVersion = new byte[] {2, 9, 0, 0};
 
+            this.sceneListeners  = new List<SceneListener>();
 			this.actorListeners  = new Dictionary<ActorListener, Actor>();
 			this.deviceListeners = new Dictionary<DeviceListener, Device>();
 
@@ -219,7 +220,27 @@ namespace MoCap
 		}
 
 
-		public bool AddActorListener(ActorListener listener)
+        public bool AddSceneListener(SceneListener listener)
+        {
+            bool added = false;
+            if (!sceneListeners.Contains(listener))
+            {
+                sceneListeners.Add(listener);
+                added = true;
+                // immediately trigger callback
+                listener.SceneChanged(scene);
+            }
+            return added;
+        }
+
+
+        public bool RemoveSceneListener(SceneListener listener)
+        {
+            return sceneListeners.Remove(listener);
+        }
+
+
+        public bool AddActorListener(ActorListener listener)
 		{
 			bool added = false;
 			if ( !actorListeners.ContainsKey(listener) )
@@ -263,6 +284,7 @@ namespace MoCap
 
 		public void RemoveAllListeners()
 		{
+            sceneListeners.Clear();
 			actorListeners.Clear();
 			deviceListeners.Clear();
 		}
@@ -488,7 +510,7 @@ namespace MoCap
 		{
 			int    id   = 0;                  // no ID for markersets
 			string name = packet.GetString(); // markerset name
-			Actor actor = new Actor(id, name);
+			Actor actor = new Actor(scene, id, name);
 
 			int nMarkers = packet.GetInt32();  // marker count
 			// TODO: Sanity check on the number before allocating that much space
@@ -507,7 +529,7 @@ namespace MoCap
 		{
 			string name = packet.GetString(); // name, TODO: No name in major version < 2
 			int    id   = packet.GetInt32();  // ID
-			Bone bone = new Bone(id, name);
+			Bone   bone = new Bone(id, name);
 
 			// rigid body name should be equal to actor name: search
 			Actor actor = null;
@@ -521,7 +543,7 @@ namespace MoCap
 			if ( actor == null )
 			{
 				Debug.LogWarning("Rigid Body " + bone.name + " could not be matched to an actor.");
-				actor = new Actor(bone.id, bone.name);
+				actor = new Actor(scene, bone.id, bone.name);
 				actors.Add(actor);
 			}
 
@@ -565,7 +587,7 @@ namespace MoCap
 			if (actor == null)
 			{
 				Debug.LogWarning("Skeleton " + skeletonName + " could not be matched to an actor.");
-				actor = new Actor(skeletonId, skeletonName);
+				actor = new Actor(scene, skeletonId, skeletonName);
 				actors.Add(actor);
 			}
 
@@ -956,7 +978,11 @@ namespace MoCap
 
 		private void NotifyListeners_Update()
 		{
-			foreach (KeyValuePair<ActorListener, Actor> entry in actorListeners)
+            foreach (SceneListener listener in sceneListeners)
+            {
+                listener.SceneUpdated(scene);
+            }
+            foreach (KeyValuePair<ActorListener, Actor> entry in actorListeners)
 			{
 				// which actor is that?
 				ActorListener listener = entry.Key;
@@ -981,7 +1007,11 @@ namespace MoCap
 
 		private void RefreshListeners()
 		{
-			List<ActorListener> actorKeys = new List<ActorListener>(actorListeners.Keys);
+            foreach (SceneListener listener in sceneListeners)
+            {
+                listener.SceneChanged(scene);
+            }
+            List<ActorListener> actorKeys = new List<ActorListener>(actorListeners.Keys);
 			foreach (ActorListener listener in actorKeys)
 			{
 				Actor actor = scene.FindActor(listener.GetActorName());
@@ -1015,6 +1045,7 @@ namespace MoCap
 		private static Bone   DUMMY_BONE    = new Bone(0, "dummy");
 		private static Device DUMMY_DEVICE  = new Device(0, "dummy");
 
+        private List<SceneListener>                sceneListeners;
 		private Dictionary<ActorListener, Actor>   actorListeners;
 		private Dictionary<DeviceListener, Device> deviceListeners;
 

@@ -105,23 +105,26 @@ namespace MoCap
 	/// 
 	public class Actor
 	{
-		public          int    id;   // ID of the actor (not readonly because skeleton description might change it)
-		public readonly string name; // Name of the actor
+        public readonly Scene  scene; // scene this actor belongs to
+        public          int    id;    // ID of the actor (not readonly because skeleton description might change it)
+		public readonly string name;  // Name of the actor
 
-		public Marker[] markers;     // Marker data
-		public Bone[]   bones;       // Bone data
+		public Marker[] markers;      // Marker data
+		public Bone[]   bones;        // Bone data
 
 
-		/// <summary>
-		/// Creates a new actor.
-		/// </summary>
-		/// <param name="id">the ID of the actor</param>
-		/// <param name="name">the name of the actor</param>
-		/// 
-		public Actor(int id, string name)
+        /// <summary>
+        /// Creates a new actor.
+        /// </summary>
+        /// <param name="scene">the scene the actor belongs to</param>
+        /// <param name="id">the ID of the actor</param>
+        /// <param name="name">the name of the actor</param>
+        /// 
+        public Actor(Scene scene, int id, string name)
 		{
-			this.id   = id;
-			this.name = name;
+            this.scene = scene;
+            this.id    = id;
+			this.name  = name;
 
 			markers = new Marker[0];
 			bones   = new Bone[0]; 
@@ -260,11 +263,34 @@ namespace MoCap
 	}
 
 
-	/// <summary>
-	/// Listener interface for reacting to changes in actor data.
+    /// <summary>
+	/// Listener interface for reacting to changes in scene data.
 	/// </summary>
 	/// 
-	public interface ActorListener
+	public interface SceneListener
+    {
+        /// <summary>
+        /// Called when the scene data has been updated.
+        /// </summary>
+        /// <param name="scene">the scene that has been updated</param>
+        /// 
+        void SceneUpdated(Scene scene);
+
+
+        /// <summary>
+        /// Called when the scene definition has changed.
+        /// </summary>
+        /// <param name="scene">the scene that has been updated</param>
+        /// 
+        void SceneChanged(Scene scene);
+    }
+
+
+    /// <summary>
+    /// Listener interface for reacting to changes in actor data.
+    /// </summary>
+    /// 
+    public interface ActorListener
 	{
 		/// <summary>
 		/// Gets the name of the actor to monitor.
