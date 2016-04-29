@@ -5,7 +5,7 @@ namespace MoCap
 	/// <summary>
 	/// Class for buffering MoCap data for (e.g., to achieve a delay).
 	/// </summary>
-	/// 
+	///
 	public class MoCapDataBuffer
 	{
 		/// name of this buffer (= marker or bone name)
@@ -18,7 +18,7 @@ namespace MoCap
 		public readonly System.Object DataObject;
 
 		/// <summary>
-		/// Creates a new MoCap data buffer object
+		/// Creates a new MoCap data buffer object.
 		/// </summary>
 		/// <param name="name">name of this buffer</param>
 		/// <param name="owner">game object that owns this buffer</param>
@@ -123,4 +123,5 @@ namespace MoCap
 		private int           index;        // current buffer index for writing, index-1 for reading
 		private bool          firstPush;    // first push of data flag
 	}
+
 }

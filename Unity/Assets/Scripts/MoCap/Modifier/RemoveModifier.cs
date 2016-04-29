@@ -1,37 +1,41 @@
 using UnityEngine;
-using MoCap;
 
-/// <summary>
-/// Component for scaline MoCap data.
-/// </summary>
-///
-[AddComponentMenu("Motion Capture/Modifier/Remove")]
-[DisallowMultipleComponent]
-public class RemoveModifier : MonoBehaviour, IModifier
+namespace MoCap
 {
-	[Tooltip("Prefix for any bone or marker name.")]
-	public string namePrefix = "";
+	/// <summary>
+	/// Component for scaline MoCap data.
+	/// </summary>
+	///
 
-	[Tooltip("Names of bones or markers to always disable.")]
-	public string[] names = { };
+	[AddComponentMenu("Motion Capture/Modifier/Remove")]
+	[DisallowMultipleComponent]
 
-
-	public void Start()
+	public class RemoveModifier : MonoBehaviour, IModifier
 	{
-		// empty, but necessary to get the "Enable" button in the inspector
-	}
+		[Tooltip("Prefix for any bone or marker name.")]
+		public string namePrefix = "";
+
+		[Tooltip("Names of bones or markers to always disable.")]
+		public string[] names = { };
 
 
-	public void Process(ref MoCapData data)
-	{
-		if (!enabled) return;
-
-		foreach (string name in names)
+		public void Start()
 		{
-			if (data.buffer.Name.Equals(namePrefix + name))
+			// empty, but necessary to get the "Enable" button in the inspector
+		}
+
+
+		public void Process(ref MoCapData data)
+		{
+			if (!enabled) return;
+
+			foreach (string name in names)
 			{
-				data.tracked = false;
-				break;
+				if (data.buffer.Name.Equals(namePrefix + name))
+				{
+					data.tracked = false;
+					break;
+				}
 			}
 		}
 	}

@@ -1,43 +1,46 @@
 using UnityEngine;
-using MoCap;
 
-/// <summary>
-/// Component for scaling MoCap data selectively by bone/marker name.
-/// </summary>
-///
-[AddComponentMenu("Motion Capture/Modifier/Selective Scale")]
-[DisallowMultipleComponent]
-public class SelectiveScaleModifier : MonoBehaviour, IModifier
+namespace MoCap
 {
-	[Tooltip("Homogeneous scale factor.")]
-	public float scaleFactor = 1.0f;
+	/// <summary>
+	/// Component for scaling MoCap data selectively by bone/marker name.
+	/// </summary>
+	///
 
-	[Tooltip("Prefix for any bone or marker name.")]
-	public string namePrefix = "";
+	[DisallowMultipleComponent]
+	[AddComponentMenu("Motion Capture/Modifier/Selective Scale")]
 
-	[Tooltip("Names of bones or markers to selectively scale.")]
-	public string[] names = { };
-
-
-	public void Start()
+	public class SelectiveScaleModifier : MonoBehaviour, IModifier
 	{
-		// empty, but necessary to get the "Enable" button in the inspector
-	}
+		[Tooltip("Homogeneous scale factor.")]
+		public float scaleFactor = 1.0f;
+
+		[Tooltip("Prefix for any bone or marker name.")]
+		public string namePrefix = "";
+
+		[Tooltip("Names of bones or markers to selectively scale.")]
+		public string[] names = { };
 
 
-	public void Process(ref MoCapData data)
-	{
-		if (!enabled) return;
-
-		foreach (string name in names)
+		public void Start()
 		{
-			if (data.buffer.Name.Equals(namePrefix + name))
+			// empty, but necessary to get the "Enable" button in the inspector
+		}
+
+
+		public void Process(ref MoCapData data)
+		{
+			if (!enabled) return;
+
+			foreach (string name in names)
 			{
-				data.pos    *= scaleFactor;
-				data.length *= scaleFactor;
-				break;
+				if (data.buffer.Name.Equals(namePrefix + name))
+				{
+					data.pos    *= scaleFactor;
+					data.length *= scaleFactor;
+					break;
+				}
 			}
 		}
-		
 	}
 }

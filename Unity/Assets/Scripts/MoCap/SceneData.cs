@@ -55,7 +55,7 @@ namespace MoCap
 		{
 			// quick check if id is an array index
 			if ( (id >= 0) && (id < actors.Length) && 
-			     (actors[id] != null) && (actors[id].id == id) ) return actors[id];
+				 (actors[id] != null) && (actors[id].id == id) ) return actors[id];
 
 			// no > linear search
 			foreach ( Actor a in actors )
@@ -100,30 +100,53 @@ namespace MoCap
 
 
 	/// <summary>
+	/// Listener interface for reacting to changes in scene data.
+	/// </summary>
+	/// 
+	public interface SceneListener
+	{
+		/// <summary>
+		/// Called when the scene data has been updated.
+		/// </summary>
+		/// <param name="scene">the scene that has been updated</param>
+		/// 
+		void SceneUpdated(Scene scene);
+
+
+		/// <summary>
+		/// Called when the scene definition has changed.
+		/// </summary>
+		/// <param name="scene">the scene that has been updated</param>
+		/// 
+		void SceneChanged(Scene scene);
+	}
+
+
+	/// <summary>
 	/// Class for holding the information of a MoCap actor.
 	/// </summary>
 	/// 
 	public class Actor
 	{
-        public readonly Scene  scene; // scene this actor belongs to
-        public          int    id;    // ID of the actor (not readonly because skeleton description might change it)
+		public readonly Scene  scene; // scene this actor belongs to
 		public readonly string name;  // Name of the actor
+		public          int id;       // ID of the actor (not readonly because skeleton description might change it)
 
 		public Marker[] markers;      // Marker data
 		public Bone[]   bones;        // Bone data
 
 
-        /// <summary>
-        /// Creates a new actor.
-        /// </summary>
-        /// <param name="scene">the scene the actor belongs to</param>
-        /// <param name="id">the ID of the actor</param>
-        /// <param name="name">the name of the actor</param>
-        /// 
-        public Actor(Scene scene, int id, string name)
+		/// <summary>
+		/// Creates a new actor.
+		/// </summary>
+		/// <param name="scene">the scene the actor belongs to</param>
+		/// <param name="id">the ID of the actor</param>
+		/// <param name="name">the name of the actor</param>
+		/// 
+		public Actor(Scene scene, int id, string name)
 		{
-            this.scene = scene;
-            this.id    = id;
+			this.scene = scene;
+			this.id    = id;
 			this.name  = name;
 
 			markers = new Marker[0];
@@ -181,23 +204,57 @@ namespace MoCap
 
 
 	/// <summary>
+	/// Listener interface for reacting to changes in actor data.
+	/// </summary>
+	/// 
+	public interface ActorListener
+	{
+		/// <summary>
+		/// Gets the name of the actor to monitor.
+		/// </summary>
+		/// <returns>The name of the actor to monitor</returns>
+		/// 
+		string GetActorName();
+
+
+		/// <summary>
+		/// Called when the actor data has been updated.
+		/// </summary>
+		/// <param name="actor">the actor that has been updated</param>
+		/// 
+		void ActorUpdated(Actor actor);
+
+
+		/// <summary>
+		/// Called when the scene definition has changed.
+		/// </summary>
+		/// <param name="actor">the actor that has changed (can be <code>null</code> when the actor is not defined anymore)</param>
+		/// 
+		void ActorChanged(Actor actor);
+	}
+
+
+	/// <summary>
 	/// Class for information about a single MoCap marker.
 	/// </summary>
 	/// 
 	public class Marker
 	{
+		public readonly Actor  actor;      // actor this marker belongs to
 		public readonly string name;       // name of the marker
 		public          float  px, py, pz; // position of the marker
 		public          bool   tracked;    // tracking state
-		
+
 		/// <summary>
 		/// Creates a new marker with a name.
 		/// </summary>
+		/// <param name="actor">actor this marker is associated with</param>
 		/// <param name="name">name of the marker</param>
 		/// 
-		public Marker(string name)
+		public Marker(Actor actor, string name)
 		{
-			this.name = name;
+			this.actor = actor;
+			this.name  = name;
 			px = py = pz = 0;
 			tracked = false;
 		}
@@ -209,6 +266,7 @@ namespace MoCap
 	/// </summary>
 	public class Bone
 	{
+		public readonly Actor  actor; // actor this bone belongs to
 		public readonly string name;  // name of the bone
 		public readonly int    id;    // ID of the bone
 
@@ -227,13 +285,15 @@ namespace MoCap
 		/// <summary>
 		/// Creates a new bone with a name and ID.
 		/// </summary>
-		/// <param name="in">ID of the bone</param>
+		/// <param name="actor">actor this bonebelongs to</param>
 		/// <param name="name">name of the bone</param>
+		/// <param name="in">ID of the bone</param>
 		/// 
-		public Bone(int id, string name)
+		public Bone(Actor actor, string name, int id)
 		{
-			this.id   = id;
-			this.name = name;
+			this.actor = actor;
+			this.name  = name;
+			this.id    = id;
 
 			ox = oy = oz = 0;  // no offset
 			parent = null;     // no parent
@@ -263,81 +323,30 @@ namespace MoCap
 	}
 
 
-    /// <summary>
-	/// Listener interface for reacting to changes in scene data.
-	/// </summary>
-	/// 
-	public interface SceneListener
-    {
-        /// <summary>
-        /// Called when the scene data has been updated.
-        /// </summary>
-        /// <param name="scene">the scene that has been updated</param>
-        /// 
-        void SceneUpdated(Scene scene);
-
-
-        /// <summary>
-        /// Called when the scene definition has changed.
-        /// </summary>
-        /// <param name="scene">the scene that has been updated</param>
-        /// 
-        void SceneChanged(Scene scene);
-    }
-
-
-    /// <summary>
-    /// Listener interface for reacting to changes in actor data.
-    /// </summary>
-    /// 
-    public interface ActorListener
-	{
-		/// <summary>
-		/// Gets the name of the actor to monitor.
-		/// </summary>
-		/// <returns>The name of the actor to monitor</returns>
-		/// 
-		string GetActorName();
-
-
-		/// <summary>
-		/// Called when the actor data has been updated.
-		/// </summary>
-		/// <param name="actor">the actor that has been updated</param>
-		/// 
-		void ActorUpdated(Actor actor);
-
-
-		/// <summary>
-		/// Called when the scene definition has changed.
-		/// </summary>
-		/// <param name="actor">the actor that has changed (can be <code>null</code> when the actor is not defined anymore)</param>
-		/// 
-		void ActorChanged(Actor actor);
-	}
-
-
 	/// <summary>
 	/// Class for holding the information of an interaction device.
 	/// </summary>
 	/// 
 	public class Device
 	{
-		public readonly int       id;       // id of the device
+		public readonly Scene     scene;    // scene this device belongs to
 		public readonly string    name;     // name of the device
+		public readonly int       id;       // id of the device
 		public          Channel[] channels; // channel data
 
 
 		/// <summary>
 		/// Creates a new device with a name and an ID.
 		/// </summary>
-		/// <param name="id">ID of the device</param>
+		/// <param name="scene">scene this device belongs to</param>
 		/// <param name="name">name of the device</param>
+		/// <param name="id">ID of the device</param>
 		/// 
-		public Device(int id, string name)
+		public Device(Scene scene, string name, int id)
 		{
-			this.id   = id;
-			this.name = name;
+			this.scene = scene;
+			this.name  = name;
+			this.id    = id;
 		}
 
 		/// <summary>
@@ -363,17 +372,20 @@ namespace MoCap
 	/// 
 	public class Channel
 	{
-		public readonly string name;  // name of the channel
-		public          float  value; // value of the channel
+		public readonly Device device; // device this channel belongs to
+		public readonly string name;   // name of the channel
+		public          float  value;  // value of the channel
 
 		/// <summary>
-		/// Creates a new device channel with a name
+		/// Creates a new device channel with a name.
 		/// </summary>
+		/// <param name="device">device this channel belongs to</param>
 		/// <param name="name">name of the channel</param>
 		/// 
-		public Channel(string name)
+		public Channel(Device device, string name)
 		{
-			this.name = name;
+			this.device = device;
+			this.name   = name;
 		}
 	}
 

@@ -12,6 +12,10 @@ namespace MoCap
 	/// 
 	class NatNetClient
 	{
+		/// <summary>
+		/// Structure for storing the MotionServer name, version and protocol version information.
+		/// </summary>
+		/// 
 		public struct ServerInfo
 		{
 			public string serverName;
@@ -25,6 +29,7 @@ namespace MoCap
 		public const int PORT_COMMAND = 1508;
 		public const int PORT_DATA    = 1509;
 		
+		// Magic Packet numbers
 		private const short NAT_PING                  = 0;
 		private const short NAT_PINGRESPONSE          = 1;
 		private const short NAT_REQUEST               = 2;
@@ -41,6 +46,7 @@ namespace MoCap
 		private const short DATASET_TYPE_SKELETON   = 2;
 		private const short DATASET_TYPE_FORCEPLATE = 3;
 
+		// some limits
 		private const int MAX_NAMELENGTH    = 256;
 		private const int MAX_RETRY_COMMAND = 10;
 		private const int MAX_RETRY_DATA    = 3;
@@ -48,13 +54,21 @@ namespace MoCap
 		private const int TIMEOUT_COMMAND = 1000;
 		private const int TIMEOUT_FRAME   = 100;
 
+
+		/// <summary>
+		/// Constructs a NatNet client instance.
+		/// This does not yet attempt to actually connect to the server.
+		/// </summary>
+		/// <param name="clientAppName">Name of the client to report to the server</param>
+		/// <param name="clientAppVersion">Version number of the client to report to the server</param>
+		/// 
 		public NatNetClient(string clientAppName, byte[] clientAppVersion)
 		{
 			this.clientAppName       = clientAppName;
 			this.clientAppVersion    = clientAppVersion;
 			this.clientNatNetVersion = new byte[] {2, 9, 0, 0};
 
-            this.sceneListeners  = new List<SceneListener>();
+			this.sceneListeners  = new List<SceneListener>();
 			this.actorListeners  = new Dictionary<ActorListener, Actor>();
 			this.deviceListeners = new Dictionary<DeviceListener, Device>();
 
@@ -65,6 +79,12 @@ namespace MoCap
 		}
 
 
+		/// <summary>
+		/// Tries to establish a connection to the server.
+		/// </summary>
+		/// <param name="serverAddress">IP address of the MotionServer to connect to</param>
+		/// <returns><c>true</c> if the connection is established</returns>
+		/// 
 		public bool Connect(IPAddress serverAddress)
 		{
 			try
@@ -148,12 +168,22 @@ namespace MoCap
 			return connected;
 		}
 
+
+		/// <summary>
+		/// Checks if the client is connected to the MotionServer.
+		/// </summary>
+		/// <returns><c>true</c> if the client is connected</returns>
+		/// 
 		public bool IsConnected()
 		{
 			return connected;
 		}
 
 
+		/// <summary>
+		/// Disconnects the client from the server.
+		/// </summary>
+		/// 
 		public void Disconnect()
 		{
 			RemoveAllListeners();
@@ -175,12 +205,17 @@ namespace MoCap
 		}
 		
 		
+		/// <summary>
+		/// Gets the name of the MotionServer.
+		/// </summary>
+		/// <returns>the name of the MotionServer</returns>
+		/// 
 		public String GetServerName()
 		{
 			if ( !connected ) return "";
 			return serverInfo.serverName + " v" +
-			       serverInfo.versionServer[0] + "." + serverInfo.versionServer[1] + "." +
-			       serverInfo.versionServer[2] + "." + serverInfo.versionServer[3];
+				   serverInfo.versionServer[0] + "." + serverInfo.versionServer[1] + "." +
+				   serverInfo.versionServer[2] + "." + serverInfo.versionServer[3];
 		}
 
 
@@ -196,7 +231,7 @@ namespace MoCap
 				{
 					int maxIterations = 5;
 					while ( (dataClient.Available > 0) && 
-					        (maxIterations-- > 0) )
+							(maxIterations-- > 0) )
 					{
 						// data streaming > just see what has arrived, no polling necessary
 						if (packetIn.Receive(dataClient) > 0)
@@ -220,27 +255,45 @@ namespace MoCap
 		}
 
 
-        public bool AddSceneListener(SceneListener listener)
-        {
-            bool added = false;
-            if (!sceneListeners.Contains(listener))
-            {
-                sceneListeners.Add(listener);
-                added = true;
-                // immediately trigger callback
-                listener.SceneChanged(scene);
-            }
-            return added;
-        }
+		/// <summary>
+		/// Adds a scene data listener.
+		/// </summary>
+		/// <param name="listener">The listener to add</param>
+		/// <returns><c>true</c>, if the scene listener was added, <c>false</c> otherwise.</returns>
+		/// 
+		public bool AddSceneListener(SceneListener listener)
+		{
+			bool added = false;
+			if (!sceneListeners.Contains(listener))
+			{
+				sceneListeners.Add(listener);
+				added = true;
+				// immediately trigger callback
+				listener.SceneChanged(scene);
+			}
+			return added;
+		}
 
 
-        public bool RemoveSceneListener(SceneListener listener)
-        {
-            return sceneListeners.Remove(listener);
-        }
+		/// <summary>
+		/// Removes a scene data listener.
+		/// </summary>
+		/// <param name="listener">The listener to remove</param>
+		/// <returns><c>true</c>, if the scene listener was removed, <c>false</c> otherwise.</returns>
+		///
+		public bool RemoveSceneListener(SceneListener listener)
+		{
+			return sceneListeners.Remove(listener);
+		}
 
 
-        public bool AddActorListener(ActorListener listener)
+		/// <summary>
+		/// Adds an actor data listener.
+		/// </summary>
+		/// <param name="listener">The listener to add</param>
+		/// <returns><c>true</c>, if the actor listener was added, <c>false</c> otherwise.</returns>
+		/// 
+		public bool AddActorListener(ActorListener listener)
 		{
 			bool added = false;
 			if ( !actorListeners.ContainsKey(listener) )
@@ -255,12 +308,24 @@ namespace MoCap
 		}
 
 
+		/// <summary>
+		/// Removes an actor data listener.
+		/// </summary>
+		/// <param name="listener">The listener to remove</param>
+		/// <returns><c>true</c>, if the actor listener was removed, <c>false</c> otherwise.</returns>
+		///
 		public bool RemoveActorListener(ActorListener listener)
 		{
 			return actorListeners.Remove(listener);
 		}
 
 
+		/// <summary>
+		/// Adds a device data listener.
+		/// </summary>
+		/// <param name="listener">The listener to add</param>
+		/// <returns><c>true</c>, if the device listener was added, <c>false</c> otherwise.</returns>
+		/// 
 		public bool AddDeviceListener(DeviceListener listener)
 		{
 			bool added = false;
@@ -276,15 +341,25 @@ namespace MoCap
 		}
 
 
+		/// <summary>
+		/// Removes a device data listener.
+		/// </summary>
+		/// <param name="listener">The listener to remove</param>
+		/// <returns><c>true</c>, if the device listener was removed, <c>false</c> otherwise.</returns>
+		///
 		public bool RemoveDeviceListener(DeviceListener listener)
 		{
 			return deviceListeners.Remove(listener);
 		}
 
 
+		/// <summary>
+		/// Removes all listeners.
+		/// </summary>
+		///
 		public void RemoveAllListeners()
 		{
-            sceneListeners.Clear();
+			sceneListeners.Clear();
 			actorListeners.Clear();
 			deviceListeners.Clear();
 		}
@@ -518,7 +593,7 @@ namespace MoCap
 			for ( int markerIdx = 0 ; markerIdx < nMarkers ; markerIdx++ )
 			{
 				name = packet.GetString();
-				Marker marker = new Marker(name);
+				Marker marker = new Marker(actor, name);
 				actor.markers[markerIdx] = marker;
 			}
 			actors.Add(actor);
@@ -529,25 +604,26 @@ namespace MoCap
 		{
 			string name = packet.GetString(); // name, TODO: No name in major version < 2
 			int    id   = packet.GetInt32();  // ID
-			Bone   bone = new Bone(id, name);
 
 			// rigid body name should be equal to actor name: search
 			Actor actor = null;
 			foreach (Actor a in actors)
 			{
-				if ( a.name.CompareTo(bone.name) == 0 )
+				if ( a.name.CompareTo(name) == 0 )
 				{
 					actor = a;
 				}
 			}
 			if ( actor == null )
 			{
-				Debug.LogWarning("Rigid Body " + bone.name + " could not be matched to an actor.");
-				actor = new Actor(scene, bone.id, bone.name);
+				Debug.LogWarning("Rigid Body " + name + " could not be matched to an actor.");
+				actor = new Actor(scene, id, name);
 				actors.Add(actor);
 			}
 
-			                packet.GetInt32();    // Parent ID (ignore for rigid body)
+			Bone bone = new Bone(actor, name, id);
+
+			packet.GetInt32();    // Parent ID (ignore for rigid body)
 			bone.parent  =  null;                 // rigid bodies should not have a parent
 			bone.ox      =  packet.GetFloat();    // X offset
 			bone.oy      =  packet.GetFloat();    // Y offset
@@ -602,7 +678,7 @@ namespace MoCap
 					name = packet.GetString(); // bone name 
 				}
 				int id = packet.GetInt32(); // bone ID
-				Bone bone = new Bone(id, name);
+				Bone bone = new Bone(actor, name, id);
 
 				bone.parent = actor.FindBone(packet.GetInt32()); // Skeleton parent ID
 				if (bone.parent != null)
@@ -623,9 +699,9 @@ namespace MoCap
 
 		private void ParseForcePlate(NatNetPacket_In packet, List<Device> devices)
 		{
-			int    id     = packet.GetInt32();    // force plate ID
-			String name   = packet.GetString();   // force plate serial #
-			Device device = new Device(id, name); // create device
+			int    id     = packet.GetInt32();           // force plate ID
+			String name   = packet.GetString();          // force plate serial #
+			Device device = new Device(scene, name, id); // create device
 
 			// skip next 652 bytes 
 			// (SDK 2.9 sample code does not explain what this is about)
@@ -636,7 +712,7 @@ namespace MoCap
 			for (int channelIdx = 0; channelIdx < nChannels; channelIdx++)
 			{
 				name = packet.GetString();
-				Channel channel = new Channel(name);
+				Channel channel = new Channel(device, name);
 				device.channels[channelIdx] = channel;
 			}
 			devices.Add(device);
@@ -699,8 +775,8 @@ namespace MoCap
 
 					// marker is tracked when at least one coordinate is not 0
 					marker.tracked = (marker.px != 0) ||
-					                 (marker.py != 0) ||
-					                 (marker.pz != 0);
+									 (marker.py != 0) ||
+									 (marker.pz != 0);
 				}
 			}
 
@@ -769,8 +845,8 @@ namespace MoCap
 					// tracking state not sent separately,
 					// but position = (0,0,0) used as "not tracked" indicator
 					bone.tracked = (bone.px != 0) ||
-					               (bone.py != 0) ||
-					               (bone.pz != 0);
+								   (bone.py != 0) ||
+								   (bone.pz != 0);
 				}
 			}
 
@@ -841,8 +917,8 @@ namespace MoCap
 							// tracking state not sent separately,
 							// but position = (0,0,0) used as "not tracked" indicator
 							bone.tracked = (bone.px != 0) || 
-							               (bone.py != 0) || 
-							               (bone.pz != 0);
+										   (bone.py != 0) || 
+										   (bone.pz != 0);
 						}
 					} // next rigid body
 				} // next skeleton 
@@ -978,11 +1054,11 @@ namespace MoCap
 
 		private void NotifyListeners_Update()
 		{
-            foreach (SceneListener listener in sceneListeners)
-            {
-                listener.SceneUpdated(scene);
-            }
-            foreach (KeyValuePair<ActorListener, Actor> entry in actorListeners)
+			foreach (SceneListener listener in sceneListeners)
+			{
+				listener.SceneUpdated(scene);
+			}
+			foreach (KeyValuePair<ActorListener, Actor> entry in actorListeners)
 			{
 				// which actor is that?
 				ActorListener listener = entry.Key;
@@ -1007,11 +1083,11 @@ namespace MoCap
 
 		private void RefreshListeners()
 		{
-            foreach (SceneListener listener in sceneListeners)
-            {
-                listener.SceneChanged(scene);
-            }
-            List<ActorListener> actorKeys = new List<ActorListener>(actorListeners.Keys);
+			foreach (SceneListener listener in sceneListeners)
+			{
+				listener.SceneChanged(scene);
+			}
+			List<ActorListener> actorKeys = new List<ActorListener>(actorListeners.Keys);
 			foreach (ActorListener listener in actorKeys)
 			{
 				Actor actor = scene.FindActor(listener.GetActorName());
@@ -1041,13 +1117,14 @@ namespace MoCap
 		private bool             connected, streamingEnabled;
 		private Scene            scene;
 
-		private static Marker DUMMY_MARKER  = new Marker("dummy");
-		private static Bone   DUMMY_BONE    = new Bone(0, "dummy");
-		private static Device DUMMY_DEVICE  = new Device(0, "dummy");
+		private static Marker DUMMY_MARKER  = new Marker(null, "dummy");
+		private static Bone   DUMMY_BONE    = new Bone(null, "dummy", 0);
+		private static Device DUMMY_DEVICE  = new Device(null, "dummy", 0);
 
-        private List<SceneListener>                sceneListeners;
+		private List<SceneListener>                sceneListeners;
 		private Dictionary<ActorListener, Actor>   actorListeners;
 		private Dictionary<DeviceListener, Device> deviceListeners;
 
 	}
+
 }

@@ -1,5 +1,3 @@
-using MoCap;
-
 namespace MoCap
 {
 	/// <summary>
@@ -15,5 +13,4 @@ namespace MoCap
 		/// 
 		void Process(ref MoCapData data);
 	}
-
 }

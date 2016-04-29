@@ -1,42 +1,48 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// Class for creating copies of a GameObject arranged in an array.
-/// </summary>
-/// 
-[DisallowMultipleComponent]
-[AddComponentMenu("Motion Capture/Tools/Array Duplicator")]
-public class ArrayDuplicator : Duplicator
+namespace MoCap
 {
-	[Tooltip("The amount of rows to form.")]
-	[Range(1, 100)]
-	public int numberOfColumns = 1;
+	/// <summary>
+	/// Class for creating copies of a GameObject arranged in an array.
+	/// </summary>
+	/// 
 
-	[Tooltip("The amount of columns to form.")]
-	[Range(1, 100)]
-	public int numberOfRows = 1;
+	[DisallowMultipleComponent]
+	[AddComponentMenu("Motion Capture/Tools/Array Duplicator")]
 
-	[Tooltip("The size of the matrix array in X/Z direction.")]
-	public Vector2 matrixDimension = new Vector2(1, 1);
-
-
-	public override void ModifyDuplicate(GameObject copy, int counter, float fParameter, out float delay)
+	public class ArrayDuplicator : Duplicator
 	{
-		// matrix placement > calculate position x/z within [-0.5...0.5]
-		float x = (counter % numberOfColumns) / (float) Mathf.Max(1, numberOfColumns - 1) - 0.5f;
-		float z = (counter / numberOfColumns) / (float) Mathf.Max(1, numberOfRows    - 1) - 0.5f;
+		[Tooltip("The amount of rows to form.")]
+		[Range(1, 100)]
+		public int numberOfColumns = 1;
 
-		copy.transform.localPosition = new Vector3(x * matrixDimension.x, 0, z * matrixDimension.y);
+		[Tooltip("The amount of columns to form.")]
+		[Range(1, 100)]
+		public int numberOfRows = 1;
 
-		// delay grows from the centre and reaches maximum at axis extremes
-		// (so diagonal elements are delayed by maximumDelay * 1.414)
-		delay = Mathf.Sqrt(x * x + z * z) * 2;
-	}
+		[Tooltip("The size of the matrix array in X/Z direction.")]
+		public Vector2 matrixDimension = new Vector2(1, 1);
 
 
-	protected override int GetNumberOfCopies()
-	{
-		return numberOfColumns * numberOfRows;
+		public override void ModifyDuplicate(GameObject copy, int counter, float fParameter, out float delay)
+		{
+			// matrix placement > calculate position x/z within [-0.5...0.5]
+			float x = (counter % numberOfColumns) / (float) Mathf.Max(1, numberOfColumns - 1) - 0.5f;
+			float z = (counter / numberOfColumns) / (float) Mathf.Max(1, numberOfRows - 1) - 0.5f;
+
+			copy.transform.localPosition = new Vector3(x * matrixDimension.x, 0, z * matrixDimension.y);
+
+			// delay grows from the centre and reaches maximum at axis extremes
+			// (so diagonal elements are delayed by maximumDelay * 1.414)
+			delay = Mathf.Sqrt(x * x + z * z) * 2;
+		}
+
+
+		protected override int GetNumberOfCopies()
+		{
+			return numberOfColumns * numberOfRows;
+		}
+
 	}
 
 }

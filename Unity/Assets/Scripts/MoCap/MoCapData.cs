@@ -5,7 +5,7 @@ namespace MoCap
 	/// <summary>
 	/// Class for storing a single MoCap data point (e.g., a marker or a bone).
 	/// </summary>
-	/// 
+	///
 	public class MoCapData
 	{
 		public readonly MoCapDataBuffer buffer; // buffer that owns this data point
@@ -25,7 +25,7 @@ namespace MoCap
 			pos = new Vector3();
 			rot = new Quaternion();
 			tracked = false;
-			length = 0;
+			length  = 0;
 		}
 
 
@@ -51,7 +51,8 @@ namespace MoCap
 			pos.Set(bone.px, bone.py, bone.pz);
 			rot.Set(bone.qx, bone.qy, bone.qz, bone.qw);
 			tracked = bone.tracked;
-			length = bone.length;
+			length  = bone.length;
 		}
 	}
+
 }
