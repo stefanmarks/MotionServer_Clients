@@ -8,8 +8,9 @@ package mocap;
 public class Actor 
 {
     public final Scene    scene;    // Scene this actor belongs to
-    public       int      id;       // Actor ID (not final > can be changed by skeleton description)
     public final String   name;     // Actor name
+    public       int      id;       // Actor ID (not final > can be changed by skeleton description)
+    
     public       Marker[] markers;  // makers
     public       Bone[]   bones;    // bones
 
@@ -17,19 +18,20 @@ public class Actor
      * Default constructor.
      * 
      * @param scene  scene this actor belongs to
-     * @param id     id of the actor
      * @param name   name of the actor
+     * @param id     id of the actor
      */
-    public Actor(Scene scene, int id, String name)
+    public Actor(Scene scene, String name, int id)
     {
         this.scene = scene;
-        this.id    = id;
         this.name  = name;
+        this.id    = id;
         
         markers = new Marker[0];
         bones   = new Bone[0];
     }
 
+    
     /**
      * Returns the marker with a given name.
      *
@@ -50,6 +52,7 @@ public class Actor
         return null;
     }
 
+    
     /**
      * Returns the bone with a given name.
      *
@@ -69,6 +72,7 @@ public class Actor
         }
         return null;
     }
+    
     
     /**
      * Returns the bone with a given ID.

@@ -8,23 +8,29 @@ package mocap;
  */
 public class Device 
 {
-    public final int       id;        // Device ID
+    public final Scene     scene;     // Associated scene
     public final String    name;      // Device name
+    public final int       id;        // Device ID
     public       Channel[] channels;  // Device channels
 
+    
     /**
      * Creates a new interaction device
-     * 
-     * @param id    the ID of the device
+     *
+     * @param scene the associated scene
      * @param name  the name of the device
+     * @param id    the ID of the device
      */
-    public Device(int id, String name)
+    public Device(Scene scene, String name, int id)
     {
-        this.id   = id;
-        this.name = name;
+        this.scene = scene;
+        this.name  = name;
+        this.id    = id;
+
         channels = new Channel[0];
     }
 
+    
     /**
      * Returns the channel with a given name.
      *

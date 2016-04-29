@@ -27,8 +27,8 @@ import java.util.logging.Logger;
 public class NatNetClient implements MoCapClient
 {
     public static final String CLIENT_NAME      = "Java MoCap Client";
-    public static final byte   CLIENT_VERSION[] = { 1, 0, 9, 0 };
-    public static final byte   NATNET_VERSION[] = { 2, 9, 0, 0 };
+    public static final byte   CLIENT_VERSION[] = { 1, 0, 10, 0 };
+    public static final byte   NATNET_VERSION[] = { 2, 9,  0, 0 };
 
 
     /**
@@ -230,7 +230,7 @@ public class NatNetClient implements MoCapClient
         {
             int    id   = 0;                    // no ID for markersets
             String name = unmarshalString(buf); // markerset name
-            Actor actor = new Actor(scene, id, name); 
+            Actor actor = new Actor(scene, name, id); 
 
             int nMarkers = buf.getInt();         // marker count
             // TODO: Sanity check on the number before allocating that much space
@@ -238,7 +238,7 @@ public class NatNetClient implements MoCapClient
             for ( int markerIdx = 0 ; markerIdx < nMarkers ; markerIdx++ )
             {   
                 name = unmarshalString(buf);
-                Marker marker = new Marker(name); 
+                Marker marker = new Marker(actor, name); 
                 actor.markers[markerIdx] = marker;
             }
             actors.add(actor);
@@ -271,11 +271,11 @@ public class NatNetClient implements MoCapClient
             if ( actor == null )
             {
                 LOG.log(Level.WARNING, "Rigid Body {0} could not be matched to an actor.", name);
-                actor = new Actor(scene, id, name);
+                actor = new Actor(scene, name, id);
                 actors.add(actor);
             }
             
-            Bone bone = new Bone(actor, id, name);
+            Bone bone = new Bone(actor, name, id);
 
                            buf.getInt();         // Parent ID (ignore for rigid body - will be -1)
             bone.parent  = null;                 // rigid bodies should not have a parent
@@ -317,7 +317,7 @@ public class NatNetClient implements MoCapClient
             if ( actor == null )
             {
                 LOG.log(Level.WARNING, "Skeleton {0} could not be matched to an actor.", skeletonName);
-                actor = new Actor(scene, skeletonId, skeletonName);
+                actor = new Actor(scene, skeletonName, skeletonId);
                 actors.add(actor);
             }
             actor.id = skeletonId;
@@ -334,7 +334,7 @@ public class NatNetClient implements MoCapClient
                 }
                 int id = buf.getInt(); // Bone ID
                 
-                Bone bone = new Bone(actor, id, name);
+                Bone bone = new Bone(actor, name, id);
                 
                 bone.parent = actor.findBone(buf.getInt()); // Skeleton parent ID
                 if ( bone.parent != null )
@@ -357,7 +357,7 @@ public class NatNetClient implements MoCapClient
         {
             int    id     = buf.getInt();         // force plate ID
             String name   = unmarshalString(buf); // force plate serial #
-            Device device = new Device(id, name); 
+            Device device = new Device(scene, name, id); 
             
             // skip next 652 bytes 
             // (SDK 2.9 sample code does not explain what this is about)
@@ -368,7 +368,7 @@ public class NatNetClient implements MoCapClient
             for ( int channelIdx = 0 ; channelIdx < nChannels ; channelIdx++ )
             {   
                 name = unmarshalString(buf);
-                Channel channel = new Channel(name); 
+                Channel channel = new Channel(device, name); 
                 device.channels[channelIdx] = channel;
             }
             devices.add(device);
@@ -493,7 +493,7 @@ public class NatNetClient implements MoCapClient
                         {
                             // in case there is no bone, create one
                             actor.bones = new Bone[1];
-                            actor.bones[0] = new Bone(actor, 0, "");
+                            actor.bones[0] = new Bone(actor, "", 0);
                         }
                         bone = actor.bones[0];
                     }
@@ -1402,9 +1402,9 @@ public class NatNetClient implements MoCapClient
     private final HashMap<ActorListener, Actor>   actorListeners;
     private final HashMap<DeviceListener, Device> deviceListeners;
     
-    private final static Marker DUMMY_MARKER  = new Marker("dummy");
-    private final static Bone   DUMMY_BONE    = new Bone(null, 0, "dummy");
-    private final static Device DUMMY_DEVICE  = new Device(0, "dummy");
+    private final static Marker DUMMY_MARKER  = new Marker(null, "dummy");
+    private final static Bone   DUMMY_BONE    = new Bone(null, "dummy", 0);
+    private final static Device DUMMY_DEVICE  = new Device(null, "dummy", 0);
     
     private final static Logger LOG = Logger.getLogger(NatNetClient.class.getName());
 }

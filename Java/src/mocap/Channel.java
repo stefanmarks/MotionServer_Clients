@@ -7,18 +7,23 @@ package mocap;
  */
 public class Channel 
 {
-    public final String name;
-    public       float  value;
+    public final Device device; // associated device
+    public final String name;   // channel name
+    
+    public       float  value;  // channel value
 
     
     /**
      * Creates a channel instance.
      * 
-     * @param name the name of the channel
+     * @param device associated device
+     * @param name   the name of the channel
      */
-    public Channel(String name)
+    public Channel(Device device, String name)
     {
-        this.name = name;
+        this.device = device;
+        this.name   = name;
+        
         value = 0.0f;
     }
 }

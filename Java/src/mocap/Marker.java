@@ -7,18 +7,23 @@ package mocap;
  */
 public class Marker 
 {
+    public final Actor   actor;      // associated actor
     public final String  name;       // name
+    
     public       float   px, py, pz; // position
     public       boolean tracked;    // tracking state
 
+    
     /**
      * Creates a marker instance.
      * 
-     * @param name the name of the marker
+     * @param actor associated actor
+     * @param name  the name of the marker
      */
-    public Marker(String name)
+    public Marker(Actor actor, String name)
     {
-        this.name = name;
+        this.actor = actor;
+        this.name  = name;
         px = py = pz = 0.0f;
         tracked = false;
     }
