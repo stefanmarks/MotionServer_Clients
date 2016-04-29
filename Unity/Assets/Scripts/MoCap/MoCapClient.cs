@@ -143,6 +143,17 @@ namespace MoCap
 
 
 		/// <summary>
+		/// Gets the name of the connected MotionServer.
+		/// </summary>
+		/// <returns>Name of the connected MotionServer</returns>
+		/// 
+		public string GetServerName()
+		{
+			return (client != null) ? client.GetServerName() : "";
+		}
+
+
+		/// <summary>
 		/// Adds a scene data listener.
 		/// </summary>
 		/// <param name="listener">The listener to add</param>
