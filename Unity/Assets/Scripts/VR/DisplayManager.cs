@@ -1,10 +1,15 @@
 ﻿using UnityEngine;
 using UnityEngine.Assertions;
 using System.Collections.Generic;
-
+using System.Text.RegularExpressions;
 
 namespace VR
 {
+	/// <summary>
+	/// Class for managing VR displays and their render and camera settings.
+	/// </summary>
+	///
+
 	[DisallowMultipleComponent]
 	[AddComponentMenu("VR/Display Manager")]
 
@@ -22,7 +27,14 @@ namespace VR
 
 		private void ParseDisplayProfiles()
 		{
-			string[] displayConfigs = ConfigFile.text.Split(new string[] { "\"Display\":" }, System.StringSplitOptions.RemoveEmptyEntries);
+			// JSON file cannot directly be read because of polymorphism > split manually
+			// remove tabs and linefeeds
+			string txtConfig = ConfigFile.text.Replace("\t", "").Replace("\n", "");
+			// cut beginning an end
+			txtConfig = Regex.Replace(txtConfig, "^\\s*{\\s*\"Displays\":\\[\\s*{", "");
+			txtConfig = Regex.Replace(txtConfig, "}\\s*\\]\\s*}\\s*$", "");
+			// split
+			string[] displayConfigs = Regex.Split(txtConfig, "}\\s*,\\s*{");
 
 			displays = new List<DisplayConfig>();
 			string logTxt = "";
@@ -30,7 +42,7 @@ namespace VR
 			{
 				try
 				{
-					string configTxtTrim = configTxt.Replace("\n", "").Trim().TrimEnd(',');
+					string configTxtTrim = "{" + configTxt + "}";
 					DisplayConfig config = DisplayConfig.FromJson(configTxtTrim);
 					if (config != null)
 					{
@@ -42,13 +54,19 @@ namespace VR
 				{
 					Debug.LogWarning("Could not parse VR Display Device Configuration entry " +
 						"'" + configTxt + "'" +
-						" - Reason: " + e.Message );
+						" - Reason: " + e.Message);
 				}
 			}
 			Debug.Log("Loaded Display Configurations: " + logTxt);
 		}
 
 
+		/// <summary>
+		/// Retrieves a specific display configuration based on the name.
+		/// </summary>
+		/// <param name="name">the configuration name to look for</param>
+		/// <returns>the configuration or <c>null</c> if the configuration doesn't exist</returns>
+		/// 
 		public DisplayConfig GetConfig(string name)
 		{
 			DisplayConfig foundConfig = null;
@@ -93,4 +111,5 @@ namespace VR
 
 		private static List<DisplayConfig> displays = null;
 	}
+
 }

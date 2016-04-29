@@ -1,15 +1,19 @@
-"Display":{
-	"Type": 0,
-	"Name":"Screen",
-	"FieldOfView":90.0
-},
-"Display":{
-	"Type": 1,
-	"Name":"Oculus Rift DK1",
-	"IPD":0.06,
-	"FieldOfView":103.0,
-	"xOffset":0.2,
-	"LensDistortionParameters":[1.0, 0.22, 0.24, 0.0],
-	"ChromaticAberrationParametersRed":[0.996, -0.004],
-	"ChromaticAberrationParametersBlue":[1.014, 0.0]
+{
+	"Displays":[
+		{
+			"Type": 0,
+			"Name":"Screen",
+			"FieldOfView":90.0
+		},
+		{
+			"Type": 1,
+			"Name":"Oculus Rift DK1",
+			"IPD":0.06,
+			"FieldOfView":103.0,
+			"xOffset":0.2,
+			"LensDistortionParameters":[1.0, 0.22, 0.24, 0.0],
+			"ChromaticAberrationParametersRed":[0.996, -0.004],
+			"ChromaticAberrationParametersBlue":[1.014, 0.0]
+		}
+	]
 }
