@@ -19,48 +19,20 @@ namespace MoCap
 		public GameObject markerTemplate;
 
 
-		/// <summary>
-		/// Called at the start of the game.
-		/// Tries to find the MoCap client singleton and then 
-		/// registers this object as a listener with the client.
-		/// </summary>
-		/// 
 		void Start()
 		{
 			// initialise variables
 			markerNode = null;
 			dataBuffers = new Dictionary<Marker, MoCapDataBuffer>();
 
-			// try to find the client singleton
-			client = FindObjectOfType<MoCapClient>();
-			if (client != null)
-			{
-				client.AddActorListener(this);
-			}
-			else
-			{
-				Debug.LogWarning("No MoCapClient component defined in the scene.");
-			}
-
 			// sanity checks
 			if (markerTemplate == null)
 			{
 				Debug.LogWarning("No marker template defined");
 			}
-		}
 
-
-		/// <summary>
-		/// Called when object is about to be destroyed.
-		/// Unregisters as listener from the MoCap client.
-		/// </summary>
-		/// 
-		void OnDestroy()
-		{
-			if (client != null)
-			{
-				client.RemoveActorListener(this);
-			}
+			// start receiving MoCap data
+			MoCapClient.GetInstance().AddActorListener(this);
 		}
 
 
@@ -99,7 +71,7 @@ namespace MoCap
 		/// 
 		void Update()
 		{
-			if ((client == null) || (markerNode == null))
+			if (markerNode == null)
 				return;
 
 			// update markers
@@ -127,11 +99,6 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Gets the name of the actor.
-		/// </summary>
-		/// <returns>The name of the actor</returns>
-		/// 
 		public string GetActorName()
 		{
 			return actorName;
@@ -169,7 +136,6 @@ namespace MoCap
 		}
 
 
-		private MoCapClient                         client;
 		private GameObject                          markerNode;
 		private Dictionary<Marker, MoCapDataBuffer> dataBuffers;
 	}

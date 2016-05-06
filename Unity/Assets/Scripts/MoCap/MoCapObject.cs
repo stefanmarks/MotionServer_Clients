@@ -67,34 +67,17 @@ namespace MoCap
 
 
 		/// <summary>
-		/// Called at the start of the game.
-		/// Tries to find the MoCap client singleton and then 
-		/// registers this object as a listener with the client.
+		/// Called at the beginning of the program execution.
 		/// </summary>
-		/// 
+		///
 		void Start()
 		{
 			// initialise variables
-			rootNode = null;
-			dataBuffers = new Dictionary<Bone, MoCapDataBuffer>();
+			rootNode        = null;
+			controllingBone = null;
+			dataBuffers     = new Dictionary<Bone, MoCapDataBuffer>();
 
-			// get the client singleton and register as listener
-			client = MoCapClient.GetInstance();
-			client.AddActorListener(this);
-		}
-
-
-		/// <summary>
-		/// Called when object is about to be destroyed.
-		/// Unregisters as listener from the MoCap client.
-		/// </summary>
-		/// 
-		void OnDestroy()
-		{
-			if (client != null)
-			{
-				client.RemoveActorListener(this);
-			}
+			MoCapClient.GetInstance().AddActorListener(this);
 		}
 
 
@@ -150,15 +133,15 @@ namespace MoCap
 		/// 
 		void Update()
 		{
-			if (client == null || controllingBone == null)
+			if (controllingBone == null)
 				return;
 
 			// update bones
 			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
 			{
-				Bone bone = entry.Key;
+				Bone            bone   = entry.Key;
 				MoCapDataBuffer buffer = entry.Value;
-				GameObject obj = buffer.GameObject;
+				GameObject      obj    = buffer.GameObject;
 
 				// pump data through buffer
 				MoCapData data = buffer.Process(bone);
@@ -260,7 +243,6 @@ namespace MoCap
 		}
 
 
-		private MoCapClient                       client;
 		private Bone                              controllingBone;
 		private GameObject                        rootNode;
 		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;

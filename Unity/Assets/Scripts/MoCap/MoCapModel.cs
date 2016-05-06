@@ -66,31 +66,7 @@ namespace MoCap
 		void Start()
 		{
 			dataBuffers = null;
-
-			// try to find the client singleton
-			client = FindObjectOfType<MoCapClient>();
-			if (client != null)
-			{
-				client.AddActorListener(this);
-			}
-			else
-			{
-				Debug.LogWarning("No MoCapClient Component defined in the scene.");
-			}
-		}
-
-
-		/// <summary>
-		/// Called when object is about to be destroyed.
-		/// Unregisters as listener from the MoCap client.
-		/// </summary>
-		/// 
-		void OnDestroy()
-		{
-			if (client != null)
-			{
-				client.RemoveActorListener(this);
-			}
+			MoCapClient.GetInstance().AddActorListener(this);
 		}
 
 
@@ -168,7 +144,7 @@ namespace MoCap
 		/// 
 		void Update()
 		{
-			if ((client == null) || (dataBuffers == null))
+			if (dataBuffers == null)
 				return;
 
 			// update bones
@@ -253,9 +229,7 @@ namespace MoCap
 		}
 
 
-		private MoCapClient                       client;
 		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
-
 	}
 
 

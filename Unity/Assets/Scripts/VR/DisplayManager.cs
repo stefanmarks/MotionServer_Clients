@@ -22,6 +22,13 @@ namespace VR
 		public void Start()
 		{
 			ParseDisplayProfiles();
+
+			Debug.Log("Connected displays: " + Display.displays.Length);
+			foreach (Display d in Display.displays)
+			{
+				Debug.Log("Display " + d.renderingWidth + "x" + d.renderingHeight + " / "
+					+ d.systemWidth + "x" + d.systemHeight);
+			}
 		}
 
 

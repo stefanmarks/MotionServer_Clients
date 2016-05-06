@@ -31,36 +31,14 @@ namespace MoCap
 			skeletonNode = null;
 			dataBuffers = new Dictionary<Bone, MoCapDataBuffer>();
 
-			// try to find the client singleton
-			client = FindObjectOfType<MoCapClient>();
-			if (client != null)
-			{
-				client.AddActorListener(this);
-			}
-			else
-			{
-				Debug.LogWarning("No MoCapClient component defined in the scene.");
-			}
-
 			// sanity checks
 			if (boneTemplate == null)
 			{
 				Debug.LogWarning("No bone template defined");
 			}
-		}
 
-
-		/// <summary>
-		/// Called when object is about to be destroyed.
-		/// Unregisters as listener from the MoCap client.
-		/// </summary>
-		/// 
-		void OnDestroy()
-		{
-			if (client != null)
-			{
-				client.RemoveActorListener(this);
-			}
+			// start receiving MoCap data
+			MoCapClient.GetInstance().AddActorListener(this);
 		}
 
 
@@ -126,7 +104,7 @@ namespace MoCap
 		/// 
 		void Update()
 		{
-			if ((client == null) || (skeletonNode == null))
+			if (skeletonNode == null)
 				return;
 
 			// update bones
@@ -211,7 +189,6 @@ namespace MoCap
 		}
 
 
-		private MoCapClient                       client;
 		private GameObject                        skeletonNode;
 		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
 	}

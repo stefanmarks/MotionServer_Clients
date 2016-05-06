@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Assertions;
 using System.Net;
 using System.Threading;
 using System.Collections.Generic;
@@ -24,58 +23,27 @@ namespace MoCap
 		public string clientAppName = "Unity MoCap Client";
 
 		[Tooltip("Version number of this client")]
-		public byte[] clientAppVersion = new byte[] { 1, 0, 8, 0 };
-
-
-		/// <summary>
-		/// Gets the internal NatNet client instance singelton.
-		/// When creating the singleton for the first time, 
-		/// tries to connect to a local MoCap server, and if not successful, a remote MoCap server.
-		/// </summary>
-		/// <returns>The NatNet singleton</returns>
-		/// 
-		private NatNetClient GetClient()
-		{
-			clientMutex.WaitOne();
-			if (client == null)
-			{
-				// create singleton
-				client = new NatNetClient(clientAppName, clientAppVersion);
-
-				if (this.isActiveAndEnabled)
-				{
-					// build list of server addresses
-					ICollection<IPAddress> serverAddresses = GetServerAddresses();
-
-					// run through the list
-					foreach (IPAddress address in serverAddresses)
-					{
-						if (client.Connect(address))
-						{
-							Debug.Log("MoCap client connected to MotionServer '" + client.GetServerName() + "' on " + address + ".");
-							break;
-						}
-					}
-
-					// nope, can't find it
-					if (!client.IsConnected())
-					{
-						Debug.LogWarning("Could not connect to any MotionServer.");
-					}
-				}
-			}
-			clientMutex.ReleaseMutex();
-			return client;
-		}
+		public byte[] clientAppVersion = new byte[] { 1, 0, 9, 0 };
 
 
 		/// <summary>
 		/// Called once at the start of the scene. 
 		/// </summary>
 		/// 
-		public void Start()
+		public void Awake()
 		{
-			GetClient(); // trigger creation of singleton (if not already happened)
+			CreateClient(); // trigger creation of singleton (if not already happened)
+
+			if (instance == null)
+			{
+				instance = this;
+				Debug.Log("MoCap Client instance created");
+			}
+			else
+			{
+				// there can be only one instance
+				GameObject.Destroy(this);
+			}
 		}
 
 
@@ -83,16 +51,17 @@ namespace MoCap
 		/// Called when object is about to be destroyed.
 		/// Disconnects from the NatNet server and destroys the NatNet client.
 		/// </summary>
-		/// 
+		///
 		void OnDestroy()
 		{
+			clientMutex.WaitOne();
 			if (client != null)
 			{
-				clientMutex.WaitOne();
+				client.RemoveAllListeners();
 				client.Disconnect();
 				client = null;
-				clientMutex.ReleaseMutex();
 			}
+			clientMutex.ReleaseMutex();
 		}
 
 
@@ -100,13 +69,13 @@ namespace MoCap
 		/// Called once per physics engine frame and before Update().
 		/// Tries to get new frame data.
 		/// </summary>
-		/// 
+		///
 		public void FixedUpdate()
 		{
 			// ideally, we want the updated scene data before Update()
-			if (readyForNextFrame && GetClient().IsConnected())
+			if (readyForNextFrame && (client != null) && client.IsConnected())
 			{
-				GetClient().Update();
+				client.Update();
 			}
 			readyForNextFrame = false;
 		}
@@ -116,7 +85,7 @@ namespace MoCap
 		/// Called once per rendered frame. 
 		/// If FixedUpdate() somehow wasn't called, tries to get new frame data now.
 		/// </summary>
-		/// 
+		///
 		public void Update()
 		{
 			// If we get the update here, it is not ideal, but better than nothing
@@ -124,6 +93,11 @@ namespace MoCap
 		}
 
 
+		/// <summary>
+		/// Called once after each rendered frame. 
+		/// All objects should be updated by now > you can receive the next packet
+		/// </summary>
+		/// 
 		public void LateUpdate()
 		{
 			// signal preparedness for next update
@@ -161,7 +135,7 @@ namespace MoCap
 		/// 
 		public bool AddSceneListener(SceneListener listener)
 		{
-			return GetClient().AddSceneListener(listener);
+			return (client != null) ? client.AddSceneListener(listener) : false;
 		}
 
 
@@ -173,7 +147,7 @@ namespace MoCap
 		/// 
 		public bool RemoveSceneListener(SceneListener listener)
 		{
-			return GetClient().RemoveSceneListener(listener);
+			return (client != null) ? client.RemoveSceneListener(listener) : true;
 		}
 
 
@@ -185,7 +159,7 @@ namespace MoCap
 		/// 
 		public bool AddActorListener(ActorListener listener)
 		{
-			return GetClient().AddActorListener(listener);
+			return (client != null) ? client.AddActorListener(listener) : false;
 		}
 
 
@@ -197,7 +171,7 @@ namespace MoCap
 		/// 
 		public bool RemoveActorListener(ActorListener listener)
 		{
-			return GetClient().RemoveActorListener(listener);
+			return (client != null) ? client.RemoveActorListener(listener) : true;
 		}
 
 
@@ -209,7 +183,7 @@ namespace MoCap
 		/// 
 		public bool AddDeviceListener(DeviceListener listener)
 		{
-			return GetClient().AddDeviceListener(listener);
+			return (client != null) ? client.AddDeviceListener(listener) : false;
 		}
 
 
@@ -221,7 +195,7 @@ namespace MoCap
 		/// 
 		public bool RemoveDeviceListener(DeviceListener listener)
 		{
-			return GetClient().RemoveDeviceListener(listener);
+			return (client != null) ? client.RemoveDeviceListener(listener) : true;
 		}
 
 
@@ -232,6 +206,48 @@ namespace MoCap
 		{
 			public List<string> ServerAddresses = new List<string>();
 		}
+
+
+		/// <summary>
+		/// Gets the internal NatNet client instance singelton.
+		/// When creating the singleton for the first time, 
+		/// tries to connect to a local MoCap server, and if not successful, a remote MoCap server.
+		/// </summary>
+		/// 
+		private void CreateClient()
+		{
+			clientMutex.WaitOne();
+			if (client == null)
+			{
+				// create singleton
+				client = new NatNetClient(clientAppName, clientAppVersion);
+
+				// only connect when this script is actually enabled
+				if (this.isActiveAndEnabled)
+				{
+					// build list of server addresses
+					ICollection<IPAddress> serverAddresses = GetServerAddresses();
+
+					// run through the list
+					foreach (IPAddress address in serverAddresses)
+					{
+						if (client.Connect(address))
+						{
+							Debug.Log("MoCap client connected to MotionServer '" + client.GetServerName() + "' on " + address + ".");
+							break;
+						}
+					}
+
+					// nope, can't find it
+					if (!client.IsConnected())
+					{
+						Debug.LogWarning("Could not connect to any MotionServer.");
+					}
+				}
+			}
+			clientMutex.ReleaseMutex();
+		}
+
 
 		/// <summary>
 		/// Reads the MotionServer address file asset and constructs a list of IP addresses to query.
@@ -271,13 +287,12 @@ namespace MoCap
 		/// 
 		public static MoCapClient GetInstance()
 		{
-			// try to find the client instance 
-			MoCapClient client = FindObjectOfType<MoCapClient>();
-			Assert.IsNotNull(client, "No MoCapClient component defined in the scene.");
-			return client;
+			if (instance == null) Debug.LogWarning("Null");
+			return instance;
 		}
 
 
+		private static MoCapClient  instance    = null;
 		private static NatNetClient client      = null;
 		private static Mutex        clientMutex = new Mutex();
 		private bool                readyForNextFrame;
