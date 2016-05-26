@@ -151,6 +151,10 @@ namespace MoCap
 
 
 
+		/// <summary>
+		/// Structure for loading sources from a JSON file.
+		/// </summary>
+		///
 		[System.Serializable]
 		private class MoCapDataSourceList
 		{
