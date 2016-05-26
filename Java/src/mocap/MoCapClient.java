@@ -52,47 +52,25 @@ public interface MoCapClient
     
     
     /**
-     * Registers a new actor listener.
+     * Registers a new scene listener.
      * 
      * @param listener the listener to register
      * 
      * @return <code>true</code> if listener was registered,
      *         <code>false</code> if not
      */
-    boolean addActorListener(ActorListener listener);
+    boolean addSceneListener(SceneListener listener);
     
     
     /**
-     * Removes an actor listener.
+     * Removes a scene listener.
      * 
      * @param listener the listener to remove
      * 
      * @return <code>true</code> if listener was removed,
      *         <code>false</code> if not
      */
-    boolean removeActorListener(ActorListener listener);
-    
-    
-    /**
-     * Registers a new device listener.
-     * 
-     * @param listener the listener to register
-     * 
-     * @return <code>true</code> if listener was registered,
-     *         <code>false</code> if not
-     */
-    boolean addDeviceListener(DeviceListener listener);
-    
-    
-    /**
-     * Removes a device listener.
-     * 
-     * @param listener the listener to remove
-     * 
-     * @return <code>true</code> if listener was removed,
-     *         <code>false</code> if not
-     */
-    boolean removeDeviceListener(DeviceListener listener);
+    boolean removeSceneListener(SceneListener listener);
     
     
     /**

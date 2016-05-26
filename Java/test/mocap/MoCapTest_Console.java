@@ -3,7 +3,6 @@ package mocap;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MoCapTest_Console 
@@ -41,10 +40,7 @@ public class MoCapTest_Console
         
             // test listeners
             Scene scene = client.getScene();
-            for ( Actor a : scene.actors )
-            {
-                client.addActorListener(new Listener(a.name));
-            }
+            client.addSceneListener(new Listener());
             
             for ( int i = 0 ; i < 10 ; i++)
             {
@@ -94,39 +90,18 @@ public class MoCapTest_Console
     }
 
 
-    private static class Listener implements ActorListener
+    private static class Listener implements SceneListener
     {
-        public Listener(String name)
-        {
-            this.name = name;
-        }
-        
-        
         @Override
-        public String getActorName()
+        public void sceneUpdated(Scene scene)
         {
-            return name;
+            System.out.println("Scene updated.");
         }
 
         @Override
-        public void actorUpdated(Actor actor)
+        public void sceneChanged(Scene scene)
         {
-            System.out.println("Actor " + actor.name + " updated.");
+            System.out.println("Scene definition changed");
         }
-
-        @Override
-        public void actorChanged(Actor actor)
-        {
-            if ( actor != null )
-            {
-                System.out.println("Actor " + actor.name + " changed.");
-            }
-            else
-            {
-                System.out.println("Actor " + name + " not defined.");
-            }
-        }
-         
-        private final String name;
     }
 }
