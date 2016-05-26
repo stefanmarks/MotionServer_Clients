@@ -10,7 +10,7 @@ namespace MoCap
 
 	[AddComponentMenu("Motion Capture/Marker Renderer")]
 
-	public class MarkerRenderer : MonoBehaviour, ActorListener
+	public class MarkerRenderer : MonoBehaviour, SceneListener
 	{
 		[Tooltip("The name of the MoCap actor to render.")]
 		public string actorName;
@@ -22,7 +22,8 @@ namespace MoCap
 		void Start()
 		{
 			// initialise variables
-			markerNode = null;
+			markerNode  = null;
+			actor       = null;
 			dataBuffers = new Dictionary<Marker, MoCapDataBuffer>();
 
 			// sanity checks
@@ -32,7 +33,7 @@ namespace MoCap
 			}
 
 			// start receiving MoCap data
-			MoCapClient.GetInstance().AddActorListener(this);
+			MoCapClient.GetInstance().AddSceneListener(this);
 		}
 
 
@@ -99,23 +100,17 @@ namespace MoCap
 		}
 
 
-		public string GetActorName()
-		{
-			return actorName;
-		}
-
-
-		public void ActorUpdated(Actor actor)
+		public void SceneUpdated(Scene scene)
 		{
 			// create marker position array if necessary
-			if (markerNode == null)
+			if ((markerNode == null) && (actor !=null))
 			{
 				CreateMarkers(actor.markers);
 			}
 		}
 
 
-		public void ActorChanged(Actor actor)
+		public void SceneChanged(Scene scene)
 		{
 			// actor has changed > rebuild markers on next update
 			if (markerNode != null)
@@ -125,6 +120,7 @@ namespace MoCap
 				markerNode = null;
 			}
 
+			actor = scene.FindActor(actorName);
 			if (actor != null)
 			{
 				Debug.Log("Marker Renderer '" + this.name + "' controlled by MoCap actor '" + actorName + "'.");
@@ -137,6 +133,7 @@ namespace MoCap
 
 
 		private GameObject                          markerNode;
+		private Actor                               actor;
 		private Dictionary<Marker, MoCapDataBuffer> dataBuffers;
 	}
 

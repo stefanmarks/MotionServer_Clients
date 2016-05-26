@@ -6,11 +6,23 @@ using UnityEngine;
 
 namespace MoCap
 {
+	class NatNetClient_ConnectionInfo : IMoCapClient_ConnectionInfo
+	{
+		public NatNetClient_ConnectionInfo(IPAddress serverAddress)
+		{
+			this.serverAddress = serverAddress;
+		}
+
+
+		public IPAddress serverAddress;
+	}
+
+
 	/// <summary>
 	/// Class for a NatNet compatible MoCap client.
 	/// </summary>
 	/// 
-	class NatNetClient
+	class NatNetClient : IMoCapClient
 	{
 		/// <summary>
 		/// Structure for storing the MotionServer name, version and protocol version information.
@@ -69,8 +81,6 @@ namespace MoCap
 			this.clientNatNetVersion = new byte[] {2, 9, 0, 0};
 
 			this.sceneListeners  = new List<SceneListener>();
-			this.actorListeners  = new Dictionary<ActorListener, Actor>();
-			this.deviceListeners = new Dictionary<DeviceListener, Device>();
 
 			serverInfo.serverName = "";
 			multicastAddress      = null;
@@ -85,8 +95,14 @@ namespace MoCap
 		/// <param name="serverAddress">IP address of the MotionServer to connect to</param>
 		/// <returns><c>true</c> if the connection is established</returns>
 		/// 
-		public bool Connect(IPAddress serverAddress)
+		public bool Connect(IMoCapClient_ConnectionInfo connectionInfo)
 		{
+			// extract server address from connection info
+			IPAddress serverAddress = (connectionInfo is NatNetClient_ConnectionInfo) ?
+				((NatNetClient_ConnectionInfo) connectionInfo).serverAddress :
+				IPAddress.Loopback; // fallback > localhost
+			
+			// try connecting
 			try
 			{
 				IPEndPoint commandEndpoint = new IPEndPoint(serverAddress, PORT_COMMAND);
@@ -186,8 +202,6 @@ namespace MoCap
 		/// 
 		public void Disconnect()
 		{
-			RemoveAllListeners();
-
 			if (dataClient != null)
 			{
 				dataClient.DropMulticastGroup(multicastAddress);
@@ -201,6 +215,8 @@ namespace MoCap
 				commandClient = null;
 			}
 
+			// and then stop
+			sceneListeners.Clear();
 			connected = false;
 		}
 		
@@ -210,7 +226,7 @@ namespace MoCap
 		/// </summary>
 		/// <returns>the name of the MotionServer</returns>
 		/// 
-		public String GetServerName()
+		public String GetDataSourceName()
 		{
 			if ( !connected ) return "";
 			return serverInfo.serverName + " v" +
@@ -284,84 +300,6 @@ namespace MoCap
 		public bool RemoveSceneListener(SceneListener listener)
 		{
 			return sceneListeners.Remove(listener);
-		}
-
-
-		/// <summary>
-		/// Adds an actor data listener.
-		/// </summary>
-		/// <param name="listener">The listener to add</param>
-		/// <returns><c>true</c>, if the actor listener was added, <c>false</c> otherwise.</returns>
-		/// 
-		public bool AddActorListener(ActorListener listener)
-		{
-			bool added = false;
-			if ( !actorListeners.ContainsKey(listener) )
-			{
-				Actor actor = scene.FindActor(listener.GetActorName());
-				actorListeners.Add(listener, actor);
-				added = true;
-				// immediately trigger callback
-				listener.ActorChanged(actor);
-			}
-			return added;
-		}
-
-
-		/// <summary>
-		/// Removes an actor data listener.
-		/// </summary>
-		/// <param name="listener">The listener to remove</param>
-		/// <returns><c>true</c>, if the actor listener was removed, <c>false</c> otherwise.</returns>
-		///
-		public bool RemoveActorListener(ActorListener listener)
-		{
-			return actorListeners.Remove(listener);
-		}
-
-
-		/// <summary>
-		/// Adds a device data listener.
-		/// </summary>
-		/// <param name="listener">The listener to add</param>
-		/// <returns><c>true</c>, if the device listener was added, <c>false</c> otherwise.</returns>
-		/// 
-		public bool AddDeviceListener(DeviceListener listener)
-		{
-			bool added = false;
-			if (!deviceListeners.ContainsKey(listener))
-			{
-				Device device = scene.FindDevice(listener.GetDeviceName());
-				deviceListeners.Add(listener, device);
-				added = true;
-				// immediately trigger callback
-				listener.DeviceChanged(device);
-			}
-			return added;
-		}
-
-
-		/// <summary>
-		/// Removes a device data listener.
-		/// </summary>
-		/// <param name="listener">The listener to remove</param>
-		/// <returns><c>true</c>, if the device listener was removed, <c>false</c> otherwise.</returns>
-		///
-		public bool RemoveDeviceListener(DeviceListener listener)
-		{
-			return deviceListeners.Remove(listener);
-		}
-
-
-		/// <summary>
-		/// Removes all listeners.
-		/// </summary>
-		///
-		public void RemoveAllListeners()
-		{
-			sceneListeners.Clear();
-			actorListeners.Clear();
-			deviceListeners.Clear();
 		}
 
 
@@ -1058,26 +996,6 @@ namespace MoCap
 			{
 				listener.SceneUpdated(scene);
 			}
-			foreach (KeyValuePair<ActorListener, Actor> entry in actorListeners)
-			{
-				// which actor is that?
-				ActorListener listener = entry.Key;
-				Actor         actor    = entry.Value;
-				if ( actor != null )
-				{
-					listener.ActorUpdated(actor);
-				}
-			}
-			foreach (KeyValuePair<DeviceListener, Device> entry in deviceListeners)
-			{
-				// which device is that?
-				DeviceListener listener = entry.Key;
-				Device         device = entry.Value;
-				if (device != null)
-				{
-					listener.DeviceUpdated(device);
-				}
-			}
 		}
 
 
@@ -1087,43 +1005,25 @@ namespace MoCap
 			{
 				listener.SceneChanged(scene);
 			}
-			List<ActorListener> actorKeys = new List<ActorListener>(actorListeners.Keys);
-			foreach (ActorListener listener in actorKeys)
-			{
-				Actor actor = scene.FindActor(listener.GetActorName());
-				actorListeners[listener] = actor;
-				listener.ActorChanged(actor);
-			}
-
-			List<DeviceListener> deviceKeys = new List<DeviceListener>(deviceListeners.Keys);
-			foreach (DeviceListener listener in deviceKeys)
-			{
-				Device device = scene.FindDevice(listener.GetDeviceName());
-				deviceListeners[listener] = device;
-				listener.DeviceChanged(device);
-			}
 		}
 
 
-		private string           clientAppName;
-		private byte[]           clientAppVersion;
-		private byte[]           clientNatNetVersion;
-		private UdpClient        commandClient, dataClient;
-		private NatNetPacket_In  packetIn;
-		private NatNetPacket_Out packetOut;
-		private ServerInfo       serverInfo;
-		private IPAddress        multicastAddress;
-		private string           serverResponse;
-		private bool             connected, streamingEnabled;
-		private Scene            scene;
+		private string              clientAppName;
+		private byte[]              clientAppVersion;
+		private byte[]              clientNatNetVersion;
+		private UdpClient           commandClient, dataClient;
+		private NatNetPacket_In     packetIn;
+		private NatNetPacket_Out    packetOut;
+		private ServerInfo          serverInfo;
+		private IPAddress           multicastAddress;
+		private string              serverResponse;
+		private bool                connected, streamingEnabled;
+		private Scene               scene;
+		private List<SceneListener> sceneListeners;
 
 		private static Marker DUMMY_MARKER  = new Marker(null, "dummy");
 		private static Bone   DUMMY_BONE    = new Bone(null, "dummy", 0);
 		private static Device DUMMY_DEVICE  = new Device(null, "dummy", 0);
-
-		private List<SceneListener>                sceneListeners;
-		private Dictionary<ActorListener, Actor>   actorListeners;
-		private Dictionary<DeviceListener, Device> deviceListeners;
 
 	}
 

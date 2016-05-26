@@ -16,14 +16,14 @@ namespace MoCap
 
 	public class MoCapClient : MonoBehaviour
 	{
-		[Tooltip("Name of the file with MotionServer IP Addresses to query")]
-		public TextAsset serverAddressFile = null;
+		[Tooltip("Name of the file with MotionServer IP Addresses or .MOT files to query")]
+		public TextAsset dataSourceFile = null;
 
 		[Tooltip("The name of this application")]
 		public string clientAppName = "Unity MoCap Client";
 
 		[Tooltip("Version number of this client")]
-		public byte[] clientAppVersion = new byte[] { 1, 0, 9, 0 };
+		public byte[] clientAppVersion = new byte[] { 1, 1, 0, 0 };
 
 
 		/// <summary>
@@ -57,7 +57,6 @@ namespace MoCap
 			clientMutex.WaitOne();
 			if (client != null)
 			{
-				client.RemoveAllListeners();
 				client.Disconnect();
 				client = null;
 			}
@@ -123,7 +122,7 @@ namespace MoCap
 		/// 
 		public string GetServerName()
 		{
-			return (client != null) ? client.GetServerName() : "";
+			return (client != null) ? client.GetDataSourceName() : "";
 		}
 
 
@@ -151,60 +150,11 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Adds an actor data listener.
-		/// </summary>
-		/// <param name="listener">The listener to add</param>
-		/// <returns><c>true</c>, if the actor listener was added, <c>false</c> otherwise.</returns>
-		/// 
-		public bool AddActorListener(ActorListener listener)
-		{
-			return (client != null) ? client.AddActorListener(listener) : false;
-		}
-
-
-		/// <summary>
-		/// Removes an actor data listener.
-		/// </summary>
-		/// <param name="listener">The listener to remove</param>
-		/// <returns><c>true</c>, if the actor listener was removed, <c>false</c> otherwise.</returns>
-		/// 
-		public bool RemoveActorListener(ActorListener listener)
-		{
-			return (client != null) ? client.RemoveActorListener(listener) : true;
-		}
-
-
-		/// <summary>
-		/// Adds an interaction device data listener.
-		/// </summary>
-		/// <param name="listener">The listener to add</param>
-		/// <returns><c>true</c>, if the actor listener was added, <c>false</c> otherwise.</returns>
-		/// 
-		public bool AddDeviceListener(DeviceListener listener)
-		{
-			return (client != null) ? client.AddDeviceListener(listener) : false;
-		}
-
-
-		/// <summary>
-		/// Removes an interaction device data listener.
-		/// </summary>
-		/// <param name="listener">The listener to remove</param>
-		/// <returns><c>true</c>, if the actor listener was removed, <c>false</c> otherwise.</returns>
-		/// 
-		public bool RemoveDeviceListener(DeviceListener listener)
-		{
-			return (client != null) ? client.RemoveDeviceListener(listener) : true;
-		}
-
-
-
 
 		[System.Serializable]
-		private class ServerAddressList
+		private class MoCapDataSourceList
 		{
-			public List<string> ServerAddresses = new List<string>();
+			public List<string> sources = new List<string>();
 		}
 
 
@@ -231,9 +181,10 @@ namespace MoCap
 					// run through the list
 					foreach (IPAddress address in serverAddresses)
 					{
-						if (client.Connect(address))
+						NatNetClient_ConnectionInfo info = new NatNetClient_ConnectionInfo(address);
+						if (client.Connect(info))
 						{
-							Debug.Log("MoCap client connected to MotionServer '" + client.GetServerName() + "' on " + address + ".");
+							Debug.Log("MoCap client connected to MotionServer '" + client.GetDataSourceName() + "' on " + address + ".");
 							break;
 						}
 					}
@@ -256,13 +207,13 @@ namespace MoCap
 		/// 
 		private ICollection<IPAddress> GetServerAddresses()
 		{
-			LinkedList<IPAddress> addresses   = new LinkedList<IPAddress>();
-			ServerAddressList     addressList = JsonUtility.FromJson<ServerAddressList>(serverAddressFile.text);
+			LinkedList<IPAddress> addresses  = new LinkedList<IPAddress>();
+			MoCapDataSourceList   sourceList = JsonUtility.FromJson<MoCapDataSourceList>(dataSourceFile.text);
 
-			foreach (string strAddress in addressList.ServerAddresses)
+			foreach (string source in sourceList.sources)
 			{
 				IPAddress address;
-				if (IPAddress.TryParse(strAddress.Trim(), out address))
+				if (IPAddress.TryParse(source.Trim(), out address))
 				{
 					// success > add to list
 					addresses.AddLast(address);
@@ -293,7 +244,7 @@ namespace MoCap
 
 
 		private static MoCapClient  instance    = null;
-		private static NatNetClient client      = null;
+		private static IMoCapClient client      = null;
 		private static Mutex        clientMutex = new Mutex();
 		private bool                readyForNextFrame;
 	}

@@ -10,7 +10,7 @@ namespace MoCap
 
 	[AddComponentMenu("Motion Capture/Skeleton Renderer")]
 
-	public class SkeletonRenderer : MonoBehaviour, ActorListener
+	public class SkeletonRenderer : MonoBehaviour, SceneListener
 	{
 		[Tooltip("The name of the MoCap actor to render.")]
 		public string actorName;
@@ -29,7 +29,8 @@ namespace MoCap
 		{
 			// initialise variables
 			skeletonNode = null;
-			dataBuffers = new Dictionary<Bone, MoCapDataBuffer>();
+			actor        = null;
+			dataBuffers  = new Dictionary<Bone, MoCapDataBuffer>();
 
 			// sanity checks
 			if (boneTemplate == null)
@@ -38,7 +39,7 @@ namespace MoCap
 			}
 
 			// start receiving MoCap data
-			MoCapClient.GetInstance().AddActorListener(this);
+			MoCapClient.GetInstance().AddSceneListener(this);
 		}
 
 
@@ -146,29 +147,18 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Gets the name of the actor.
-		/// </summary>
-		/// <returns>The name of the actor</returns>
-		/// 
-		public string GetActorName()
-		{
-			return actorName;
-		}
-
-
-		public void ActorUpdated(Actor actor)
+		public void SceneUpdated(Scene scene)
 		{
 			// create marker position array if necessary
 			// but only when tracking is OK, otherwise the bone lengths are undefined
-			if ((skeletonNode == null) && actor.bones[0].tracked)
+			if ((skeletonNode == null) && (actor != null) && actor.bones[0].tracked)
 			{
 				CreateBones(actor.bones);
 			}
 		}
 
 
-		public void ActorChanged(Actor actor)
+		public void SceneChanged(Scene scene)
 		{
 			// actor has changed > rebuild skeleton on next update
 			if (skeletonNode != null)
@@ -178,6 +168,7 @@ namespace MoCap
 				skeletonNode = null;
 			}
 
+			actor = scene.FindActor(actorName);
 			if (actor != null)
 			{
 				Debug.Log("Skeleton Renderer '" + this.name + "' controlled by MoCap actor '" + actorName + "'.");
@@ -190,6 +181,7 @@ namespace MoCap
 
 
 		private GameObject                        skeletonNode;
+		private Actor                             actor;
 		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
 	}
 

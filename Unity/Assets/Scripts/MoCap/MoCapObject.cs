@@ -11,7 +11,7 @@ namespace MoCap
 	[DisallowMultipleComponent]
 	[AddComponentMenu("Motion Capture/MoCap Object")]
 
-	public class MoCapObject : MonoBehaviour, ActorListener
+	public class MoCapObject : MonoBehaviour, SceneListener
 	{
 		[Tooltip("The name of the MoCap actor to link to this game object.")]
 		public string actorName = "";
@@ -77,16 +77,15 @@ namespace MoCap
 			controllingBone = null;
 			dataBuffers     = new Dictionary<Bone, MoCapDataBuffer>();
 
-			MoCapClient.GetInstance().AddActorListener(this);
+			MoCapClient.GetInstance().AddSceneListener(this);
 		}
 
 
 		/// <summary>
 		/// Creates a hierarchy of a selected bone of an actor.
 		/// </summary>
-		/// <param name="actor">actor to use</param>
 		/// 
-		private void CreateHierarchy(Actor actor)
+		private void CreateHierarchy()
 		{
 			// create node for containing all the hierarchy objects
 			rootNode = new GameObject();
@@ -173,29 +172,13 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Gets the name of the actor.
-		/// </summary>
-		/// <returns>The name of the actor</returns>
-		/// 
-		public string GetActorName()
-		{
-			return actorName;
-		}
-
-
-		/// <summary>
-		/// Callback for the MoCap client when new data has arrived.
-		/// </summary>
-		/// <param name="actor">the actor that has been updated</param>
-		/// 
-		public void ActorUpdated(Actor actor)
+		public void SceneUpdated(Scene scene)
 		{
 			// create node hierarchy if not already built.
 			// but only when tracking is OK, otherwise the bone lengths are undefined
-			if (rootNode == null)
+			if ((rootNode == null) && (controllingBone != null))
 			{
-				CreateHierarchy(actor);
+				CreateHierarchy();
 			}
 			if (!this.gameObject.activeInHierarchy)
 			{
@@ -207,7 +190,7 @@ namespace MoCap
 		}
 
 
-		public void ActorChanged(Actor actor)
+		public void SceneChanged(Scene scene)
 		{
 			// actor has changed > rebuild hierarchy on next update
 			if (rootNode != null)
@@ -218,6 +201,7 @@ namespace MoCap
 				rootNode = null;
 			}
 
+			Actor actor = scene.FindActor(actorName);
 			if (actor != null)
 			{
 				if (boneName.Length > 0)

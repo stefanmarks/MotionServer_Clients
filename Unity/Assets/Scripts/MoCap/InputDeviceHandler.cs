@@ -7,7 +7,7 @@ namespace MoCap
 	/// e.g., GetButton(), GetButtonDown
 	/// </summary>
 	///
-	public class InputDeviceHandler : DeviceListener
+	public class InputDeviceHandler : SceneListener
 	{
 		/// <summary>
 		/// Creates a new input device handler instance for a specific device.
@@ -22,7 +22,7 @@ namespace MoCap
 			this.channelName = channelName;
 			this.proxyName   = inputManagerProxy;
 
-			MoCapClient.GetInstance().AddDeviceListener(this);
+			MoCapClient.GetInstance().AddSceneListener(this);
 		}
 
 
@@ -94,20 +94,15 @@ namespace MoCap
 		}
 
 
-		public string GetDeviceName()
-		{
-			return deviceName;
-		}
-
-
-		public void DeviceChanged(Device device)
+		public void SceneChanged(Scene scene)
 		{
 			// scene description has changed > search for channel again
 			oldValue = 0;
-			pressed = false;
+			pressed  = false;
 			released = false;
 
 			channel = null;
+			Device device = scene.FindDevice(deviceName);
 			if (device != null)
 			{
 				channel = device.FindChannel(channelName);
@@ -123,7 +118,7 @@ namespace MoCap
 		}
 
 
-		public void DeviceUpdated(Device device)
+		public void SceneUpdated(Scene scene)
 		{
 			// store value for queries
 			if (channel != null)
@@ -133,7 +128,7 @@ namespace MoCap
 				{
 					// changed value: set booleans accordingly
 					if (value <= 0) { released = true; }
-					if (value > 0) { pressed = true; }
+					if (value >  0) { pressed = true; }
 
 					oldValue = value;
 				}

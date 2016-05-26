@@ -24,7 +24,7 @@ namespace MoCap
 	[DisallowMultipleComponent]
 	[AddComponentMenu("Motion Capture/MoCap Model")]
 
-	public class MoCapModel : MonoBehaviour, ActorListener
+	public class MoCapModel : MonoBehaviour, SceneListener
 	{
 		[Tooltip("The name of the MoCap actor to link to this model.")]
 		public string actorName;
@@ -66,7 +66,7 @@ namespace MoCap
 		void Start()
 		{
 			dataBuffers = null;
-			MoCapClient.GetInstance().AddActorListener(this);
+			MoCapClient.GetInstance().AddSceneListener(this);
 		}
 
 
@@ -191,33 +191,23 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Gets the name of the actor.
-		/// </summary>
-		/// <returns>The name of the actor</returns>
-		/// 
-		public string GetActorName()
-		{
-			return actorName;
-		}
-
-
-		public void ActorUpdated(Actor actor)
+		public void SceneUpdated(Scene scene)
 		{
 			// create marker position array if necessary
 			// but only when tracking is OK, otherwise the bone lengths are undefined
-			if (dataBuffers == null)
+			if ((dataBuffers == null) && (actor != null))
 			{
 				MatchBones(actor.bones);
 			}
 		}
 
 
-		public void ActorChanged(Actor actor)
+		public void SceneChanged(Scene scene)
 		{
 			// re-match bone names with the next update
 			dataBuffers = null;
 
+			actor = scene.FindActor(actorName);
 			if (actor != null)
 			{
 				Debug.Log("MoCapModel '" + this.name + "' controlled by MoCap actor '" + actorName + "'.");
@@ -228,7 +218,7 @@ namespace MoCap
 			}
 		}
 
-
+		private Actor                             actor;
 		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
 	}
 
