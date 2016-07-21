@@ -6,24 +6,23 @@ using UnityEngine;
 
 namespace MoCap
 {
-	class NatNetClient_ConnectionInfo : IMoCapClient_ConnectionInfo
-	{
-		public NatNetClient_ConnectionInfo(IPAddress serverAddress)
-		{
-			this.serverAddress = serverAddress;
-		}
-
-
-		public IPAddress serverAddress;
-	}
-
-
 	/// <summary>
 	/// Class for a NatNet compatible MoCap client.
 	/// </summary>
 	/// 
 	class NatNetClient : IMoCapClient
 	{
+		public class ConnectionInfo : IMoCapClient_ConnectionInfo
+		{
+			public ConnectionInfo(IPAddress serverAddress)
+			{
+				this.serverAddress = serverAddress;
+			}
+
+			public IPAddress serverAddress;
+		}
+
+
 		/// <summary>
 		/// Structure for storing the MotionServer name, version and protocol version information.
 		/// </summary>
@@ -89,17 +88,11 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Tries to establish a connection to the server.
-		/// </summary>
-		/// <param name="serverAddress">IP address of the MotionServer to connect to</param>
-		/// <returns><c>true</c> if the connection is established</returns>
-		/// 
 		public bool Connect(IMoCapClient_ConnectionInfo connectionInfo)
 		{
 			// extract server address from connection info
-			IPAddress serverAddress = (connectionInfo is NatNetClient_ConnectionInfo) ?
-				((NatNetClient_ConnectionInfo) connectionInfo).serverAddress :
+			IPAddress serverAddress = (connectionInfo is NatNetClient.ConnectionInfo) ?
+				((NatNetClient.ConnectionInfo) connectionInfo).serverAddress :
 				IPAddress.Loopback; // fallback > localhost
 			
 			// try connecting
@@ -185,21 +178,12 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Checks if the client is connected to the MotionServer.
-		/// </summary>
-		/// <returns><c>true</c> if the client is connected</returns>
-		/// 
 		public bool IsConnected()
 		{
 			return connected;
 		}
 
 
-		/// <summary>
-		/// Disconnects the client from the server.
-		/// </summary>
-		/// 
 		public void Disconnect()
 		{
 			if (dataClient != null)
@@ -217,15 +201,11 @@ namespace MoCap
 
 			// and then stop
 			sceneListeners.Clear();
+
 			connected = false;
 		}
-		
-		
-		/// <summary>
-		/// Gets the name of the MotionServer.
-		/// </summary>
-		/// <returns>the name of the MotionServer</returns>
-		/// 
+
+
 		public String GetDataSourceName()
 		{
 			if ( !connected ) return "";
@@ -235,10 +215,6 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Gets the latest frame data either via the multicast channel
-		/// or via polling.
-		/// </summary>
 		public void Update()
 		{
 			if (connected)
@@ -247,17 +223,21 @@ namespace MoCap
 				{
 					int maxIterations = 5;
 					while ( (dataClient.Available > 0) && 
-							(maxIterations-- > 0) )
+					        (maxIterations-- > 0) )
 					{
 						// data streaming > just see what has arrived, no polling necessary
 						if (packetIn.Receive(dataClient) > 0)
 						{
 							ParsePacket(packetIn, NAT_FRAMEOFDATA);
+
 							if (!streamingEnabled)
 							{
 								Debug.Log("Data streaming enabled.");
 								streamingEnabled = true;
 							}
+
+							maxIterations++; // don't stop receiving even if data comes in
+							// otherwise slow framerates lead to even longer delays
 						}
 					}
 				}
@@ -271,12 +251,6 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Adds a scene data listener.
-		/// </summary>
-		/// <param name="listener">The listener to add</param>
-		/// <returns><c>true</c>, if the scene listener was added, <c>false</c> otherwise.</returns>
-		/// 
 		public bool AddSceneListener(SceneListener listener)
 		{
 			bool added = false;
@@ -291,12 +265,6 @@ namespace MoCap
 		}
 
 
-		/// <summary>
-		/// Removes a scene data listener.
-		/// </summary>
-		/// <param name="listener">The listener to remove</param>
-		/// <returns><c>true</c>, if the scene listener was removed, <c>false</c> otherwise.</returns>
-		///
 		public bool RemoveSceneListener(SceneListener listener)
 		{
 			return sceneListeners.Remove(listener);
@@ -513,7 +481,7 @@ namespace MoCap
 			scene.devices = devices.ToArray();
 
 			// scene description has possibly changed > update device and actor listeners
-			RefreshListeners();
+			NotifyListeners_Change();
 
 			return true;
 		}
@@ -547,12 +515,12 @@ namespace MoCap
 			Actor actor = null;
 			foreach (Actor a in actors)
 			{
-				if ( a.name.CompareTo(name) == 0 )
+				if (a.name.Equals(name))
 				{
 					actor = a;
 				}
 			}
-			if ( actor == null )
+			if (actor == null)
 			{
 				Debug.LogWarning("Rigid Body " + name + " could not be matched to an actor.");
 				actor = new Actor(scene, id, name);
@@ -999,7 +967,7 @@ namespace MoCap
 		}
 
 
-		private void RefreshListeners()
+		private void NotifyListeners_Change()
 		{
 			foreach (SceneListener listener in sceneListeners)
 			{

@@ -4,7 +4,7 @@ namespace MoCap
 {
 	/// <summary>
 	/// Class for treating a MoCap input device similar to key strokes of the Input class,
-	/// e.g., GetButton(), GetButtonDown
+	/// e.g., GetButton(), GetButtonDown()
 	/// </summary>
 	///
 	public class InputDeviceHandler : SceneListener
@@ -14,15 +14,12 @@ namespace MoCap
 		/// </summary>
 		/// <param name="deviceName">the device to attach to</param>
 		/// <param name="channelName">the channel to attach to</param>
-		/// <param name="inputManagerProxy">name of the channel from the Unity input manager to simulate the device (optional)</param>
 		/// 
-		public InputDeviceHandler(string deviceName, string channelName, string inputManagerProxy = "")
+		public InputDeviceHandler(string deviceName, string channelName)
 		{
 			this.deviceName  = deviceName;
 			this.channelName = channelName;
-			this.proxyName   = inputManagerProxy;
-
-			MoCapClient.GetInstance().AddSceneListener(this);
+			MoCapManager.GetInstance().AddSceneListener(this);
 		}
 
 
@@ -34,10 +31,6 @@ namespace MoCap
 		public bool GetButton()
 		{
 			bool returnValue = (value > 0);
-			if (proxyName.Length > 0)
-			{
-				returnValue |= Input.GetButton(proxyName);
-			}
 			return returnValue;
 		}
 
@@ -51,10 +44,6 @@ namespace MoCap
 		public bool GetButtonDown()
 		{
 			bool returnValue = pressed;
-			if (proxyName.Length > 0)
-			{
-				returnValue |= Input.GetButtonDown(proxyName);
-			}
 			pressed = false; // reset flag
 			return returnValue;
 		}
@@ -69,10 +58,6 @@ namespace MoCap
 		public bool GetButtonUp()
 		{
 			bool returnValue = released;
-			if (proxyName.Length > 0)
-			{
-				returnValue |= Input.GetButtonUp(proxyName);
-			}
 			released = false; // reset flag
 			return returnValue;
 		}
@@ -85,12 +70,7 @@ namespace MoCap
 		///
 		public float GetAxis()
 		{
-			float returnValue = value;
-			if (proxyName.Length > 0)
-			{
-				returnValue += Input.GetAxis(proxyName);
-			}
-			return returnValue;
+			return value;
 		}
 
 
@@ -109,11 +89,11 @@ namespace MoCap
 			}
 			if (channel != null)
 			{
-				Debug.Log("Handler registered for input device '" + deviceName + "' channel '" + channelName + "'");
+				Debug.Log("Handler registered for input device '" + deviceName + "', channel '" + channelName + "'");
 			}
 			else
 			{
-				Debug.LogWarning("Could not register handler for input device '" + deviceName + "' channel '" + channelName + "'");
+				Debug.LogWarning("Could not register handler for input device '" + deviceName + "', channel '" + channelName + "'");
 			}
 		}
 
@@ -136,7 +116,16 @@ namespace MoCap
 		}
 
 
-		private string  deviceName, channelName, proxyName;
+		public override string ToString()
+		{
+			return "MoCap.InputDeviceHandler(" +
+				deviceName + "/" + channelName + ", " +
+				((channel != null) ? "active" : "not found") +
+				")";
+		}
+
+
+		private string  deviceName, channelName;
 		private Channel channel;
 		private float   value, oldValue;
 		private bool    pressed, released;

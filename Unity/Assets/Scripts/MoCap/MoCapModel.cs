@@ -66,7 +66,7 @@ namespace MoCap
 		void Start()
 		{
 			dataBuffers = null;
-			MoCapClient.GetInstance().AddSceneListener(this);
+			MoCapManager.GetInstance().AddSceneListener(this);
 		}
 
 

@@ -2,9 +2,13 @@ using System;
 
 namespace MoCap
 {
-	interface IMoCapClient_ConnectionInfo
+	/// <summary>
+	/// Base class for providing connection information to the client instance.
+	/// </summary>
+	///
+	public abstract class IMoCapClient_ConnectionInfo
 	{
-		// no methods, just a base interface
+		// no methods, just a base class
 	};
 
 	/// <summary>

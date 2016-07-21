@@ -39,7 +39,7 @@ namespace MoCap
 			}
 
 			// start receiving MoCap data
-			MoCapClient.GetInstance().AddSceneListener(this);
+			MoCapManager.GetInstance().AddSceneListener(this);
 		}
 
 

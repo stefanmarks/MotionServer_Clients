@@ -77,7 +77,7 @@ namespace MoCap
 			controllingBone = null;
 			dataBuffers     = new Dictionary<Bone, MoCapDataBuffer>();
 
-			MoCapClient.GetInstance().AddSceneListener(this);
+			MoCapManager.GetInstance().AddSceneListener(this);
 		}
 
 
