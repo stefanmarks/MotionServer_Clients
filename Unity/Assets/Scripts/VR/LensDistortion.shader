@@ -42,18 +42,17 @@ Shader "VR/LensDistortion"
 
 	float2 Distort(float2 p, float2 chromaticAberration)
 	{
-		p = p - _Center.xy;
-		p = p *_ScaleIn;
+		p = (p - _Center.xy) *_ScaleIn;
 		
-		float r2    = p.x * p.x + p.y * p.y;
-		float rDist =   _Distortion.x	
-			          + _Distortion.y * r2 
+		float r2 = p.x * p.x + p.y * p.y;
+		r2 = r2 * 2; // shouldn't be here, but seems to work better
+		float rDist =   _Distortion.x
+		              + _Distortion.y * r2
 		              + _Distortion.z * r2 * r2
-					  + _Distortion.w * r2 * r2 * r2;
+		              + _Distortion.w * r2 * r2 * r2;
 		rDist = rDist * (chromaticAberration.x + chromaticAberration.y * r2);
 		
-		p = p * rDist * _ScaleOut;
-		p = p + _Center.xy;
+		p = (p * rDist * _ScaleOut) + _Center.xy;
 
 		return p;
 	}

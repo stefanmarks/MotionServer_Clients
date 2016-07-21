@@ -43,7 +43,7 @@ namespace VR
 			// split
 			string[] displayConfigs = Regex.Split(txtConfig, "}\\s*,\\s*{");
 
-			displays = new List<DisplayConfig>();
+			displays = new Dictionary<string, DisplayConfig>();
 			string logTxt = "";
 			foreach (string configTxt in displayConfigs)
 			{
@@ -53,7 +53,7 @@ namespace VR
 					DisplayConfig config = DisplayConfig.FromJson(configTxtTrim);
 					if (config != null)
 					{
-						displays.Add(config);
+						displays.Add(SimplifyConfigName(config.Name), config);
 						logTxt += ((logTxt.Length > 0) ? ", " : "") + config.Name;
 					}
 				}
@@ -68,6 +68,13 @@ namespace VR
 		}
 
 
+		private string SimplifyConfigName(string name)
+		{
+			// remove spaces and convert completely to lowercase 
+			return name.Replace(" ", "").ToLower();
+		}
+
+
 		/// <summary>
 		/// Retrieves a specific display configuration based on the name.
 		/// </summary>
@@ -76,28 +83,18 @@ namespace VR
 		/// 
 		public DisplayConfig GetConfig(string name)
 		{
-			DisplayConfig foundConfig = null;
-
 			if ( displays == null )
 			{
 				ParseDisplayProfiles();
 			}
 
-			foreach ( DisplayConfig config in displays )
-			{
-				if ( name.Equals(config.Name) )
-				{
-					foundConfig = config;
-					break;
-				}
-			}
-
-			if ( foundConfig == null )
+			DisplayConfig config = displays[SimplifyConfigName(name)];
+			if ( config == null )
 			{
 				Debug.LogWarning("Could not find VR Display Configuration '" + name + "'");
 			}
 
-			return foundConfig;
+			return config;
 		}
 
 
@@ -116,7 +113,7 @@ namespace VR
 		}
 
 
-		private static List<DisplayConfig> displays = null;
+		private static Dictionary<string, DisplayConfig> displays = null;
 	}
 
 }
