@@ -50,10 +50,17 @@ namespace MoCap
 
 
 		/// <summary>
-		/// Gets the latest frame data.
+		/// Retrieves the latest frame data.
 		/// </summary>
 		/// 
 		void Update();
+
+
+		/// <summary>
+		/// Gets the latest frame.
+		/// </summary>
+		/// 
+		Scene GetScene();
 
 
 		/// <summary>

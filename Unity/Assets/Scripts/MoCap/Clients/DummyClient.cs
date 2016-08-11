@@ -53,6 +53,12 @@ namespace MoCap
 		}
 
 
+		public Scene GetScene()
+		{
+			return scene;
+		}
+
+
 		public bool AddSceneListener(SceneListener listener)
 		{
 			bool added = false;
@@ -70,12 +76,6 @@ namespace MoCap
 		public bool RemoveSceneListener(SceneListener listener)
 		{
 			return sceneListeners.Remove(listener);
-		}
-
-
-		public Scene GetScene()
-		{
-			return scene;
 		}
 
 

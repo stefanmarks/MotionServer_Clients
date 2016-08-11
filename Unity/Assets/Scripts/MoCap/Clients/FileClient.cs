@@ -149,6 +149,12 @@ namespace MoCap
 		}
 
 
+		public Scene GetScene()
+		{
+			return scene;
+		}
+
+
 		public bool AddSceneListener(SceneListener listener)
 		{
 			bool added = false;
@@ -362,7 +368,7 @@ namespace MoCap
 
 			dataStream.ReadNextLine();
 			scene.frameNumber = dataStream.GetInt();             // frame number
-			scene.latency = (int)(dataStream.GetFloat() * 1000); // latency in ms
+			scene.latency     = dataStream.GetFloat(); // latency in s
 
 			if (!dataStream.GetString().Equals("M"))
 			{
@@ -527,12 +533,6 @@ namespace MoCap
 			bone.qz = q.z;
 			bone.qw = q.w;
 			*/
-		}
-
-
-		public Scene GetScene()
-		{
-			return scene;
 		}
 
 

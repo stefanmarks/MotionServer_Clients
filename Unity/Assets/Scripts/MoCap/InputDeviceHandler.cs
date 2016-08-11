@@ -36,30 +36,24 @@ namespace MoCap
 
 
 		/// <summary>
-		/// Checks if the button has been pressed at least once since the last check.
-		/// This method resets the "down" flag.
+		/// Checks if the button has been pressed at least once since the last update.
 		/// </summary>
 		/// <returns><c>true</c> when the button has been pressed</returns>
 		///
 		public bool GetButtonDown()
 		{
-			bool returnValue = pressed;
-			pressed = false; // reset flag
-			return returnValue;
+			return pressed;
 		}
 
 
 		/// <summary>
-		/// Checks if the button has been released at least once since the last check.
-		/// This method resets the "up" flag.
+		/// Checks if the button has been released at least once since the last update.
 		/// </summary>
 		/// <returns><c>true</c> when the button has been released</returns>
 		///
 		public bool GetButtonUp()
 		{
-			bool returnValue = released;
-			released = false; // reset flag
-			return returnValue;
+			return released;
 		}
 
 
@@ -101,6 +95,8 @@ namespace MoCap
 		public void SceneUpdated(Scene scene)
 		{
 			// store value for queries
+			released = false;
+			pressed  = false;
 			if (channel != null)
 			{
 				value = channel.value;

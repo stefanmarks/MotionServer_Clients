@@ -75,8 +75,7 @@ namespace VR
 						hmdInfo-&gt;EyeToScreenDistance = 0.0387f;
 		*/
 
-		#region Unity Messages
-		private void Start()
+		public void Start()
 		{
 			if (!Application.isPlaying)
 				return;
@@ -106,18 +105,15 @@ namespace VR
 			UpdateCameras();
 		}
 
-		#endregion
-
-
 
 		private void UpdateCameras()
 		{
 			if (needsCameraConfigure)
 			{
 				// Check presence of any VR display which would take care of the configuration automatically
-				if (UnityEngine.VR.VRSettings.loadedDevice != VRDeviceType.None)
+				if (VRDevice.isPresent)
 				{
-					Debug.Log("VR Display: " + UnityEngine.VR.VRDevice.model);
+					Debug.Log("VR Display: " + VRDevice.model);
 					needsCameraConfigure = false;
 				}
 			}

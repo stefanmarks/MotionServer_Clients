@@ -13,7 +13,7 @@ namespace MoCap
 	public class Scene
 	{
 		public int      frameNumber; // current frame number
-		public int      latency;     // latency in milliseconds from camera capture to the SDK sending the data
+		public float    latency;     // latency in seconds from camera capture to the SDK sending the data
 		public Actor[]  actors;      // actor data 
 		public Device[] devices;     // data for interaction devices
 

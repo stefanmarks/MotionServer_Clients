@@ -251,6 +251,12 @@ namespace MoCap
 		}
 
 
+		public Scene GetScene()
+		{
+			return scene;
+		}
+
+
 		public bool AddSceneListener(SceneListener listener)
 		{
 			bool added = false;
@@ -885,8 +891,8 @@ namespace MoCap
 					}
 				}
 
-				// read latency and convert from s to ms
-				scene.latency = (int)(packet.GetFloat() * 1000);
+				// read latency in s
+				scene.latency = packet.GetFloat();
 			}
 
 			NotifyListeners_Update();
@@ -949,12 +955,6 @@ namespace MoCap
 			bone.qz = q.z;
 			bone.qw = q.w;
 			*/
-		}
-
-
-		public Scene GetScene()
-		{
-			return scene;
 		}
 
 

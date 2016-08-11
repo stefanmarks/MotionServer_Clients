@@ -45,7 +45,6 @@ Shader "VR/LensDistortion"
 		p = (p - _Center.xy) *_ScaleIn;
 		
 		float r2 = p.x * p.x + p.y * p.y;
-		r2 = r2 * 2; // shouldn't be here, but seems to work better
 		float rDist =   _Distortion.x
 		              + _Distortion.y * r2
 		              + _Distortion.z * r2 * r2
