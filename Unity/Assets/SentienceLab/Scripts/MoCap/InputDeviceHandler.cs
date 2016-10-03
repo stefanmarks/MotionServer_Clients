@@ -10,6 +10,14 @@ namespace MoCap
 	public class InputDeviceHandler : SceneListener
 	{
 		/// <summary>
+		/// Threshold beyond which to consider a continuous axis value "pressed".
+		/// Default: 1.0
+		/// </summary>
+		/// 
+		public float PressThreshold { get; set; }
+
+
+		/// <summary>
 		/// Creates a new input device handler instance for a specific device.
 		/// </summary>
 		/// <param name="deviceName">the device to attach to</param>
@@ -19,6 +27,10 @@ namespace MoCap
 		{
 			this.deviceName  = deviceName;
 			this.channelName = channelName;
+
+			lastFrame      = 0;
+			PressThreshold = 1.0f;
+
 			MoCapManager.GetInstance().AddSceneListener(this);
 		}
 
@@ -30,8 +42,7 @@ namespace MoCap
 		///
 		public bool GetButton()
 		{
-			bool returnValue = (value > 0);
-			return returnValue;
+			return (value >= PressThreshold);
 		}
 
 
@@ -74,6 +85,7 @@ namespace MoCap
 			oldValue = 0;
 			pressed  = false;
 			released = false;
+			lastFrame = 0;
 
 			channel = null;
 			Device device = scene.FindDevice(deviceName);
@@ -94,21 +106,28 @@ namespace MoCap
 
 		public void SceneUpdated(Scene scene)
 		{
-			// store value for queries
+			if (Time.frameCount != lastFrame)
+			{
+				// SceneUpdates might happen several times per Unity Update.
+				// Reset flags only when a new Unity frame has come
 			released = false;
 			pressed  = false;
+			}
+
+			// store values and flags for queries
 			if (channel != null)
 			{
 				value = channel.value;
 				if (value != oldValue)
 				{
 					// changed value: set booleans accordingly
-					if (value <= 0) { released = true; }
-					if (value >  0) { pressed = true; }
+					if ((oldValue >= PressThreshold) && (value <  PressThreshold)) { released = true; }
+					if ((oldValue <  PressThreshold) && (value >= PressThreshold)) { pressed  = true; }
 
 					oldValue = value;
 				}
 			}
+			lastFrame = Time.frameCount;
 		}
 
 
@@ -122,6 +141,7 @@ namespace MoCap
 
 
 		private string  deviceName, channelName;
+		private int     lastFrame;
 		private Channel channel;
 		private float   value, oldValue;
 		private bool    pressed, released;
