@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace VR
+namespace SentienceLab
 {
 	/// <summary>
 	/// Script for applying parameters to the shader that simulates the in-built lens distortion of the Oculus Rift.

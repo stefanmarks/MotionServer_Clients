@@ -3,7 +3,7 @@ using UnityEngine.Assertions;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace VR
+namespace SentienceLab
 {
 	/// <summary>
 	/// Class for managing VR displays and their render and camera settings.
@@ -37,7 +37,7 @@ namespace VR
 			// JSON file cannot directly be read because of polymorphism > split manually
 			// remove tabs and linefeeds
 			string txtConfig = ConfigFile.text.Replace("\t", "").Replace("\n", "");
-			// cut beginning an end
+			// cut beginning and end
 			txtConfig = Regex.Replace(txtConfig, "^\\s*{\\s*\"Displays\":\\[\\s*{", "");
 			txtConfig = Regex.Replace(txtConfig, "}\\s*\\]\\s*}\\s*$", "");
 			// split

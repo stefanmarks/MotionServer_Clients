@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.VR;
 
-namespace VR
+namespace SentienceLab
 {
 	/// <summary>
 	/// Stereo camera manager for applying the necessary adjustments to the template camera
@@ -80,6 +80,15 @@ namespace VR
 			if (!Application.isPlaying)
 				return;
 
+			if (UnityEngine.VR.VRDevice.isPresent)
+				return;
+
+			//foreach ( string s in VRSettings.supportedDevices )
+			//{
+			//	Debug.Log(s);
+			//}
+			//VRSettings.LoadDeviceByName(DisplayProfileName);
+
 			// search for the display configuration stated in the parameter
 			config = DisplayManager.GetInstance().GetConfig(DisplayProfileName);
 			if (config is ScreenConfig)
@@ -141,6 +150,7 @@ namespace VR
 					leftCameraNode.transform.localRotation = cameraNode.transform.localRotation;
 					leftCameraNode.transform.localScale = Vector3.one;
 					ConfigureCamera(leftCameraNode, VRNode.LeftEye, hmdConfig);
+					AudioListener alLeft = leftCameraNode.GetComponentInChildren<AudioListener>();
 
 					rightCameraNode = GameObject.Instantiate(cameraNode);
 					rightCameraNode.name = "Right Eye Camera";
@@ -148,6 +158,13 @@ namespace VR
 					rightCameraNode.transform.localRotation = cameraNode.transform.localRotation;
 					rightCameraNode.transform.localScale = Vector3.one;
 					ConfigureCamera(rightCameraNode, VRNode.RightEye, hmdConfig);
+					AudioListener alRight = rightCameraNode.GetComponentInChildren<AudioListener>();
+
+					// there can only be one listener
+					if ((alLeft != null) && (alRight != null))
+					{
+						Component.DestroyImmediate(alRight);
+					}
 
 					leftCameraNode.SetActive(true);
 					rightCameraNode.SetActive(true);

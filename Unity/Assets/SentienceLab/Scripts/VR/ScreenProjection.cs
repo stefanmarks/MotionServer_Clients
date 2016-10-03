@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace VR
+namespace SentienceLab
 {
 	/// <summary>
 	/// This script should be attached to a Camera object in Unity. 

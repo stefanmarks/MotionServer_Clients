@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace VR
+namespace SentienceLab
 {
 	[System.Serializable]
 	public enum DisplayType
@@ -8,6 +8,7 @@ namespace VR
 		Screen,
 		HMD
 	}
+
 
 	[System.Serializable]
 	public class DisplayConfig
