@@ -183,16 +183,19 @@ namespace MoCap
 								client = new FileClient();
 							}
 						}
-						else
-						{
-							client = new DummyClient();
-						}
 
 						if (client.Connect(info))
 						{
 							// connection established > that's it
 							break;
 						}
+					}
+
+					// no client yet > try VR
+					if (!client.IsConnected() && UnityEngine.VR.VRDevice.isPresent)
+					{
+						client = new HtcViveClient();
+						client.Connect(null);
 					}
 
 					if (client.IsConnected())
