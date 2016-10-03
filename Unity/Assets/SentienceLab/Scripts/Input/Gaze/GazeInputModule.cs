@@ -23,7 +23,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.VR;
-using VR.Input;
+using SentienceLab.Input;
 
 /// This script provides an implemention of Unity's `BaseInputModule` class, so
 /// that Canvas-based (_uGUI_) UI elements can be selected by looking at them and
@@ -129,7 +129,7 @@ public class GazeInputModule : BaseInputModule
 	{
 		if (triggerAction == null)
 		{
-			triggerAction = InputManager.GetActionHandler(triggerActionName);
+			triggerAction = InputHandler.Find(triggerActionName);
 		}
 
 		// Save the previous Game Object
@@ -407,7 +407,7 @@ public class GazeInputModule : BaseInputModule
 	}
 
 
-	private ActionHandler    triggerAction;
+	private InputHandler    triggerAction;
 	private PointerEventData pointerData;
 	private Vector2          lastHeadPose, pointerPos;
 	private float            gazeStartTime, fuseTime;

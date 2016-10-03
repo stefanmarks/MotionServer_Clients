@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 [AddComponentMenu("Input/Gaze/GUI Reticle")]
 
@@ -16,7 +17,7 @@ public class GuiReticle : MonoBehaviour, IGazePointer
 	public float maximumReticleDistance = 5.0f;
 
 
-	void Start ()
+	void Start()
 	{
 		reticleDistance      = new Vector3(0, 0, maximumReticleDistance);
 		originalReticleScale = transform.localScale;
@@ -25,13 +26,20 @@ public class GuiReticle : MonoBehaviour, IGazePointer
 
 		reticleNeutral.gameObject.SetActive(false);
 		reticleActive.gameObject.SetActive(false);
-		fuseProgress = 0;
+		reticleFuse.gameObject.SetActive(false);
 	}
 
 
 	void OnEnable()
 	{
 		GazeInputModule.gazePointer = this;
+		
+		// create Physics Raycaster if this is attached to a camera
+		Camera cam = transform.parent.GetComponent<Camera>();
+		if (cam != null)
+		{
+			raycaster = (PhysicsRaycaster) cam.gameObject.AddComponent<PhysicsRaycaster>();
+		}
 	}
 
 
@@ -40,6 +48,12 @@ public class GuiReticle : MonoBehaviour, IGazePointer
 		if (GazeInputModule.gazePointer == (IGazePointer) this)
 		{
 			GazeInputModule.gazePointer = null;
+		}
+
+		if (raycaster != null)
+		{
+			GameObject.DestroyImmediate(raycaster);
+			raycaster = null;
 		}
 	}
 
@@ -165,4 +179,5 @@ public class GuiReticle : MonoBehaviour, IGazePointer
 	private Vector3 originalReticleScale;
 	private Vector3 reticleScale;
 	private float   fuseProgress;
+	private PhysicsRaycaster raycaster;
 }
