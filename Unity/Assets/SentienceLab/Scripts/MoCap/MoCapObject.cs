@@ -223,6 +223,11 @@ namespace MoCap
 			else
 			{
 				Debug.LogWarning("Mocap Object '" + this.name + "' cannot find MoCap actor '" + actorName + "'.");
+				if (trackingLostBehaviour == TrackingLostBehaviour.Disable)
+				{
+					// MoCap Actor not found at all > time to disable object?
+					this.gameObject.SetActive(false);
+				}
 			}
 		}
 

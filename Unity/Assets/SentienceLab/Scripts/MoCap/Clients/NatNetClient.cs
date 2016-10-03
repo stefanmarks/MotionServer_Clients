@@ -497,7 +497,7 @@ namespace MoCap
 		{
 			int    id   = 0;                  // no ID for markersets
 			string name = packet.GetString(); // markerset name
-			Actor actor = new Actor(scene, id, name);
+			Actor actor = new Actor(scene, name, id);
 
 			int nMarkers = packet.GetInt32();  // marker count
 			// TODO: Sanity check on the number before allocating that much space
@@ -529,7 +529,7 @@ namespace MoCap
 			if (actor == null)
 			{
 				Debug.LogWarning("Rigid Body " + name + " could not be matched to an actor.");
-				actor = new Actor(scene, id, name);
+				actor = new Actor(scene, name, id);
 				actors.Add(actor);
 			}
 
@@ -575,7 +575,7 @@ namespace MoCap
 			if (actor == null)
 			{
 				Debug.LogWarning("Skeleton " + skeletonName + " could not be matched to an actor.");
-				actor = new Actor(scene, skeletonId, skeletonName);
+				actor = new Actor(scene, skeletonName, skeletonId);
 				actors.Add(actor);
 			}
 

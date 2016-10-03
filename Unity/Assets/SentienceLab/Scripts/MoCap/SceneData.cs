@@ -140,10 +140,10 @@ namespace MoCap
 		/// Creates a new actor.
 		/// </summary>
 		/// <param name="scene">the scene the actor belongs to</param>
-		/// <param name="id">the ID of the actor</param>
 		/// <param name="name">the name of the actor</param>
+		/// <param name="id">the ID of the actor</param>
 		/// 
-		public Actor(Scene scene, int id, string name)
+		public Actor(Scene scene, string name, int id)
 		{
 			this.scene = scene;
 			this.id    = id;
@@ -289,6 +289,18 @@ namespace MoCap
 				chain.InsertRange(0, parent.chain);
 			}
 		}
+
+		/// <summary>
+		/// Copys data froma position/rotation from Unity classes into the structure
+		/// </summary>
+		/// <param name="pos">Position data</param>
+		/// <param name="rot">Rotation data</param>
+		/// 
+		public void CopyTransform(UnityEngine.Vector3 pos, UnityEngine.Quaternion rot)
+		{
+			px = pos.x; py = pos.y; pz = pos.z;
+			qx = rot.x; qy = rot.y; qz = rot.z; qw = rot.w;
+		}
 	}
 
 
@@ -317,6 +329,7 @@ namespace MoCap
 			this.name  = name;
 			this.id    = id;
 		}
+
 
 		/// <summary>
 		/// Finds a channel by name.
