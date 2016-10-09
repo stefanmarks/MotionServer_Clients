@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.VR;
 using Valve.VR;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for a MoCap client that uses tracking data from an HTC Vive.
@@ -30,24 +30,32 @@ namespace MoCap
 
 			if (connected)
 			{
+				system = OpenVR.System;
+				if (system == null)
+				{
+					connected = false;
+					Debug.LogWarning("Could not find OpenVR System instance.");
+				}
 				compositor = OpenVR.Compositor;
-				connected &= compositor != null;
+				if (compositor == null)
+				{
+					connected = false;
+					Debug.LogWarning("Could not find OpenVR Compositor instance.");
+				}
 			}
 
-			if ( connected )
+			if (connected)
 			{
 				poses     = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
 				gamePoses = new TrackedDevicePose_t[0];
 
-				controllers   = new SteamVR_Controller.Device[2];
-				scene.actors  = new Actor[controllers.Length];
-				scene.devices = new Device[controllers.Length];
+				FindControllerIndices();
+				scene.actors  = new Actor[controllerIndices.Length];
+				scene.devices = new Device[controllerIndices.Length];
+				states        = new VRControllerState_t[controllerIndices.Length];
 
-				int firstControllerIdx = SteamVR_Controller.GetDeviceIndex(SteamVR_Controller.DeviceRelation.First);
-				for (int idx = 0; idx < controllers.Length; idx++)
+				for (int idx = 0; idx < controllerIndices.Length; idx++)
 				{
-					controllers[idx] = SteamVR_Controller.Input(idx + firstControllerIdx);
-
 					string name = "Controller" + (idx + 1);
 
 					Actor actor        = new Actor(scene, name, idx);
@@ -56,17 +64,39 @@ namespace MoCap
 					scene.actors[idx]  = actor;
 
 					Device device      = new Device(scene, name, idx);
-					device.channels    = new Channel[5];
-					device.channels[0] = new Channel(device, "trigger");
-					device.channels[1] = new Channel(device, "menu");
-					device.channels[2] = new Channel(device, "grip");
-					device.channels[3] = new Channel(device, "axis1");
+					device.channels    = new Channel[7];
+					device.channels[0] = new Channel(device, "button1");  // fire
+					device.channels[1] = new Channel(device, "button2");  // menu
+					device.channels[2] = new Channel(device, "button3");  // grip
+					device.channels[3] = new Channel(device, "axis1");    // touchpad + press
 					device.channels[4] = new Channel(device, "axis2");
+					device.channels[5] = new Channel(device, "axis1raw"); // touchpad touch
+					device.channels[6] = new Channel(device, "axis2raw");
 
 					scene.devices[idx] = device;
 				}
 			}
 			return connected;
+		}
+
+
+		/// <summary>
+		/// Finds all the OpenVR device indices for hand controllers.
+		/// </summary>
+		/// 
+		private void FindControllerIndices()
+		{
+			List<int> indices = new List<int>();
+			for (int index = 0; index < OpenVR.k_unMaxTrackedDeviceCount; index++)
+			{
+				if (system.GetTrackedDeviceClass((uint) index) == ETrackedDeviceClass.Controller)
+				{
+					indices.Add(index);
+				}
+				// limit to 2 controllers
+				if (indices.Count == 2) break;
+			}
+			controllerIndices = indices.ToArray();
 		}
 
 
@@ -79,6 +109,8 @@ namespace MoCap
 		public void Disconnect()
 		{
 			connected = false; 
+			system     = null;
+			compositor = null;
 			sceneListeners.Clear();
 		}
 		
@@ -91,44 +123,42 @@ namespace MoCap
 
 		public void Update()
 		{
+			// TODO: is this necessary?
 			compositor.GetLastPoses(poses, gamePoses);
-			SteamVR_Controller.Update();
-			for (int idx = 0; idx < controllers.Length; idx++)
+
+			for (int idx = 0; idx < controllerIndices.Length; idx++)
 			{
-				// update position and orientation
-				SteamVR_Controller.Device controller = controllers[idx];
+				// update position, orientation, and tracking state
+				int controller = controllerIndices[idx];
 				Bone bone = scene.actors[idx].bones[0];
-				bone.tracked = poses[controller.index].bPoseIsValid;
-				HmdMatrix34_t pose = poses[controller.index].mDeviceToAbsoluteTracking;
+
+				HmdMatrix34_t pose = poses[controller].mDeviceToAbsoluteTracking;
 				Matrix4x4     m    = Matrix4x4.identity;
-				m[0, 0] =  pose.m0;
-				m[0, 1] =  pose.m1;
-				m[0, 2] = -pose.m2;
-				m[0, 3] =  pose.m3;
+				m[0,0] = pose.m0; m[0,1] = pose.m1; m[0,2] = pose.m2;  m[0,3] = pose.m3;
+				m[1,0] = pose.m4; m[1,1] = pose.m5; m[1,2] = pose.m6;  m[1,3] = pose.m7;
+				m[2,0] = pose.m8; m[2,1] = pose.m9; m[2,2] = pose.m10; m[2,3] = pose.m11;
+				MathUtil.ToggleLeftRightHandedMatrix(ref m);
+				bone.CopyTransform(MathUtil.GetTranslation(m), MathUtil.GetRotation(m));
 
-				m[1, 0] =  pose.m4;
-				m[1, 1] =  pose.m5;
-				m[1, 2] = -pose.m6;
-				m[1, 3] =  pose.m7;
-
-				m[2, 0] = -pose.m8;
-				m[2, 1] = -pose.m9;
-				m[2, 2] =  pose.m10;
-				m[2, 3] = -pose.m11;
-
-				bone.CopyTransform(m.GetPosition(), m.GetRotation());
+				bone.tracked = poses[controller].bDeviceIsConnected && poses[controller].bPoseIsValid;
 
 				// update inputs
+				system.GetControllerStateWithPose(
+					ETrackingUniverseOrigin.TrackingUniverseStanding, 
+					(uint) controller, ref states[idx], ref poses[idx]);
 				Device device = scene.devices[idx];
 				// trigger button
-				device.channels[0].value = controller.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Trigger).magnitude;
+				device.channels[0].value = states[idx].rAxis1.x;
 				// menu button
-				device.channels[1].value = controller.GetAxis(Valve.VR.EVRButtonId.k_EButton_ApplicationMenu).magnitude;
+				device.channels[1].value = (states[idx].ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_ApplicationMenu)) != 0 ? 1 : 0;
 				// grip button
-				device.channels[2].value = controller.GetAxis(Valve.VR.EVRButtonId.k_EButton_Grip).magnitude;
-				// touchpad (axis1/2)
-				device.channels[3].value = controller.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).x;
-				device.channels[4].value = controller.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).y;
+				device.channels[2].value = (states[idx].ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_Grip)) != 0 ? 1 : 0;
+				// touchpad (axis1/2 and axis1/2raw)
+				float touchpadPressed = (states[idx].ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_SteamVR_Touchpad)) != 0 ? 1 : 0;
+				device.channels[3].value = states[idx].rAxis0.x * touchpadPressed;
+				device.channels[4].value = states[idx].rAxis0.y * touchpadPressed;
+				device.channels[5].value = states[idx].rAxis0.x;
+				device.channels[6].value = states[idx].rAxis0.y;
 			}
 			NotifyListeners_Update();
 		}
@@ -181,9 +211,11 @@ namespace MoCap
 		private bool                        connected;
 		private Scene                       scene;
 		private List<SceneListener>         sceneListeners;
-		private SteamVR_Controller.Device[] controllers;
 		private CVRCompositor               compositor;
+		private CVRSystem              system;
+		private int[]                  controllerIndices;
 		private TrackedDevicePose_t[]       poses, gamePoses;
+		private VRControllerState_t[]  states;
 	}
 
 }

@@ -8,7 +8,7 @@
 		{
 			"inputName": "trigger",
 			"inputType": 1,
-			"parameters": "Controller1/trigger"
+			"parameters": "Controller1/button1"
 		}
 	]
 }
