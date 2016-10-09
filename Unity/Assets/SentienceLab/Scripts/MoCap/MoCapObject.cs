@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for controlling a game object by Motion Capture data.

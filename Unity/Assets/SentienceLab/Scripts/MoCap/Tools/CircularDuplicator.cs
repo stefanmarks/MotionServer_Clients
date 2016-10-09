@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for creating copies of a GameObject arranged in a circular fashion.

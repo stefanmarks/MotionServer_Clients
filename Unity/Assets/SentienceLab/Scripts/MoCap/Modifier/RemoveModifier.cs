@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Component for scaline MoCap data.

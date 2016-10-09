@@ -1,6 +1,6 @@
 using System;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Base class for providing connection information to the client instance.

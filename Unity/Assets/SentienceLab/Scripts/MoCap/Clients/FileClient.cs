@@ -5,7 +5,7 @@ using System.IO.Compression;
 using System.Threading;
 using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for a MoCap client that reads from a .MOT file.

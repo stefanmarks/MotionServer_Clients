@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for treating a MoCap input device similar to key strokes of the Input class,

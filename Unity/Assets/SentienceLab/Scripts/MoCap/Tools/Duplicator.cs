@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Abstract base class for duplicating GameObjects into arrangements.

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	[System.Serializable]
 	public class BoneNameTranslationEntry

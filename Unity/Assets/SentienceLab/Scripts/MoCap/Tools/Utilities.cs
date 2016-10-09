@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Utilities for Scenegraph queries and manipulations.
@@ -35,7 +35,6 @@ namespace MoCap
 			}
 			return result;
 		}
-
 	}
 
 }

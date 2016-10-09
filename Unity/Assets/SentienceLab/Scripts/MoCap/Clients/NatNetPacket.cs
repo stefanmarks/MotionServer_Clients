@@ -7,7 +7,7 @@ using UnityEngine;
 /// Classes for NatNet data packet and marshalling/unmarshalling methods.
 /// </summary>
 /// 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for a received NatNet data packet and unmarshalling methods.

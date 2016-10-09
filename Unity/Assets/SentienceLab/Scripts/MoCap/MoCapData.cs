@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for storing a single MoCap data point (e.g., a marker or a bone).
@@ -13,7 +13,6 @@ namespace MoCap
 		public Quaternion rot; // orientation of bone
 		public bool  tracked;  // tracking flag
 		public float length;   // length of bone
-
 
 		/// <summary>
 		/// Creates a new MoCap data object.

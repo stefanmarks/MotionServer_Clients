@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for a NatNet compatible MoCap client.

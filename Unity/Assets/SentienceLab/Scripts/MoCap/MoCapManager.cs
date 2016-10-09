@@ -4,7 +4,7 @@ using System.Net;
 using System.Threading;
 using System.Collections.Generic;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Component for a Motion Capture manager.

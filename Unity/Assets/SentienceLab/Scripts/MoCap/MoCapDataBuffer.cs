@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for buffering MoCap data for (e.g., to achieve a delay).
@@ -16,6 +16,7 @@ namespace MoCap
 
 		/// arbitrary object associated with this buffer
 		public readonly System.Object DataObject;
+
 
 		/// <summary>
 		/// Creates a new MoCap data buffer object.

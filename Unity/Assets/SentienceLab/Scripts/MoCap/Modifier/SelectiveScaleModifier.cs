@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Component for scaling MoCap data selectively by bone/marker name.
@@ -43,4 +43,5 @@ namespace MoCap
 			}
 		}
 	}
+
 }

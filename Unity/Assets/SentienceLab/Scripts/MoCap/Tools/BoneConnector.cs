@@ -4,7 +4,7 @@
 using UnityEditor;
 #endif 
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for a single bone name connection entry.

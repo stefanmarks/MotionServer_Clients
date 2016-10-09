@@ -1,4 +1,4 @@
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Interface for components that influence MoCap data, e.g., scaling, mirroring

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for a dummy MoCap client that does not deliver any data.

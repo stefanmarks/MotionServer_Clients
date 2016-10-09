@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using MoCap;
+using SentienceLab.MoCap;
 using System.Collections.Generic;
 
 #if UNITY_EDITOR

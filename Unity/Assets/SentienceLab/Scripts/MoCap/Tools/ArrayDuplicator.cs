@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for creating copies of a GameObject arranged in an array.
@@ -42,7 +42,6 @@ namespace MoCap
 		{
 			return numberOfColumns * numberOfRows;
 		}
-
 	}
 
 }

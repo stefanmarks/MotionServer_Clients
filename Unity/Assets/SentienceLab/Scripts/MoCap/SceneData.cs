@@ -4,7 +4,7 @@ using System.Collections.Generic;
 /// Scene description and data.
 /// </summary>
 /// 
-namespace MoCap
+namespace SentienceLab.MoCap
 {
 	/// <summary>
 	/// Class for holding the information of a MoCap scene.

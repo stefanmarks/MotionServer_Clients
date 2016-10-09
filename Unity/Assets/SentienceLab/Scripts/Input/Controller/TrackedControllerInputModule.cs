@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using SentienceLab.Input;
-using MoCap;
+using SentienceLab.MoCap;
 
 [AddComponentMenu("Event/Tracked Controller Input Module")]
 public class TrackedControllerInputModule : BaseInputModule
@@ -201,6 +201,7 @@ public class TrackedControllerInputModule : BaseInputModule
 		controllerCamera.transform.position = controllers[index].trackedObject.position;
 		controllerCamera.transform.forward  = controllers[index].trackedObject.forward;
 	}
+
 
 	// Process is called by UI system to process events
 	public override void Process()
