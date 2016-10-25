@@ -7,14 +7,24 @@ ModelImporter:
   fileIDToRecycleName:
     100000: Head
     100002: //RootNode
+    100004: Touchpad
+    100006: Trigger
     400000: Head
     400002: //RootNode
+    400004: Touchpad
+    400006: Trigger
     2300000: Head
     2300002: //RootNode
+    2300004: Touchpad
+    2300006: Trigger
     3300000: Head
     3300002: //RootNode
+    3300004: Touchpad
+    3300006: Trigger
     4300000: Handle
     4300002: Head
+    4300004: Touchpad
+    4300006: Trigger
   materials:
     importMaterials: 1
     materialName: 1
