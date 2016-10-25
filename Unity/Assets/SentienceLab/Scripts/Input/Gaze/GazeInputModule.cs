@@ -57,7 +57,7 @@ public class GazeInputModule : BaseInputModule
 	public float defaultFuseTime = 0;
 
 	[Tooltip("Action for triggering the object gazed at")]
-	public string triggerActionName = "fire";
+	public string triggerActionName = "trigger";
 
 	/// Time in seconds between the pointer down and up events sent by a trigger.
 	/// Allows time for the UI elements to make their state transitions.
@@ -177,6 +177,27 @@ public class GazeInputModule : BaseInputModule
 		pointerData.Reset();
 		pointerData.position = pointerPos;
 		eventSystem.RaycastAll(pointerData, m_RaycastResultCache);
+
+		// discard every hit too far away or too close
+		for (int idx = m_RaycastResultCache.Count - 1 ; idx >= 0; idx--)
+		{
+			RaycastResult r = m_RaycastResultCache[idx];
+
+			// what are te limits of the gaze pointer
+			float min, max;
+			gazePointer.GetDistanceLimits(out min, out max);
+
+			// consider gaze behaviour modifiers
+			GazeBehaviourModifier gbm = (r.gameObject != null) ? r.gameObject.GetComponent<GazeBehaviourModifier>() : null;
+			min = (gbm != null) && (gbm.minimumGazeRangeOverride > 0) ? gbm.minimumGazeRangeOverride : min;
+			max = (gbm != null) && (gbm.maximumGazeRangeOverride > 0) ? gbm.maximumGazeRangeOverride : max;
+
+			if ((r.distance > max) || (r.distance < min))
+			{
+				m_RaycastResultCache.RemoveAt(idx);
+			}
+		}
+
 		pointerData.pointerCurrentRaycast = FindFirstRaycast(m_RaycastResultCache);
 		m_RaycastResultCache.Clear();
 		pointerData.delta = headPose - lastHeadPose;
@@ -245,7 +266,8 @@ public class GazeInputModule : BaseInputModule
 			{
 				gazePointer.OnGazeStart(eventCamera, gazeObject, intersectionPosition, isInteractive);
 				gazeStartTime = Time.unscaledTime;
-				fuseTime      = defaultFuseTime;
+				GazeBehaviourModifier gbm = gazeObject.GetComponent<GazeBehaviourModifier>();
+				fuseTime  = (gbm != null) && (gbm.fuseTimeOverride > 0) ? gbm.fuseTimeOverride : defaultFuseTime;
 				fuseState     = FuseState.Arming;
 			}
 		}
@@ -259,6 +281,10 @@ public class GazeInputModule : BaseInputModule
 		{
 			ExecuteEvents.Execute(pointerData.pointerDrag, pointerData, ExecuteEvents.beginDragHandler);
 			pointerData.dragging = true;
+		}
+		else if ( moving )
+		{
+			ExecuteEvents.Execute(pointerData.pointerDrag, pointerData, ExecuteEvents.moveHandler);
 		}
 
 		// Drag notification

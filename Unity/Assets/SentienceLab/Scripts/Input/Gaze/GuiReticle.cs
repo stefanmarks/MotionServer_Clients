@@ -38,7 +38,11 @@ public class GuiReticle : MonoBehaviour, IGazePointer
 		Camera cam = transform.parent.GetComponent<Camera>();
 		if (cam != null)
 		{
-			raycaster = (PhysicsRaycaster) cam.gameObject.AddComponent<PhysicsRaycaster>();
+			PhysicsRaycaster raycaster = cam.GetComponent<PhysicsRaycaster>();
+			if (raycaster == null)
+			{
+				cam.gameObject.AddComponent<PhysicsRaycaster>();
+			}
 		}
 	}
 
@@ -49,13 +53,7 @@ public class GuiReticle : MonoBehaviour, IGazePointer
 		{
 			GazeInputModule.gazePointer = null;
 		}
-
-		if (raycaster != null)
-		{
-			GameObject.DestroyImmediate(raycaster);
-			raycaster = null;
 		}
-	}
 
 
 	void Update()
@@ -149,6 +147,13 @@ public class GuiReticle : MonoBehaviour, IGazePointer
 	}
 
 
+	public void GetDistanceLimits(out float minimumDistance, out float maximumDistance)
+	{
+		minimumDistance = minimumReticleDistance;
+		maximumDistance = maximumReticleDistance;
+	}
+
+
 	private void SetGazeTarget(Transform cameraTransform, Vector3 target)
 	{
 		// determine distance to targetpoint
@@ -175,9 +180,8 @@ public class GuiReticle : MonoBehaviour, IGazePointer
 	}
 
 
-	private Vector3 reticleDistance;
-	private Vector3 originalReticleScale;
-	private Vector3 reticleScale;
-	private float   fuseProgress;
-	private PhysicsRaycaster raycaster;
+	private Vector3          reticleDistance;
+	private Vector3          originalReticleScale;
+	private Vector3          reticleScale;
+	private float            fuseProgress;
 }

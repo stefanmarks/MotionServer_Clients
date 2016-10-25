@@ -86,4 +86,11 @@ public interface IGazePointer
 	/// to avoid a flickering effect when just at the border of the intersection.
 	void GetPointerRadius(out float innerRadius, out float outerRadius);
 
+
+	/// <summary>
+	/// Return the minimum and maximum distance of th pointer
+	/// </summary>
+	/// <param name="minimumDistance">minimum distance of the pointer</param>
+	/// <param name="maximumDistance">maximum distance of the pointer</param>
+	void GetDistanceLimits(out float minimumDistance, out float maximumDistance);
 }

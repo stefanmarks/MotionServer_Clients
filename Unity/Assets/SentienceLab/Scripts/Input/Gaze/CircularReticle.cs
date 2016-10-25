@@ -152,6 +152,13 @@ public class CircularReticle : MonoBehaviour, IGazePointer
 	}
 
 
+	public void GetDistanceLimits(out float minimumDistance, out float maximumDistance)
+	{
+		minimumDistance = kReticleDistanceMin;
+		maximumDistance = kReticleDistanceMax;
+	}
+
+
 	private void CreateReticleVertices()
 	{
 		Mesh mesh = new Mesh();
