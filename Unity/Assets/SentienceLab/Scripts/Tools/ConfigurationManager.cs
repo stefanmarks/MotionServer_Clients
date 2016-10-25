@@ -39,6 +39,16 @@ public class ConfigurationManager : MonoBehaviour
 
 	public void Start()
 	{
+		DetectConfiguration();
+		Debug.Log("Configuration: " + configuration);
+		ProcessConfigurations();
+	}
+
+
+	private static void DetectConfiguration()
+	{
+		if (detectionDone) return;
+
 		// fallback
 		configuration = Configuration.Standalone;
 
@@ -63,13 +73,18 @@ public class ConfigurationManager : MonoBehaviour
 			}
 		}
 
-		Debug.Log("Configuration: " + configuration);
-
-		DoCheck();
+		detectionDone = true;
 	}
 
 
-	private void DoCheck()
+	public static Configuration GetConfiguration()
+	{
+		DetectConfiguration();
+		return configuration;
+	}
+
+
+	private void ProcessConfigurations()
 	{
 		foreach (ConfigItem ci in objectList)
 		{
@@ -88,7 +103,8 @@ public class ConfigurationManager : MonoBehaviour
 	}
 
 
-	private Configuration configuration;
+	private static Configuration configuration;
+	private static bool          detectionDone = false;
 }
 
 

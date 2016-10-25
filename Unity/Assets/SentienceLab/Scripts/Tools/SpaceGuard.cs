@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Valve.VR;
 
 /// <summary>
 /// Script for fading in geometry that signals the limits of the tracking volume.
@@ -6,11 +7,17 @@
 /// 
 public class SpaceGuard : MonoBehaviour
 {
-	[Tooltip("The object that needs to be guarded to stay within the walls.")]
+	[Tooltip("The object that needs to be guarded to stay within the walls (default: main camera).")]
 	public Transform guardedObject;
 
+	[Tooltip("Material to use for rendering the walls.")]
+	public Material wallMaterial;
+
+	[Tooltip("The height of the walls.")]
+	public float wallHeight = 2;
+
 	[Tooltip("The minimum distance that the falls should start to fade in.")]
-	public float fadeInDistance;
+	public float fadeInDistance = 0.5f;
 
 	[Tooltip("The name of the material parameter to modify based on the distance.")]
 	public string colourParameterName = "_TintColor";
@@ -26,10 +33,69 @@ public class SpaceGuard : MonoBehaviour
 	/// 
 	void Start()
 	{
+		// if no specific guarded object stated, use main camera
+		if (guardedObject == null)
+		{
+			guardedObject = Camera.main.transform;
+		}
+
+		// create walls
+		CreateSpaceGuardWalls();
+
 		// all components with a renderer are considered walls
 		walls = transform.GetComponentsInChildren<MeshRenderer>();
 	}
 	
+
+	private void CreateSpaceGuardWalls()
+	{
+		switch (ConfigurationManager.GetConfiguration())
+		{
+			case ConfigurationManager.Configuration.HTC_Vive:
+				CVRChaperone chaperone = OpenVR.Chaperone;
+				HmdQuad_t  area = new HmdQuad_t();
+				chaperone.GetPlayAreaRect(ref area);
+				CreateWall(area.vCorners0.v0, area.vCorners0.v2, area.vCorners1.v0, area.vCorners1.v2, "Wall1");
+				CreateWall(area.vCorners1.v0, area.vCorners1.v2, area.vCorners2.v0, area.vCorners2.v2, "Wall2");
+				CreateWall(area.vCorners2.v0, area.vCorners2.v2, area.vCorners3.v0, area.vCorners3.v2, "Wall3");
+				CreateWall(area.vCorners3.v0, area.vCorners3.v2, area.vCorners0.v0, area.vCorners0.v2, "Wall4");
+				chaperone.ForceBoundsVisible(false);
+				break;
+
+			case ConfigurationManager.Configuration.MoCapRoom:
+				CreateWall(-2, -2,  2, -2, "Front");
+				CreateWall( 2, -2,  2,  2, "Right");
+				CreateWall( 2,  2, -2,  2, "Back");
+				CreateWall(-2,  2, -2, -2, "Left");
+				break;
+
+			default:
+				break;
+		}
+	}
+
+
+	private void CreateWall(float x1, float z1, float x2, float z2, string name)
+	{
+		Debug.Log(x1 + "/" + z1 + " > " + x2 + " / " + z2);
+		GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+		Vector3 corner1 = new Vector3(x1, 0, z1);
+		Vector3 corner2 = new Vector3(x2, 0, z2);
+		Vector3 wall    = corner2 - corner1;
+		Vector3 centre  = 0.5f * (corner2 + corner1) + new Vector3(0, wallHeight / 2, 0);
+		quad.name                    = name;
+		quad.transform.parent        = this.transform;
+		quad.transform.localPosition = centre;
+		quad.transform.localScale    = new Vector3(wall.magnitude, wallHeight, 1);
+		quad.transform.localRotation = Quaternion.AngleAxis(Mathf.Rad2Deg * Mathf.Atan2(centre.x, centre.z), Vector3.up);
+
+		MeshRenderer renderer = quad.GetComponent<MeshRenderer>();
+		renderer.material = wallMaterial;
+		Vector2 scale  = renderer.material.GetTextureScale("_MainTex");
+		scale.Scale(new Vector2(Mathf.Max(1, Mathf.Round(wall.magnitude)), wallHeight));
+		renderer.material.SetTextureScale("_MainTex", scale);
+	}
+
 
 	/// <summary>
 	/// Called one per frame.
