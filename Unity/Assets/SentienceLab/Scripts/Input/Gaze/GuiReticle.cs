@@ -21,7 +21,7 @@ public class GuiReticle : MonoBehaviour, IGazePointer
 	{
 		reticleDistance      = new Vector3(0, 0, maximumReticleDistance);
 		originalReticleScale = transform.localScale;
-		reticleScale         = new Vector3(1, 1, maximumReticleDistance);
+		reticleScale         = new Vector3(1, 1, 1);
 		fuseProgress         = 0;
 
 		reticleNeutral.gameObject.SetActive(false);
