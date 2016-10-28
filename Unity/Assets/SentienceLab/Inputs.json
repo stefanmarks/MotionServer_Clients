@@ -2,12 +2,12 @@
 	"Inputs":[
 		{
 			"inputName": "trigger",
-			"inputType": 1,
+			"inputType": 2,
 			"parameters": "Joystick1/button1"
 		},
 		{
 			"inputName": "trigger",
-			"inputType": 1,
+			"inputType": 2,
 			"parameters": "Controller1/button1"
 		}
 	]

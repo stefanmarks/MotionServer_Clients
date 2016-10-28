@@ -64,8 +64,15 @@ namespace SentienceLab.Input
 			switch (type)
 			{
 				case InputManager.InputType.UnityInput:  device = new Device_UnityInput(); break;
-				case InputManager.InputType.MoCapDevice: device = new Device_MoCap(); break;
 				case InputManager.InputType.Keyboard:    device = new Device_Keyboard(); break;
+#if !NO_MOCAP_INPUT 
+				case InputManager.InputType.MoCapDevice: device = new Device_MoCap(); break;
+#endif
+				default:
+					{
+						Debug.LogWarning("Input Type " + type.ToString() + " not supported.");
+						break;
+					}
 			}
 			// try to initialise given the parameter string
 			if ((device != null) && device.Initialise(inputName))
@@ -275,62 +282,6 @@ namespace SentienceLab.Input
 		}
 
 
-
-		/// <summary>
-		/// Class for a MoCap input device.
-		/// </summary>
-		///
-		private class Device_MoCap : IDevice
-		{
-			public Device_MoCap()
-			{
-				device = null;
-			}
-
-			public bool Initialise(string inputName)
-			{
-				string[] parts = inputName.Split('/');
-				if (parts.Length >= 2)
-				{
-					device = new MoCap.InputDeviceHandler(parts[0], parts[1]);
-				}
-				return true;
-			}
-
-			public void Process()
-			{
-				// nothing to do
-			}
-
-			public bool IsActivated()
-			{
-				return device.GetButtonDown();
-			}
-
-			public bool IsDeactivated()
-			{
-				return device.GetButtonUp();
-			}
-
-			public float GetValue()
-			{
-				return device.GetAxis();
-			}
-
-			public void SetPressThreshold(float value)
-			{
-				device.PressThreshold = value;
-			}
-
-			public override string ToString()
-			{
-				return device.ToString();
-			}
-
-			private MoCap.InputDeviceHandler device;
-		}
-
-
 		/// <summary>
 		/// Class for a keyboard button input device.
 		/// It can be a single key, or a +/- combination of two keys, e.g., for zoom.
@@ -487,5 +438,63 @@ namespace SentienceLab.Input
 			private string keyName1, keyName2;
 			private Mode mode;
 		}
+
+
+#if !NO_MOCAP_INPUT
+		/// <summary>
+		/// Class for a MoCap input device.
+		/// </summary>
+		///
+		private class Device_MoCap : IDevice
+		{
+			public Device_MoCap()
+			{
+				device = null;
+			}
+
+			public bool Initialise(string inputName)
+			{
+				string[] parts = inputName.Split('/');
+				if (parts.Length >= 2)
+				{
+					device = new MoCap.InputDeviceHandler(parts[0], parts[1]);
+				}
+				return true;
+			}
+
+			public void Process()
+			{
+				// nothing to do
+			}
+
+			public bool IsActivated()
+			{
+				return device.GetButtonDown();
+			}
+
+			public bool IsDeactivated()
+			{
+				return device.GetButtonUp();
+			}
+
+			public float GetValue()
+			{
+				return device.GetAxis();
+			}
+
+			public void SetPressThreshold(float value)
+			{
+				device.PressThreshold = value;
+			}
+
+			public override string ToString()
+			{
+				return device.ToString();
+			}
+
+			private MoCap.InputDeviceHandler device;
+		}
+#endif
+
 	}
 }

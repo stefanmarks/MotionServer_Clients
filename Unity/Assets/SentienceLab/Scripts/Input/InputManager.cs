@@ -30,8 +30,8 @@ namespace SentienceLab.Input
 		public enum InputType
 		{
 			UnityInput,
-			MoCapDevice,
-			Keyboard
+			Keyboard,
+			MoCapDevice
 		}
 
 
