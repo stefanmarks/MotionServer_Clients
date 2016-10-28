@@ -1,0 +1,107 @@
+﻿using UnityEngine;
+using SentienceLab.Input;
+
+namespace SentienceLab
+{
+	/// <summary>
+	/// Component for an object that can be aimed at for teleporting.
+	/// This component uses the event system for th functionality.
+	/// </summary>
+
+	[AddComponentMenu("Locomotion/Teleport Controller")]
+	[DisallowMultipleComponent]
+
+	public class TeleportController : MonoBehaviour
+	{
+		public string    actionName   = "teleport";
+		public string    groundTag    = "floor";
+		public Transform cameraNode   = null;
+		public Transform targetMarker = null;
+
+		public ActivationType activationType = ActivationType.OnTrigger;
+
+
+		public enum ActivationType
+		{
+			OnTrigger,
+			ActivateAndRelease
+		}
+
+
+
+		void Start()
+		{
+			ray             = GetComponentInChildren<PointerRay>();
+			transportAction = InputHandler.Find(actionName);
+
+			if (ray == null)
+			{
+				// activate and release doesn't make much sense without the ray
+				activationType  = ActivationType.OnTrigger;
+			}
+			teleporter      = GameObject.FindObjectOfType<Teleporter>();
+		}
+
+
+		void Update()
+		{
+			bool doTransport = false;
+
+			if (activationType == ActivationType.OnTrigger)
+			{
+				doTransport = transportAction.IsActivated();
+			}
+			else
+			{
+				ray.SetEnabled(transportAction.IsActive());
+				if (transportAction.IsDeactivated())
+				{
+					doTransport = true;
+				}
+			}
+
+			RaycastHit hit;
+			if (ray != null)
+			{
+				hit = ray.GetRayTarget();
+			}
+			else
+			{
+				// no ray component > do a basic raycast here
+				Ray tempRay = new Ray(transform.position, transform.forward);
+				Physics.Raycast(tempRay, out hit);
+			}
+
+			if ((hit.distance > 0) && (hit.transform.gameObject != null) && hit.transform.gameObject.tag.Equals(groundTag))
+			{
+				if (doTransport && (teleporter != null))
+				{
+					// activate teleport
+					teleporter.Activate(hit.point);
+				}
+				else
+				{
+					if (targetMarker != null)
+					{
+						targetMarker.gameObject.SetActive(true);
+						float yaw = cameraNode.transform.rotation.eulerAngles.y;
+						targetMarker.position = hit.point;
+						targetMarker.localRotation = Quaternion.Euler(0, yaw, 0);
+					}
+				}
+			}
+			else
+			{
+				if (targetMarker != null)
+				{
+					targetMarker.gameObject.SetActive(false);
+				}
+			}
+		}
+
+
+		private PointerRay   ray;
+		private InputHandler transportAction;
+		private Teleporter   teleporter;
+	}
+}

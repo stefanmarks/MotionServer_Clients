@@ -273,6 +273,7 @@ public class GazeInputModule : BaseInputModule
 		}
 	}
 
+
 	private void HandleDrag()
 	{
 		bool moving = pointerData.IsPointerMoving();
@@ -383,6 +384,12 @@ public class GazeInputModule : BaseInputModule
 
 		float outElevation = Mathf.Asin(cartCoords.y);
 		return new Vector2(outPolar, outElevation);
+	}
+
+
+	public PointerEventData GetPointerData()
+	{
+		return pointerData;
 	}
 
 
