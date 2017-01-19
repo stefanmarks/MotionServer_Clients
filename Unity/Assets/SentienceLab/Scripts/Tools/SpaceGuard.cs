@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 using Valve.VR;
+using SentienceLab.MoCap;
 
 /// <summary>
 /// Script for fading in geometry that signals the limits of the tracking volume.
@@ -7,8 +9,14 @@ using Valve.VR;
 /// 
 public class SpaceGuard : MonoBehaviour
 {
-	[Tooltip("The object that needs to be guarded to stay within the walls (default: main camera).")]
-	public Transform guardedObject;
+	[Tooltip("Automatically include the main camera in the list of guarded objects.")]
+	public bool includeMainCamera = true;
+
+	[Tooltip("Automatically include all motion captured objects.")]
+	public bool includeMoCapObjects = true;
+
+	[Tooltip("Additional objects that need to be guarded to stay within the walls.")]
+	public List<Transform> guardedObjects = new List<Transform>();
 
 	[Tooltip("Material to use for rendering the walls.")]
 	public Material wallMaterial;
@@ -33,10 +41,20 @@ public class SpaceGuard : MonoBehaviour
 	/// 
 	void Start()
 	{
-		// if no specific guarded object stated, use main camera
-		if (guardedObject == null)
+		// is the camera already in the list?
+		if (includeMainCamera && !guardedObjects.Contains(Camera.main.transform))
 		{
-			guardedObject = Camera.main.transform;
+			guardedObjects.Add(Camera.main.transform);
+		}
+
+		// automatically add all MoCap objects
+		if (includeMoCapObjects)
+		{
+			MoCapObject[] objects = FindObjectsOfType<MoCapObject>();
+			foreach (MoCapObject o in objects)
+			{
+				guardedObjects.Add(o.transform);
+			}
 		}
 
 		// create walls
@@ -77,8 +95,11 @@ public class SpaceGuard : MonoBehaviour
 
 	private void CreateWall(float x1, float z1, float x2, float z2, string name)
 	{
-		Debug.Log(x1 + "/" + z1 + " > " + x2 + " / " + z2);
+		// Debug.Log(x1 + "/" + z1 + " > " + x2 + " / " + z2);
 		GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+		Destroy(quad.GetComponent<Collider>());  // no need for physics
+		Destroy(quad.GetComponent<Rigidbody>());
+
 		Vector3 corner1 = new Vector3(x1, 0, z1);
 		Vector3 corner2 = new Vector3(x2, 0, z2);
 		Vector3 wall    = corner2 - corner1;
@@ -106,10 +127,17 @@ public class SpaceGuard : MonoBehaviour
 	{
 		foreach (MeshRenderer wall in walls)
 		{
-			// calculate distance of guarded object against all the walls
+			// calculate minimum distance of guarded objects against all the walls
 			Vector3 pos    = wall.transform.position;
 			Vector3 normal = wall.transform.forward;
-			float dist = -Vector3.Dot(normal, guardedObject.position - pos);
+			float dist = float.PositiveInfinity;
+			foreach (Transform guardedObject in guardedObjects)
+			{
+				if (guardedObject.gameObject.activeInHierarchy)
+				{
+					dist = Mathf.Min(dist, -Vector3.Dot(normal, guardedObject.position - pos));
+				}
+			}
 			Color wallColour = wall.material.GetColor(colourParameterName);
 
 			// can't be further away from the wall than "in" it
