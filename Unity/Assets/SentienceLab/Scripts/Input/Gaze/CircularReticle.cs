@@ -209,7 +209,6 @@ public class CircularReticle : MonoBehaviour, IGazePointer
 		mesh.vertices  = vertices;
 		mesh.triangles = indices;
 		mesh.RecalculateBounds();
-		mesh.Optimize();
 	}
 
 

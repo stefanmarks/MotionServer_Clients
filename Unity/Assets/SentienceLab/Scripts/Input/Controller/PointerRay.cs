@@ -10,11 +10,16 @@ using UnityEngine;
 
 public class PointerRay : MonoBehaviour
 {
+	[Tooltip("Enable or disable the ray")]
+	public bool rayEnabled = true;
+
 	[Tooltip("Maximum range of the ray")]
 	public float rayRange = 100.0f;
 
 	[Tooltip("List of tags that the pointer reacts to (e.g., 'floor')")]
 	public string[] tagList = { };
+
+	public Collider[] checkInsideColliders = { };
 
 	[Tooltip("Object to render at the point where the ray meets another game object (optional)")]
 	public Transform activeEndPoint = null;
@@ -23,9 +28,8 @@ public class PointerRay : MonoBehaviour
 	void Start()
 	{
 		line = GetComponent<LineRenderer>();
-		line.SetVertexCount(2);
+		line.numPositions = 2;
 		line.useWorldSpace = true;
-		rayEnabled = line.enabled;
 		overrideTarget = false;
 	}
 
@@ -77,9 +81,22 @@ public class PointerRay : MonoBehaviour
 					Physics.Raycast(ray, out rayTarget, 0);
 				}
 			}
+
+			Ray reverse = new Ray(ray.origin + ray.direction * rayRange, -ray.direction);
+			foreach (Collider c in checkInsideColliders)
+			{
+				RaycastHit hitReverse;
+				if ( c.Raycast(reverse, out hitReverse, rayRange) && (rayRange - hitReverse.distance < (hit ? rayTarget.distance : rayRange)) )
+				{
+					rayTarget = hitReverse;
+					hit = true;
+				}
+			}
 		}
 		else
 		{
+			Physics.Raycast(ray, out rayTarget, 0); // reset structure
+			rayTarget.point = overridePoint;        // override point
 			hit = true;
 		}
 
@@ -129,26 +146,13 @@ public class PointerRay : MonoBehaviour
 		else
 		{
 			overrideTarget = true;
-			rayTarget.point = pos;
+			overridePoint  = pos;
 		}
 	}
 
 
-	/// <summary>
-	/// Enables or disables the ray.
-	/// </summary>
-	/// <param name="enabled"><code>true</code> to enable the ray functionality</param>
-	/// 
-	public void SetEnabled(bool enabled)
-	{
-		if (line == null) Start();
-
-		rayEnabled = enabled;
-	}
-
-
 	private LineRenderer line;
-	private bool         rayEnabled;
 	private RaycastHit   rayTarget;
 	private bool         overrideTarget;
+	private Vector3      overridePoint;
 }

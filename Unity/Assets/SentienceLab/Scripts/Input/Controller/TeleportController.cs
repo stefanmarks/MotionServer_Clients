@@ -38,7 +38,13 @@ namespace SentienceLab
 			{
 				// activate and release doesn't make much sense without the ray
 				activationType  = ActivationType.OnTrigger;
+                rayAlwaysActive = false;
 			}
+			else
+			{
+                rayAlwaysActive = ray.rayEnabled;
+			}
+
 			teleporter      = GameObject.FindObjectOfType<Teleporter>();
 		}
 
@@ -46,14 +52,19 @@ namespace SentienceLab
 		void Update()
 		{
 			bool doTransport = false;
+			bool doAim       = false;
 
 			if (activationType == ActivationType.OnTrigger)
 			{
+				doAim       = true;
 				doTransport = transportAction.IsActivated();
 			}
 			else
 			{
-				ray.SetEnabled(transportAction.IsActive());
+				doAim = transportAction.IsActive();
+
+				ray.rayEnabled = (doAim || rayAlwaysActive);
+
 				if (transportAction.IsDeactivated())
 				{
 					doTransport = true;
@@ -76,12 +87,14 @@ namespace SentienceLab
 			{
 				if (doTransport && (teleporter != null))
 				{
-					// activate teleport
+					// here we go: hide marker...
+					targetMarker.gameObject.SetActive(false);
+					// ...and activate teleport
 					teleporter.Activate(hit.point);
 				}
 				else
 				{
-					if (targetMarker != null)
+					if ((targetMarker != null) && doAim)
 					{
 						targetMarker.gameObject.SetActive(true);
 						float yaw = cameraNode.transform.rotation.eulerAngles.y;
@@ -101,6 +114,7 @@ namespace SentienceLab
 
 
 		private PointerRay   ray;
+		private bool         rayAlwaysActive;
 		private InputHandler transportAction;
 		private Teleporter   teleporter;
 	}
