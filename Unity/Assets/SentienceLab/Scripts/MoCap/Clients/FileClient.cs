@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Threading;
+using SentienceLab.IO;
 using UnityEngine;
 
 namespace SentienceLab.MoCap
@@ -24,10 +24,10 @@ namespace SentienceLab.MoCap
 			{
 				// cut any leading character
 				filename = filename.TrimStart('/');
-				dataStream = new DataStream_File(System.IO.Path.Combine(Application.streamingAssetsPath, filename));
+				dataStream = new DataStream_File(Path.Combine(Application.streamingAssetsPath, filename));
 			}
 
-			public FileClient.DataStream dataStream;
+			public DataStream dataStream;
 		}
 
 
@@ -180,20 +180,20 @@ namespace SentienceLab.MoCap
 			// read header
 			int headerParts = dataStream.ReadNextLine();
 			if ((headerParts < 3) ||
-				!dataStream.GetString().Equals("MotionServer Data File"))
+				!dataStream.GetNextString().Equals("MotionServer Data File"))
 			{
 				throw new FileLoadException("Invalid MOT file header");
 			}
-			fileVersion = dataStream.GetInt();
-			updateRate  = dataStream.GetInt();
+			fileVersion = dataStream.GetNextInt();
+			updateRate  = dataStream.GetNextInt();
 
 			int descriptionParts = dataStream.ReadNextLine();
 			if ((descriptionParts < 2) ||
-				!dataStream.GetString().Equals("Descriptions"))
+				!dataStream.GetNextString().Equals("Descriptions"))
 			{
 				throw new FileLoadException("Missing description section");
 			}
-			int descriptionCount = dataStream.GetInt();
+			int descriptionCount = dataStream.GetNextInt();
 
 			List<Actor>  actors  = new List<Actor>();
 			List<Device> devices = new List<Device>();
@@ -201,12 +201,12 @@ namespace SentienceLab.MoCap
 			{
 				int descrParts = dataStream.ReadNextLine();
 				if ((descrParts < 2) ||
-					(dataStream.GetInt() != descrIdx))
+					(dataStream.GetNextInt() != descrIdx))
 				{
 					throw new FileLoadException("Invalid description block #" + descrIdx);
 				}
 
-				switch (dataStream.GetString()[0])
+				switch (dataStream.GetNextString()[0])
 				{
 					case 'M': ReadMarkersetDescription( ref actors); break;
 					case 'R': ReadRigidBodyDescription( ref actors); break;
@@ -221,7 +221,7 @@ namespace SentienceLab.MoCap
 			// here comes the frame data
 			int frameParts = dataStream.ReadNextLine();
 			if ((frameParts < 1) ||
-				!dataStream.GetString().Equals("Frames"))
+				!dataStream.GetNextString().Equals("Frames"))
 			{
 				throw new FileLoadException("Missing frame section");
 			}
@@ -234,14 +234,14 @@ namespace SentienceLab.MoCap
 		private void ReadMarkersetDescription(ref List<Actor> actors)
 		{
 			int    id   = 0;                      // no ID for markersets
-			string name = dataStream.GetString(); // markerset name
+			string name = dataStream.GetNextString(); // markerset name
 			Actor actor = new Actor(scene, name, id);
 
-			int nMarkers  = dataStream.GetInt(); // marker count
+			int nMarkers  = dataStream.GetNextInt(); // marker count
 			actor.markers = new Marker[nMarkers];
 			for (int markerIdx = 0; markerIdx < nMarkers; markerIdx++)
 			{
-				name = dataStream.GetString();
+				name = dataStream.GetNextString();
 				Marker marker = new Marker(actor, name);
 				actor.markers[markerIdx] = marker;
 			}
@@ -251,8 +251,8 @@ namespace SentienceLab.MoCap
 
 		private void ReadRigidBodyDescription(ref List<Actor> actors)
 		{
-			int    id   = dataStream.GetInt();    // ID
-			string name = dataStream.GetString(); // name
+			int    id   = dataStream.GetNextInt();    // ID
+			string name = dataStream.GetNextString(); // name
 
 			// rigid body name should be equal to actor name: search
 			Actor actor = null;
@@ -272,11 +272,11 @@ namespace SentienceLab.MoCap
 
 			Bone bone = new Bone(actor, name, id);
 
-			dataStream.GetInt();             // Parent ID (ignore for rigid body)
+			dataStream.GetNextInt();             // Parent ID (ignore for rigid body)
 			bone.parent = null;              // rigid bodies should not have a parent
-			bone.ox = dataStream.GetFloat(); // X offset
-			bone.oy = dataStream.GetFloat(); // Y offset
-			bone.oz = dataStream.GetFloat(); // Z offset
+			bone.ox = dataStream.GetNexFloat(); // X offset
+			bone.oy = dataStream.GetNexFloat(); // Y offset
+			bone.oz = dataStream.GetNexFloat(); // Z offset
 
 			actor.bones = new Bone[1];
 			actor.bones[0] = bone;
@@ -285,8 +285,8 @@ namespace SentienceLab.MoCap
 
 		private void ReadSkeletonDescription(ref List<Actor> actors)
 		{
-			int    skeletonId   = dataStream.GetInt();    // ID
-			string skeletonName = dataStream.GetString(); // name
+			int    skeletonId   = dataStream.GetNextInt();    // ID
+			string skeletonName = dataStream.GetNextString(); // name
 
 			// rigid body name should be equal to actor name: search
 			Actor actor = null;
@@ -313,15 +313,15 @@ namespace SentienceLab.MoCap
 				actors.Add(actor);
 			}
 
-			int nBones  = dataStream.GetInt(); // Skeleton bone count
+			int nBones  = dataStream.GetNextInt(); // Skeleton bone count
 			actor.bones = new Bone[nBones];
 			for (int boneIdx = 0; boneIdx < nBones; boneIdx++)
 			{
-				int    id   = dataStream.GetInt();    // bone ID
-				String name = dataStream.GetString(); // bone name 
+				int    id   = dataStream.GetNextInt();    // bone ID
+				String name = dataStream.GetNextString(); // bone name 
 				Bone   bone = new Bone(actor, name, id);
 
-				int parentId = dataStream.GetInt(); // Skeleton parent ID
+				int parentId = dataStream.GetNextInt(); // Skeleton parent ID
 				bone.parent = actor.FindBone(parentId); 
 				if (bone.parent != null)
 				{
@@ -330,9 +330,9 @@ namespace SentienceLab.MoCap
 				}
 				bone.BuildChain(); // build chain from root to this bone
 
-				bone.ox = dataStream.GetFloat(); // X offset
-				bone.oy = dataStream.GetFloat(); // Y offset
-				bone.oz = dataStream.GetFloat(); // Z offset
+				bone.ox = dataStream.GetNexFloat(); // X offset
+				bone.oy = dataStream.GetNexFloat(); // Y offset
+				bone.oz = dataStream.GetNexFloat(); // Z offset
 
 				actor.bones[boneIdx] = bone;
 			}
@@ -341,15 +341,15 @@ namespace SentienceLab.MoCap
 
 		private void ReadForcePlateDescription(ref List<Device> devices)
 		{
-			int    id   = dataStream.GetInt();    // ID
-			string name = dataStream.GetString(); // name
+			int    id   = dataStream.GetNextInt();    // ID
+			string name = dataStream.GetNextString(); // name
 			Device device = new Device(scene, name, id); // create device
 
-			int nChannels   = dataStream.GetInt(); // channel count
+			int nChannels   = dataStream.GetNextInt(); // channel count
 			device.channels = new Channel[nChannels];
 			for (int channelIdx = 0; channelIdx < nChannels; channelIdx++)
 			{
-				name = dataStream.GetString();
+				name = dataStream.GetNextString();
 				Channel channel = new Channel(device, name);
 				device.channels[channelIdx] = channel;
 			}
@@ -359,7 +359,7 @@ namespace SentienceLab.MoCap
 
 		private void GetFrameData()
 		{
-			if (dataStream.EndReached())
+			if (dataStream.EndOfStream())
 			{
 				Debug.Log("End of MOT file reached > looping");
 				// end of file > start from beginning
@@ -367,26 +367,26 @@ namespace SentienceLab.MoCap
 			}
 
 			dataStream.ReadNextLine();
-			scene.frameNumber = dataStream.GetInt();             // frame number
-			scene.latency     = dataStream.GetFloat(); // latency in s
+			scene.frameNumber = dataStream.GetNextInt();   // frame number
+			scene.latency     = dataStream.GetNexFloat(); // latency in s
 
-			if (!dataStream.GetString().Equals("M"))
+			if (!dataStream.GetNextString().Equals("M"))
 			{
 				throw new FileLoadException("Invalid marker frame block");
 			}
 			// Read actor data
-			int nActors = dataStream.GetInt(); // actor count
+			int nActors = dataStream.GetNextInt(); // actor count
 			for (int actorIdx = 0; actorIdx < nActors; actorIdx++)
 			{
 				Actor actor    = scene.actors[actorIdx];
-				int   nMarkers = dataStream.GetInt();
+				int   nMarkers = dataStream.GetNextInt();
 				for (int markerIdx = 0; markerIdx < nMarkers; markerIdx++)
 				{
 					Marker marker = actor.markers[markerIdx];
 					// Read position
-					marker.px = dataStream.GetFloat();
-					marker.py = dataStream.GetFloat();
-					marker.pz = dataStream.GetFloat();
+					marker.px = dataStream.GetNexFloat();
+					marker.py = dataStream.GetNexFloat();
+					marker.pz = dataStream.GetNexFloat();
 					TransformToUnity(ref marker);
 
 					// marker is tracked when at least one coordinate is not 0
@@ -397,82 +397,82 @@ namespace SentienceLab.MoCap
 			}
 
 			// Read rigid body data
-			if (!dataStream.GetString().Equals("R"))
+			if (!dataStream.GetNextString().Equals("R"))
 			{
 				throw new FileLoadException("Invalid rigid body frame block");
 			}
-			int nRigidBodies = dataStream.GetInt(); // rigid body count
+			int nRigidBodies = dataStream.GetNextInt(); // rigid body count
 			for (int rigidBodyIdx = 0; rigidBodyIdx < nRigidBodies; rigidBodyIdx++)
 			{
-				int rigidBodyID = dataStream.GetInt(); // get rigid body ID
+				int rigidBodyID = dataStream.GetNextInt(); // get rigid body ID
 				Bone bone = scene.FindActor(rigidBodyID).bones[0];
 
 				// Read position/rotation 
-				bone.px = dataStream.GetFloat(); // position
-				bone.py = dataStream.GetFloat();
-				bone.pz = dataStream.GetFloat();
-				bone.qx = dataStream.GetFloat(); // rotation
-				bone.qy = dataStream.GetFloat();
-				bone.qz = dataStream.GetFloat();
-				bone.qw = dataStream.GetFloat();
+				bone.px = dataStream.GetNexFloat(); // position
+				bone.py = dataStream.GetNexFloat();
+				bone.pz = dataStream.GetNexFloat();
+				bone.qx = dataStream.GetNexFloat(); // rotation
+				bone.qy = dataStream.GetNexFloat();
+				bone.qz = dataStream.GetNexFloat();
+				bone.qw = dataStream.GetNexFloat();
 				TransformToUnity(ref bone);
 
-				bone.length = dataStream.GetFloat(); // Mean error, used as length
-				int state = dataStream.GetInt();     // state
+				bone.length = dataStream.GetNexFloat(); // Mean error, used as length
+				int state = dataStream.GetNextInt();     // state
 				bone.tracked = (state & 0x01) != 0;
 			}
 
 			// Read skeleton data
-			if (!dataStream.GetString().Equals("S"))
+			if (!dataStream.GetNextString().Equals("S"))
 			{
 				throw new FileLoadException("Invalid skeleton frame block");
 			}
-			int nSkeletons = dataStream.GetInt(); // skeleton count
+			int nSkeletons = dataStream.GetNextInt(); // skeleton count
 			for (int skeletonIdx = 0; skeletonIdx < nSkeletons; skeletonIdx++)
 			{
-				int   skeletonId = dataStream.GetInt();
+				int   skeletonId = dataStream.GetNextInt();
 				Actor actor      = scene.FindActor(skeletonId);
 
 				// # of bones in skeleton
-				int nBones = dataStream.GetInt();
+				int nBones = dataStream.GetNextInt();
 				for (int nBodyIdx = 0; nBodyIdx < nBones; nBodyIdx++)
 				{
-					int boneId = dataStream.GetInt();
+					int boneId = dataStream.GetNextInt();
 					Bone bone = actor.bones[boneId];
 
 					// Read position/rotation 
-					bone.px = dataStream.GetFloat(); // position
-					bone.py = dataStream.GetFloat();
-					bone.pz = dataStream.GetFloat();
-					bone.qx = dataStream.GetFloat(); // rotation
-					bone.qy = dataStream.GetFloat();
-					bone.qz = dataStream.GetFloat();
-					bone.qw = dataStream.GetFloat();
+					bone.px = dataStream.GetNexFloat(); // position
+					bone.py = dataStream.GetNexFloat();
+					bone.pz = dataStream.GetNexFloat();
+					bone.qx = dataStream.GetNexFloat(); // rotation
+					bone.qy = dataStream.GetNexFloat();
+					bone.qz = dataStream.GetNexFloat();
+					bone.qw = dataStream.GetNexFloat();
 					TransformToUnity(ref bone);
 
-					bone.length = dataStream.GetFloat(); // Mean error, used as length
-					int state = dataStream.GetInt();     // state
+					bone.length = dataStream.GetNexFloat(); // Mean error, used as length
+					int state = dataStream.GetNextInt();     // state
 					bone.tracked = (state & 0x01) != 0;
 				}
 			} // next skeleton 
 
 			// Read force plate data
-			if (!dataStream.GetString().Equals("F"))
+			if (!dataStream.GetNextString().Equals("F"))
 			{
 				throw new FileLoadException("Invalid force plate frame block");
 			}
-			int nForcePlates = dataStream.GetInt(); // force plate count
+			int nForcePlates = dataStream.GetNextInt(); // force plate count
 			for (int forcePlateIdx = 0; forcePlateIdx < nForcePlates; forcePlateIdx++)
 			{
 				// read force plate ID and find corresponding device
-				int    forcePlateId = dataStream.GetInt();
+				int    forcePlateId = dataStream.GetNextInt();
 				Device device       = scene.FindDevice(forcePlateId);
 				// channel count
-				int nChannels = dataStream.GetInt();
+				int nChannels = dataStream.GetNextInt();
 				// channel data
 				for (int chn = 0; chn < nChannels; chn++)
 				{
-					float value = dataStream.GetFloat();
+					float value = dataStream.GetNexFloat();
 					device.channels[chn].value = value;
 				}
 			}
@@ -571,164 +571,5 @@ namespace SentienceLab.MoCap
 		private Mutex               sceneMutex;
 		private List<SceneListener> sceneListeners;
 		private bool                notifyListeners;
-
-
-		public interface DataStream
-		{
-			string GetName();
-			bool   Open();
-			int    ReadNextLine();
-			void   MarkPosition();
-			bool   EndReached();
-			void   Rewind();
-			string GetString();
-			int    GetInt();
-			float  GetFloat();
-			void   Close();
-		}
-
-
-		private abstract class AbstractDataStream : DataStream
-		{
-			public AbstractDataStream()
-			{
-				stream         = null;
-				filePosition   = 0;
-				markerPosition = 0;
 			}
-
-			public abstract string GetName();
-
-			public abstract bool Open();
-
-			public int ReadNextLine()
-			{
-				string line;
-				do
-				{
-					line = stream.ReadLine().TrimStart();
-					filePosition++;
-				}
-				while (line.StartsWith("#") && !stream.EndOfStream);
-				data    = line.Split('\t');
-				dataIdx = 0;
-				return data.Length;
-			}
-
-			public void MarkPosition()
-			{
-				markerPosition = filePosition;
-			}
-
-			public bool EndReached()
-			{
-				return stream.EndOfStream;
-			}
-
-			abstract public void Rewind();
-
-			public string GetString()
-			{
-				return data[dataIdx++].Trim().Trim('"');
-			}
-
-			public int GetInt()
-			{
-				return int.Parse(data[dataIdx++]);
-			}
-
-			public float GetFloat()
-			{
-				return float.Parse(data[dataIdx++]);
-			}
-
-			public void Close()
-			{
-				if (stream != null)
-				{
-					stream.Close();
-					stream = null;
-				}
-			}
-
-			protected StreamReader stream;
-			protected string[]     data;
-			protected int          dataIdx;
-			protected int          filePosition, markerPosition;
-		}
-
-
-		private class DataStream_File : AbstractDataStream
-		{
-			public DataStream_File(string filename)
-			{
-				this.filename = filename;
-			}
-
-			public override string GetName()
-			{
-				return filename;
-			}
-
-			public override bool Open()
-			{
-				if (File.Exists(filename))
-				{
-					Close();
-					stream = new StreamReader(filename);
-					filePosition = 0;
-				}
-				return (stream != null);
-			}
-
-			public override void Rewind()
-			{ 
-				Open();
-				while (filePosition < markerPosition)
-				{
-					ReadNextLine();
-				}
-			}
-
-			private string filename;
-		}
-
-
-		private class DataStream_TextAsset : AbstractDataStream
-		{
-			public DataStream_TextAsset(TextAsset asset)
-			{
-				this.asset = asset;
-			}
-
-			public override string GetName()
-			{
-				return asset.name;
-			}
-
-			public override bool Open()
-			{
-				Close();
-				memoryStream = new MemoryStream(asset.bytes);
-				stream       = new StreamReader(memoryStream);
-				filePosition = 0;
-				return true;
-			}
-
-			public override void Rewind()
-			{
-				memoryStream.Seek(0, SeekOrigin.Begin);
-				stream       = new StreamReader(memoryStream);
-				filePosition = 0;
-				while (filePosition < markerPosition)
-				{
-					ReadNextLine();
-				}
-			}
-
-			private TextAsset    asset;
-			private MemoryStream memoryStream;
-		}
-	}
-
 }

@@ -64,7 +64,7 @@ namespace SentienceLab.MoCap
 					scene.actors[idx]  = actor;
 
 					Device device      = new Device(scene, name, idx);
-					device.channels    = new Channel[7];
+					device.channels     = new Channel[11];
 					device.channels[0] = new Channel(device, "button1");  // fire
 					device.channels[1] = new Channel(device, "button2");  // menu
 					device.channels[2] = new Channel(device, "button3");  // grip
@@ -72,6 +72,10 @@ namespace SentienceLab.MoCap
 					device.channels[4] = new Channel(device, "axis2");
 					device.channels[5] = new Channel(device, "axis1raw"); // touchpad touch
 					device.channels[6] = new Channel(device, "axis2raw");
+					device.channels[7]  = new Channel(device, "right");    // touchpad as buttons
+					device.channels[8]  = new Channel(device, "left");
+					device.channels[9]  = new Channel(device, "up");
+					device.channels[10] = new Channel(device, "down");
 
 					scene.devices[idx] = device;
 				}
@@ -159,6 +163,11 @@ namespace SentienceLab.MoCap
 				device.channels[4].value = states[idx].rAxis0.y * touchpadPressed;
 				device.channels[5].value = states[idx].rAxis0.x;
 				device.channels[6].value = states[idx].rAxis0.y;
+				// touchpad as buttons
+				device.channels[7].value  = (states[idx].rAxis0.x > +0.5) ? touchpadPressed : 0;
+				device.channels[8].value  = (states[idx].rAxis0.x < -0.5) ? touchpadPressed : 0;
+                device.channels[9].value  = (states[idx].rAxis0.y > +0.5) ? touchpadPressed : 0;
+                device.channels[10].value = (states[idx].rAxis0.y < -0.5) ? touchpadPressed : 0;
 			}
 			NotifyListeners_Update();
 		}
