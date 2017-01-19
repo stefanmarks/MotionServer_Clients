@@ -180,11 +180,12 @@ namespace SentienceLab
 		{
 			// adjust camera X-positions based on IPD
 			float xDir = 0;
-			if (eye == VRNode.LeftEye) { xDir = -1; }
+			if      (eye == VRNode.LeftEye) { xDir = -1; }
 			else if (eye == VRNode.RightEye) { xDir = +1; }
 
 			// shift camera sideways considering any offset orientation
 			node.transform.localPosition = (node.transform.localRotation * Vector3.right) * ((hmdConfig.IPD / 2) * xDir);
+			node.transform.localRotation = Quaternion.identity;
 
 			foreach (Camera cam in node.GetComponents<Camera>())
 			{
