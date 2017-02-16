@@ -42,6 +42,7 @@ namespace SentienceLab.MoCap
 			sceneMutex          = new Mutex();
 			dataStream          = null;
 			streamingTimer      = null;
+			paused              = false;
 			notifyListeners     = false;
 		}
 
@@ -136,6 +137,12 @@ namespace SentienceLab.MoCap
 		}
 
 
+		public void SetPaused(bool pause)
+		{
+			paused = pause;
+		}
+
+
 		public void Update()
 		{
 			sceneMutex.WaitOne();
@@ -185,6 +192,11 @@ namespace SentienceLab.MoCap
 				throw new FileLoadException("Invalid MOT file header");
 			}
 			fileVersion = dataStream.GetNextInt();
+			if ((fileVersion < 1) || (fileVersion > 1))
+			{
+				throw new FileLoadException("Invalid MOT file version number");
+			}
+
 			updateRate  = dataStream.GetNextInt();
 
 			int descriptionParts = dataStream.ReadNextLine();
@@ -556,6 +568,8 @@ namespace SentienceLab.MoCap
 
 		private void StreamingTimerCallback(object state)
 		{
+			if (paused) return;
+
 			sceneMutex.WaitOne();
 			GetFrameData();
 			notifyListeners = true;
@@ -566,6 +580,7 @@ namespace SentienceLab.MoCap
 		private DataStream          dataStream;
 		private int                 fileVersion, updateRate;
 		private Timer               streamingTimer;
+		private bool        paused;
 
 		private Scene               scene;
 		private Mutex               sceneMutex;

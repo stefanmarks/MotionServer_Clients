@@ -125,6 +125,12 @@ namespace SentienceLab.MoCap
 		}
 
 
+		public void SetPaused(bool pause)
+		{
+			// ignored
+		}
+
+
 		public void Update()
 		{
 			// TODO: is this necessary?

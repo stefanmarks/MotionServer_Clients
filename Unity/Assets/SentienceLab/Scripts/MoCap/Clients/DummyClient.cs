@@ -48,6 +48,11 @@ namespace SentienceLab.MoCap
 		}
 
 
+		public void SetPaused(bool pause)
+		{
+		}
+
+
 		public void Update()
 		{
 		}

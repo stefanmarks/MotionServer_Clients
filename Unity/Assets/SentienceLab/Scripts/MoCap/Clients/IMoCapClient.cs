@@ -50,6 +50,14 @@ namespace SentienceLab.MoCap
 
 
 		/// <summary>
+		/// Pauses or continues the data stream.
+		/// </summary>
+		/// <param name="paused"><c>true</c> to pause the stream</param>
+		/// 
+		void SetPaused(bool paused);
+
+
+		/// <summary>
 		/// Retrieves the latest frame data.
 		/// </summary>
 		/// 

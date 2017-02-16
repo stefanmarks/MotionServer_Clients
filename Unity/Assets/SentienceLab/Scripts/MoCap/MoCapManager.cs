@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 using System.Net;
 using System.Threading;
 using System.Collections.Generic;
+using SentienceLab.Input;
 
 namespace SentienceLab.MoCap
 {
@@ -21,6 +22,10 @@ namespace SentienceLab.MoCap
 		[Tooltip("Name of the file with MotionServer IP Addresses or .MOT files to query")]
 		public TextAsset dataSourceFile = null;
 		
+		[Tooltip("Action name for pausing/running the client")]
+		public string pauseAction = "pause";
+
+
 		private byte[] clientAppVersion = new byte[] { 1, 2, 0, 0 };
 
 		/// <summary>
@@ -41,6 +46,9 @@ namespace SentienceLab.MoCap
 				// there can be only one instance
 				GameObject.Destroy(this);
 			}
+
+			pauseHandler = InputHandler.Find(pauseAction);
+			pauseClient  = false;
 		}
 
 
@@ -49,7 +57,7 @@ namespace SentienceLab.MoCap
 		/// Disconnects from the NatNet server and destroys the NatNet client.
 		/// </summary>
 		///
-		void OnDestroy()
+		public void OnDestroy()
 		{
 			clientMutex.WaitOne();
 			if (client != null)
@@ -62,6 +70,20 @@ namespace SentienceLab.MoCap
 
 
 		/// <summary>
+		/// Called when the application is paused or continued.
+		/// </summary>
+		/// <param name="pause"><c>true</c> when the application is paused</param>
+		/// 
+		public void OnApplicationPause(bool pause)
+		{
+			if (client != null)
+			{
+				client.SetPaused(pause);
+			}
+		}
+
+
+		/// <summary>
 		/// Called once per rendered frame. 
 		/// Get new frame data now.
 		/// Make sure the MoCapManager script is executed before any other script in "Project Settings/Script Execution Order".
@@ -69,9 +91,17 @@ namespace SentienceLab.MoCap
 		///
 		public void Update()
 		{
-			if ((client != null) && client.IsConnected())
+			if (client != null)
+			{
+				if (client.IsConnected())
 			{
 				client.Update();
+			}
+		}
+			if ( (pauseHandler != null) && pauseHandler.IsActivated())
+			{
+				pauseClient = !pauseClient;
+				OnApplicationPause(pauseClient);
 			}
 		}
 
@@ -276,6 +306,9 @@ namespace SentienceLab.MoCap
 		private static MoCapManager instance    = null;
 		private static IMoCapClient client      = null;
 		private static Mutex        clientMutex = new Mutex();
+
+		private InputHandler pauseHandler;
+		private bool         pauseClient; 
 	}
 
 }
