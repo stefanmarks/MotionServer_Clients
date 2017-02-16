@@ -48,16 +48,17 @@ namespace SentienceLab
 		/// <summary>
 		/// Activates the Teleport function to a specific point.
 		/// </summary>
+		/// <param name="originPoint">the point to teleport from</param>
 		/// <param name="targetPoint">the point to teleport to</param>
 		/// 
-		public void Activate(Vector3 targetPoint)
+		public void Activate(Vector3 originPoint, Vector3 targetPoint)
 		{
 			if (!IsReady()) return;
 
-			// calculate target point
-			Vector3 startPoint = this.transform.position;
-			Vector3 offset = targetPoint - this.transform.position;
+			// calculate offset to target point
+			Vector3 offset = targetPoint - originPoint;
 			offset.y = 0;
+			Vector3 startPoint = this.transform.position;
 			Vector3 endPoint = startPoint + offset;
 
 			// activate transition

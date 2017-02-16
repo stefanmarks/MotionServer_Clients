@@ -5,7 +5,7 @@ namespace SentienceLab
 {
 	/// <summary>
 	/// Component for an object that can be aimed at for teleporting.
-	/// This component uses the event system for th functionality.
+	/// This component uses the event system.
 	/// </summary>
 
 	[AddComponentMenu("Locomotion/Teleport Target")]
@@ -60,7 +60,10 @@ namespace SentienceLab
 		{
 			if (teleporter != null)
 			{
-				teleporter.Activate(eventData.pointerPressRaycast.worldPosition);
+				groundMarker.gameObject.SetActive(false);
+				teleporter.Activate(
+					Camera.main.transform.position,
+					eventData.pointerPressRaycast.worldPosition);
 			}
 		}
 

@@ -5,7 +5,7 @@ namespace SentienceLab
 {
 	/// <summary>
 	/// Component for an object that can be aimed at for teleporting.
-	/// This component uses the event system for th functionality.
+	/// This component does NOT use the event system.
 	/// </summary>
 
 	[AddComponentMenu("Locomotion/Teleport Controller")]
@@ -51,6 +51,8 @@ namespace SentienceLab
 
 		void Update()
 		{
+			if ((teleporter == null) || !teleporter.IsReady()) return;
+
 			bool doTransport = false;
 			bool doAim       = false;
 
@@ -90,7 +92,7 @@ namespace SentienceLab
 					// here we go: hide marker...
 					targetMarker.gameObject.SetActive(false);
 					// ...and activate teleport
-					teleporter.Activate(hit.point);
+					teleporter.Activate(cameraNode.transform.position, hit.point);
 				}
 				else
 				{
