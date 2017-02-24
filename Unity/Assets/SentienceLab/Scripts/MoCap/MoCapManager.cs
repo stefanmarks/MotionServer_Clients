@@ -1,3 +1,8 @@
+#region Copyright Information
+// Sentience Lab VR Framework
+// (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
+#endregion Copyright Information
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Net;
@@ -12,7 +17,6 @@ namespace SentienceLab.MoCap
 	/// One instance of this object is needed that all MoCap controlled objects get their data from.
 	/// Make sure the MoCapManager script is executed before any other script in "Project Settings/Script Execution Order".
 	/// </summary>
-	///
 
 	[DisallowMultipleComponent]
 	[AddComponentMenu("Motion Capture/MoCap Manager")]

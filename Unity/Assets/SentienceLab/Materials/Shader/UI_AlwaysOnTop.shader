@@ -1,4 +1,7 @@
-﻿Shader "UI/Always On Top" 
+﻿// Sentience Lab VR Framework
+// (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
+
+Shader "UI/Always On Top" 
 {
 	Properties
 	{

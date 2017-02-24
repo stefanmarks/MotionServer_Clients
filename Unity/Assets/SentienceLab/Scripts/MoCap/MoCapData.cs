@@ -1,3 +1,8 @@
+#region Copyright Information
+// Sentience Lab VR Framework
+// (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
+#endregion Copyright Information
+
 using UnityEngine;
 
 namespace SentienceLab.MoCap
@@ -9,6 +14,7 @@ namespace SentienceLab.MoCap
 	public class MoCapData
 	{
 		public readonly MoCapDataBuffer buffer; // buffer that owns this data point
+
 		public Vector3    pos; // position of marker or bone
 		public Quaternion rot; // orientation of bone
 		public bool  tracked;  // tracking flag
