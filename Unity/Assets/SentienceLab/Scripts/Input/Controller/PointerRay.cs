@@ -1,158 +1,183 @@
+#region Copyright Information
+// Sentience Lab VR Framework
+// (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
+#endregion Copyright Information
+
+using SentienceLab.Input;
 using UnityEngine;
 
-/// <summary>
-/// Component for controlling a laser-like ray to point at objects in the scene.
-/// This component can be queried as to what it is pointing at.
-/// </summary>
-///
-
-[RequireComponent(typeof(LineRenderer))]
-
-public class PointerRay : MonoBehaviour
+namespace SentienceLab
 {
-	[Tooltip("Enable or disable the ray")]
-	public bool rayEnabled = true;
+	/// <summary>
+	/// Component for controlling a laser-like ray to point at objects in the scene.
+	/// This component can be queried as to what it is pointing at.
+	/// </summary>
+	///
 
-	[Tooltip("Maximum range of the ray")]
-	public float rayRange = 100.0f;
+	[RequireComponent(typeof(LineRenderer))]
 
-	[Tooltip("List of tags that the pointer reacts to (e.g., 'floor')")]
-	public string[] tagList = { };
-
-	public Collider[] checkInsideColliders = { };
-
-	[Tooltip("Object to render at the point where the ray meets another game object (optional)")]
-	public Transform activeEndPoint = null;
-
-
-	void Start()
+	public class PointerRay : MonoBehaviour
 	{
-		line = GetComponent<LineRenderer>();
-		line.numPositions = 2;
-		line.useWorldSpace = true;
-		overrideTarget = false;
-	}
+		[Tooltip("Enable or disable the ray")]
+		public bool rayEnabled = true;
+
+		[Tooltip("Maximum range of the ray")]
+		public float rayRange = 100.0f;
+
+		[Tooltip("List of tags that the pointer reacts to (e.g., 'floor')")]
+		public string[] tagList = { };
+
+		[Tooltip("List of colliders to check for inside-out collisions")]
+		public Collider[] checkInsideColliders = { };
+
+		[Tooltip("Object to render at the point where the ray meets another game object (optional)")]
+		public Transform activeEndPoint = null;
+
+		[Tooltip("(Optional) Action to activate the ray")]
+		public string activationAction = "";
 
 
-	void LateUpdate()
-	{
-		// assume nothing is hit at first
-		rayTarget.distance = 0;
-
-		// change in enabled flag
-		if (line.enabled != rayEnabled)
+		void Start()
 		{
-			line.enabled = rayEnabled;
-			if ((activeEndPoint != null) && !rayEnabled)
+			line = GetComponent<LineRenderer>();
+			line.numPositions = 2;
+			line.useWorldSpace = true;
+			overrideTarget = false;
+
+			if ( activationAction.Trim().Length > 0 )
 			{
-				activeEndPoint.gameObject.SetActive(false);
+				handlerActivate = InputHandler.Find(activationAction);
+				rayEnabled = false;
 			}
 		}
 
-		if (!line.enabled) return; // if ray is disabled, bail out right now
 
-		bool hit = false;
-		// construct ray
-		Ray ray = new Ray(transform.position, transform.forward);
-		Vector3 end = ray.origin + ray.direction * rayRange;
-		line.SetPosition(0, ray.origin);
-		Debug.DrawLine(ray.origin, end, Color.red);
-
-		if (!overrideTarget)
+		void LateUpdate()
 		{
-			// do raycast
-			hit = Physics.Raycast(ray, out rayTarget, rayRange);
+			// assume nothing is hit at first
+			rayTarget.distance = 0;
 
-			// test tags
-			if (hit && (tagList.Length > 0))
+			if (handlerActivate != null)
 			{
-				hit = false;
-				foreach (string tag in tagList)
+				rayEnabled = handlerActivate.IsActive();
+			}
+
+			// change in enabled flag
+			if (line.enabled != rayEnabled)
+			{
+				line.enabled = rayEnabled;
+				if ((activeEndPoint != null) && !rayEnabled)
 				{
-					if (rayTarget.transform.tag.CompareTo(tag) == 0)
+					activeEndPoint.gameObject.SetActive(false);
+				}
+			}
+
+			if (!line.enabled) return; // if ray is disabled, bail out right now
+
+			bool hit = false;
+			// construct ray
+			Ray ray = new Ray(transform.position, transform.forward);
+			Vector3 end = ray.origin + ray.direction * rayRange;
+			line.SetPosition(0, ray.origin);
+			Debug.DrawLine(ray.origin, end, Color.red);
+
+			if (!overrideTarget)
+			{
+				// do raycast
+				hit = Physics.Raycast(ray, out rayTarget, rayRange);
+
+				// test tags
+				if (hit && (tagList.Length > 0))
+				{
+					hit = false;
+					foreach (string tag in tagList)
 					{
-						hit = true;
-						break;
+						if (rayTarget.transform.tag.CompareTo(tag) == 0)
+						{
+							hit = true;
+							break;
+						}
+					}
+					if (!hit)
+					{
+						// tag test negative > reset raycast structure
+						Physics.Raycast(ray, out rayTarget, 0);
 					}
 				}
-				if (!hit)
+
+				Ray reverse = new Ray(ray.origin + ray.direction * rayRange, -ray.direction);
+				foreach (Collider c in checkInsideColliders)
 				{
-					// tag test negative > reset raycast structure
-					Physics.Raycast(ray, out rayTarget, 0);
+					RaycastHit hitReverse;
+					if ( c.Raycast(reverse, out hitReverse, rayRange) && (rayRange - hitReverse.distance < (hit ? rayTarget.distance : rayRange)) )
+					{
+						rayTarget = hitReverse;
+						hit = true;
+					}
 				}
 			}
-
-			Ray reverse = new Ray(ray.origin + ray.direction * rayRange, -ray.direction);
-			foreach (Collider c in checkInsideColliders)
+			else
 			{
-				RaycastHit hitReverse;
-				if ( c.Raycast(reverse, out hitReverse, rayRange) && (rayRange - hitReverse.distance < (hit ? rayTarget.distance : rayRange)) )
+				Physics.Raycast(ray, out rayTarget, 0); // reset structure
+				rayTarget.point = overridePoint;        // override point
+				hit = true;
+			}
+
+			if (hit)
+			{
+				// hit something > draw ray to there and render end point object
+				line.SetPosition(1, rayTarget.point);
+				if (activeEndPoint != null)
 				{
-					rayTarget = hitReverse;
-					hit = true;
+					activeEndPoint.position = rayTarget.point;
+					activeEndPoint.gameObject.SetActive(true);
+				}
+			}
+			else
+			{
+				// hit nothing > draw ray to end and disable end point object
+				line.SetPosition(1, end);
+				if (activeEndPoint != null)
+				{
+					activeEndPoint.gameObject.SetActive(false);
 				}
 			}
 		}
-		else
+
+
+		/// <summary>
+		/// Returns the current target of the ray.
+		/// </summary>
+		/// <returns>the last raycastHit result</returns>
+		/// 
+		public RaycastHit GetRayTarget()
 		{
-			Physics.Raycast(ray, out rayTarget, 0); // reset structure
-			rayTarget.point = overridePoint;        // override point
-			hit = true;
+			return rayTarget;
 		}
 
-		if (hit)
+
+		/// <summary>
+		/// Sets the current target of the ray.
+		/// </summary>
+		/// 
+		public void OverrideRayTarget(Vector3 pos)
 		{
-			// hit something > draw ray to there and render end point object
-			line.SetPosition(1, rayTarget.point);
-			if (activeEndPoint != null)
+			if (pos.Equals(Vector3.zero))
 			{
-				activeEndPoint.position = rayTarget.point;
-				activeEndPoint.gameObject.SetActive(true);
+				overrideTarget = false;
+			}
+			else
+			{
+				overrideTarget = true;
+				overridePoint  = pos;
 			}
 		}
-		else
-		{
-			// hit nothing > draw ray to end and disable end point object
-			line.SetPosition(1, end);
-			if (activeEndPoint != null)
-			{
-				activeEndPoint.gameObject.SetActive(false);
-			}
-		}
+
+
+		private LineRenderer line;
+		private RaycastHit   rayTarget;
+		private bool         overrideTarget;
+		private Vector3      overridePoint;
+		private InputHandler handlerActivate;
 	}
-
-
-	/// <summary>
-	/// Returns the current target of the ray.
-	/// </summary>
-	/// <returns>the last raycastHit result</returns>
-	/// 
-	public RaycastHit GetRayTarget()
-	{
-		return rayTarget;
-	}
-
-
-	/// <summary>
-	/// Sets the current target of the ray.
-	/// </summary>
-	/// 
-	public void OverrideRayTarget(Vector3 pos)
-	{
-		if (pos.Equals(Vector3.zero))
-		{
-			overrideTarget = false;
-		}
-		else
-		{
-			overrideTarget = true;
-			overridePoint  = pos;
-		}
-	}
-
-
-	private LineRenderer line;
-	private RaycastHit   rayTarget;
-	private bool         overrideTarget;
-	private Vector3      overridePoint;
 }

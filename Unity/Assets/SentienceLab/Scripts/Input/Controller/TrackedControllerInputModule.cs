@@ -1,13 +1,19 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using SentienceLab.Input;
-using SentienceLab.MoCap;
+using System.Collections.Generic;
 
-[AddComponentMenu("Event/Tracked Controller Input Module")]
-public class TrackedControllerInputModule : BaseInputModule
+namespace SentienceLab
 {
+	/// <summary>
+	/// Input manager that uses motion tracked game objects for interaction.
+	/// </summary>
+	/// 
+	[AddComponentMenu("Event/Tracked Controller Input Module")]
+	public class TrackedControllerInputModule : BaseInputModule
+	{
 	[System.Serializable]
-	public class Controller
+		public class ControllerInfo
 	{
 		public Transform  trackedObject;
 		public string     actionName;
@@ -17,7 +23,7 @@ public class TrackedControllerInputModule : BaseInputModule
 	public LayerMask layerMask;
 
 	[Tooltip("Tracked controllers and their action name for clicking")]
-	public Controller[] controllers;
+		public ControllerInfo[] controllers;
 
 
 	public override bool ShouldActivateModule()
@@ -27,9 +33,10 @@ public class TrackedControllerInputModule : BaseInputModule
 		{
 			// is at least one of the controller objects active?
 			bool controllersActive = false;
-			foreach (Controller controller in controllers)
+				foreach (ControllerInfo controller in controllers)
 			{
-				if (controller.trackedObject.gameObject.activeInHierarchy)
+					if ((controller.trackedObject != null) &&
+						controller.trackedObject.gameObject.activeInHierarchy)
 				{
 					controllersActive = true;
 					break;
@@ -48,6 +55,7 @@ public class TrackedControllerInputModule : BaseInputModule
 
 		if (!activated)
 		{
+				// create event camera
 			controllerCamera = new GameObject("Controller UI Camera").AddComponent<Camera>();
 			controllerCamera.clearFlags      = CameraClearFlags.Depth;
 			controllerCamera.cullingMask = layerMask; 
@@ -58,22 +66,27 @@ public class TrackedControllerInputModule : BaseInputModule
 			PhysicsRaycaster prc = (PhysicsRaycaster) controllerCamera.gameObject.AddComponent<PhysicsRaycaster>();
 			prc.eventMask = layerMask;
 
-			currentPoint    = new GameObject[controllers.Length];
-			currentPressed  = new GameObject[controllers.Length];
-			currentDragging = new GameObject[controllers.Length];
-			pointEvents     = new PointerEventData[controllers.Length];
-
+				// assign event camera to all canvasses
 			Canvas[] canvases = GameObject.FindObjectsOfType<Canvas>();
 			foreach (Canvas canvas in canvases)
 			{
 				canvas.worldCamera = controllerCamera;
 			}
 
-			actionHandlers = new InputHandler[controllers.Length];
+				// create controller data strctures
+				List<ControllerData> controllerDataList = new List<ControllerData>();
 			for (int idx = 0; idx < controllers.Length; idx++)
 			{
-				actionHandlers[idx] = InputHandler.Find(controllers[idx].actionName);
+					if (controllers[idx].trackedObject != null)
+					{
+						ControllerData data = new ControllerData();
+						data.transform = controllers[idx].trackedObject.transform;
+						data.actionHandler = InputHandler.Find(controllers[idx].actionName);
+						data.ray = controllers[idx].trackedObject.GetComponentInChildren<PointerRay>();
+						controllerDataList.Add(data);
 			}
+				}
+				controllerData = controllerDataList.ToArray();
 
 			activated = true;
 		}
@@ -86,78 +99,84 @@ public class TrackedControllerInputModule : BaseInputModule
 
 		if (activated)
 		{
-			currentPoint    = null;
-			currentPressed  = null;
-			currentDragging = null;
-			pointEvents     = null;
-
 			Destroy(controllerCamera);
 			controllerCamera = null;
 
+				controllerData = null;
 			activated = false;
 		}
 	}
 
 	// use screen midpoint as locked pointer location, enabling look location to be the "mouse"
-	private void GetLookPointerEventData(int index)
+		private void GetLookPointerEventData(ref ControllerData info)
 	{
-		if (pointEvents[index] == null)
-			pointEvents[index] = new PointerEventData(base.eventSystem);
+			if (info.eventData == null)
+			{
+				info.eventData = new PointerEventData(base.eventSystem);
+			}
 		else
-			pointEvents[index].Reset();
+			{
+				info.eventData.Reset();
+			}
 
-		pointEvents[index].delta       = Vector2.zero;
-		pointEvents[index].position    = new Vector2(Screen.width / 2, Screen.height / 2);
-		pointEvents[index].scrollDelta = Vector2.zero;
+			info.eventData.delta       = Vector2.zero;
+			info.eventData.position    = new Vector2(Screen.width / 2, Screen.height / 2);
+			info.eventData.scrollDelta = Vector2.zero;
 
-		base.eventSystem.RaycastAll(pointEvents[index], m_RaycastResultCache);
-		pointEvents[index].pointerCurrentRaycast = FindFirstRaycast(m_RaycastResultCache);
+			// actually do the raycast
+			base.eventSystem.RaycastAll(info.eventData, m_RaycastResultCache);
+			info.eventData.pointerCurrentRaycast = FindFirstRaycast(m_RaycastResultCache);
+
 		m_RaycastResultCache.Clear();
 	}
 
 	// update the cursor location and whether it is enabled
 	// this code is based on Unity's DragMe.cs code provided in the UI drag and drop example
-	private void UpdateCursor(int index, PointerEventData pointData)
+		private void UpdateCursor(ref ControllerData ctrl)
 	{
-		PointerRay ray = controllers[index].trackedObject.GetComponentInChildren<PointerRay>();
-		if (ray)
+			if (ctrl.ray != null)
 		{
-			ray.OverrideRayTarget(Vector3.zero);
+				ctrl.ray.OverrideRayTarget(Vector3.zero);
 		}
 
-		if (pointEvents[index].pointerCurrentRaycast.gameObject != null)
+			if (ctrl.eventData.pointerCurrentRaycast.gameObject != null)
 		{
-			if (pointData.pointerEnter != null)
+				if (ctrl.eventData.pointerEnter != null)
 			{
-				RectTransform draggingPlane = pointData.pointerEnter.GetComponent<RectTransform>();
+					RectTransform draggingPlane = ctrl.eventData.pointerEnter.GetComponent<RectTransform>();
 				Vector3 globalLookPos;
-				if ((draggingPlane != null) && RectTransformUtility.ScreenPointToWorldPointInRectangle(draggingPlane, pointData.position, pointData.enterEventCamera, out globalLookPos))
+					if ((draggingPlane != null) && 
+						RectTransformUtility.ScreenPointToWorldPointInRectangle(
+							draggingPlane, 
+							ctrl.eventData.position, 
+							ctrl.eventData.enterEventCamera, 
+							out globalLookPos))
 				{
-					if (ray)
+						if (ctrl.ray)
 					{
-						ray.OverrideRayTarget(globalLookPos);
+							ctrl.ray.OverrideRayTarget(globalLookPos);
 					}
-//					Cursors[index].position = globalLookPos;
-//					Cursors[index].rotation = draggingPlane.rotation;
+	//					Cursors[index].position = globalLookPos;
+	//					Cursors[index].rotation = draggingPlane.rotation;
 
 					// scale cursor based on distance to camera
-//					float lookPointDistance = (Cursors[index].position - Camera.main.transform.position).magnitude;
-//					float cursorScale = lookPointDistance * NormalCursorScale;
-//					if (cursorScale < NormalCursorScale)
-//					{
-//						cursorScale = NormalCursorScale;
-//					}
+	//					float lookPointDistance = (Cursors[index].position - Camera.main.transform.position).magnitude;
+	//					float cursorScale = lookPointDistance * NormalCursorScale;
+	//					if (cursorScale < NormalCursorScale)
+	//					{
+	//						cursorScale = NormalCursorScale;
+	//					}
 
-//					Cursors[index].localScale = Vector3.one * cursorScale;
+	//					Cursors[index].localScale = Vector3.one * cursorScale;
 				}
 			}
 		}
 		else
 		{
 			//			Cursors[index].gameObject.SetActive(false);
-			if (ray)
+				if (ctrl.ray)
 			{
-				ray.OverrideRayTarget(Vector3.zero);
+					ctrl.ray.OverrideRayTarget(Vector3.zero);
 			}
 		}
 	}
@@ -190,16 +209,19 @@ public class TrackedControllerInputModule : BaseInputModule
 			return false;
 
 		BaseEventData data = GetBaseEventData();
-
-		ExecuteEvents.Execute(base.eventSystem.currentSelectedGameObject, data, ExecuteEvents.updateSelectedHandler);
+			ExecuteEvents.Execute(
+				base.eventSystem.currentSelectedGameObject, 
+				data, 
+				ExecuteEvents.updateSelectedHandler);
 
 		return data.used;
 	}
 
-	private void UpdateCameraPosition(int index)
+
+		private void UpdateCameraPosition(ref ControllerData ctrl)
 	{
-		controllerCamera.transform.position = controllers[index].trackedObject.position;
-		controllerCamera.transform.forward  = controllers[index].trackedObject.forward;
+			controllerCamera.transform.position = ctrl.transform.position;
+			controllerCamera.transform.rotation = ctrl.transform.rotation;
 	}
 
 
@@ -210,113 +232,129 @@ public class TrackedControllerInputModule : BaseInputModule
 		SendUpdateEventToSelectedObject();
 
 		// see if there is a UI element that is currently being looked at
-		for (int index = 0; index < controllers.Length; index++)
+			for (int index = 0; index < controllerData.Length; index++)
 		{
-			if (controllers[index].trackedObject.gameObject.activeInHierarchy == false)
+				ControllerData ctrl = controllerData[index];
+
+				if (ctrl.transform.gameObject.activeInHierarchy == false)
 			{
-//				if (Cursors[index].gameObject.activeInHierarchy == true)
+	//				if (Cursors[index].gameObject.activeInHierarchy == true)
 				{
-//					Cursors[index].gameObject.SetActive(false);
+	//					Cursors[index].gameObject.SetActive(false);
 				}
 				continue;
 			}
 
-			UpdateCameraPosition(index);
-			GetLookPointerEventData(index);
+				UpdateCameraPosition(ref ctrl);
+				GetLookPointerEventData(ref ctrl);
 
-			currentPoint[index] = pointEvents[index].pointerCurrentRaycast.gameObject;
+				// what object are we pointing at?
+				ctrl.currentPoint = ctrl.eventData.pointerCurrentRaycast.gameObject;
+				// is the pointer ray inactive?
+				if ((ctrl.ray != null) && !ctrl.ray.rayEnabled)
+				{
+					// yes > no active object
+					ctrl.currentPoint = null;
+				}
 
 			// handle enter and exit events (highlight)
-			base.HandlePointerExitAndEnter(pointEvents[index], currentPoint[index]);
+				base.HandlePointerExitAndEnter(ctrl.eventData, ctrl.currentPoint);
 
 			// update cursor
-			UpdateCursor(index, pointEvents[index]);
+				UpdateCursor(ref ctrl);
 
-			if (controllers[index] != null)
-			{
-				if (actionHandlers[index].IsActivated())
+				if (ctrl.actionHandler.IsActivated())
 				{
 					ClearSelection();
 
-					pointEvents[index].pressPosition = pointEvents[index].position;
-					pointEvents[index].pointerPressRaycast = pointEvents[index].pointerCurrentRaycast;
-					pointEvents[index].pointerPress = null;
+					ctrl.eventData.pressPosition = ctrl.eventData.position;
+					ctrl.eventData.pointerPressRaycast = ctrl.eventData.pointerCurrentRaycast;
+					ctrl.eventData.pointerPress = null;
 
-					if (currentPoint[index] != null)
+					if (ctrl.currentPoint != null)
 					{
-						currentPressed[index] = currentPoint[index];
+						ctrl.currentPressed = ctrl.currentPoint;
 
-						GameObject newPressed = ExecuteEvents.ExecuteHierarchy(currentPressed[index], pointEvents[index], ExecuteEvents.pointerDownHandler);
+						GameObject newPressed = ExecuteEvents.ExecuteHierarchy(ctrl.currentPressed, ctrl.eventData, ExecuteEvents.pointerDownHandler);
 
 						if (newPressed == null)
 						{
 							// some UI elements might only have click handler and not pointer down handler
-							newPressed = ExecuteEvents.ExecuteHierarchy(currentPressed[index], pointEvents[index], ExecuteEvents.pointerClickHandler);
+							newPressed = ExecuteEvents.ExecuteHierarchy(ctrl.currentPressed, ctrl.eventData, ExecuteEvents.pointerClickHandler);
 							if (newPressed != null)
 							{
-								currentPressed[index] = newPressed;
+								ctrl.currentPressed = newPressed;
 							}
 						}
 						else
 						{
-							currentPressed[index] = newPressed;
+							ctrl.currentPressed = newPressed;
 							// we want to do click on button down at same time, unlike regular mouse processing
 							// which does click when mouse goes up over same object it went down on
 							// reason to do this is head tracking might be jittery and this makes it easier to click buttons
-							ExecuteEvents.Execute(newPressed, pointEvents[index], ExecuteEvents.pointerClickHandler);
+							ExecuteEvents.Execute(newPressed, ctrl.eventData, ExecuteEvents.pointerClickHandler);
 						}
 
 						if (newPressed != null)
 						{
-							pointEvents[index].pointerPress = newPressed;
-							currentPressed[index] = newPressed;
-							Select(currentPressed[index]);
+							ctrl.eventData.pointerPress = newPressed;
+							ctrl.currentPressed = newPressed;
+							Select(ctrl.currentPressed);
 						}
 
-						ExecuteEvents.Execute(currentPressed[index], pointEvents[index], ExecuteEvents.beginDragHandler);
-						pointEvents[index].pointerDrag = currentPressed[index];
-						currentDragging[index] = currentPressed[index];
+						ExecuteEvents.Execute(ctrl.currentPressed, ctrl.eventData, ExecuteEvents.beginDragHandler);
+						ctrl.eventData.pointerDrag = ctrl.currentPressed;
+						ctrl.currentDragging = ctrl.currentPressed;
 					}
 				}
 
-				if (actionHandlers[index].IsDeactivated())
+				if (ctrl.actionHandler.IsDeactivated())
 				{
-					if (currentDragging[index])
+					if (ctrl.currentDragging)
 					{
-						ExecuteEvents.Execute(currentDragging[index], pointEvents[index], ExecuteEvents.endDragHandler);
-						if (currentPoint[index] != null)
+						ExecuteEvents.Execute(ctrl.currentDragging, ctrl.eventData, ExecuteEvents.endDragHandler);
+						if (ctrl.currentPoint != null)
 						{
-							ExecuteEvents.ExecuteHierarchy(currentPoint[index], pointEvents[index], ExecuteEvents.dropHandler);
+							ExecuteEvents.ExecuteHierarchy(ctrl.currentPoint, ctrl.eventData, ExecuteEvents.dropHandler);
 						}
-						pointEvents[index].pointerDrag = null;
-						currentDragging[index] = null;
+						ctrl.eventData.pointerDrag = null;
+						ctrl.currentDragging = null;
 					}
-					if (currentPressed[index])
+					if (ctrl.currentPressed)
 					{
-						ExecuteEvents.Execute(currentPressed[index], pointEvents[index], ExecuteEvents.pointerUpHandler);
-						pointEvents[index].rawPointerPress = null;
-						pointEvents[index].pointerPress = null;
-						currentPressed[index] = null;
+						ExecuteEvents.Execute(ctrl.currentPressed, ctrl.eventData, ExecuteEvents.pointerUpHandler);
+						ctrl.eventData.rawPointerPress = null;
+						ctrl.eventData.pointerPress = null;
+						ctrl.currentPressed = null;
 					}
 
 					ClearSelection();
 				}
 
 				// drag handling
-				if (currentDragging[index] != null)
+				if (ctrl.currentDragging != null)
 				{
-					ExecuteEvents.Execute(currentDragging[index], pointEvents[index], ExecuteEvents.dragHandler);
+					ExecuteEvents.Execute(ctrl.currentDragging, ctrl.eventData, ExecuteEvents.dragHandler);
 				}
 			}
 		}
+
+
+		protected class ControllerData
+		{
+			public int              index;
+			public Transform        transform;
+			public InputHandler     actionHandler;
+			public GameObject       currentPoint;
+			public GameObject       currentPressed;
+			public GameObject       currentDragging;
+			public PointerEventData eventData;
+			public PointerRay       ray;
 	}
 
 
 	private bool               activated = false;
-	private InputHandler[]    actionHandlers;
-	private GameObject[]       currentPoint;
-	private GameObject[]       currentPressed;
-	private GameObject[]       currentDragging;
-	private PointerEventData[] pointEvents;
+		private ControllerData[]   controllerData;
 	private Camera controllerCamera;
+	}
 }
