@@ -151,17 +151,17 @@ namespace SentienceLab
 					cameraNode = camera.gameObject;
 					leftCameraNode = GameObject.Instantiate(cameraNode);
 					leftCameraNode.name = "Left Eye Camera";
-					leftCameraNode.transform.parent = cameraNode.transform.parent;
+					leftCameraNode.transform.parent        = cameraNode.transform.parent;
 					leftCameraNode.transform.localRotation = cameraNode.transform.localRotation;
-					leftCameraNode.transform.localScale = Vector3.one;
+					leftCameraNode.transform.localScale    = Vector3.one;
 					ConfigureCamera(leftCameraNode, VRNode.LeftEye, hmdConfig);
 					AudioListener alLeft = leftCameraNode.GetComponentInChildren<AudioListener>();
 
 					rightCameraNode = GameObject.Instantiate(cameraNode);
 					rightCameraNode.name = "Right Eye Camera";
-					rightCameraNode.transform.parent = cameraNode.transform.parent;
+					rightCameraNode.transform.parent        = cameraNode.transform.parent;
 					rightCameraNode.transform.localRotation = cameraNode.transform.localRotation;
-					rightCameraNode.transform.localScale = Vector3.one;
+					rightCameraNode.transform.localScale    = Vector3.one;
 					ConfigureCamera(rightCameraNode, VRNode.RightEye, hmdConfig);
 					AudioListener alRight = rightCameraNode.GetComponentInChildren<AudioListener>();
 
@@ -185,7 +185,7 @@ namespace SentienceLab
 		{
 			// adjust camera X-positions based on IPD
 			float xDir = 0;
-			if      (eye == VRNode.LeftEye) { xDir = -1; }
+			if      (eye == VRNode.LeftEye ) { xDir = -1; }
 			else if (eye == VRNode.RightEye) { xDir = +1; }
 
 			// shift camera sideways considering any offset orientation
@@ -197,14 +197,14 @@ namespace SentienceLab
 				// Setup perspective projection, with aspect ratio matches viewport
 				float top = (float)Mathf.Tan(Mathf.Deg2Rad * hmdConfig.FieldOfView / 2) * cam.nearClipPlane;
 				float bottom = -top;
-				float left = cam.aspect * bottom / 2;
-				float right = -left;
+				float left   = cam.aspect * bottom / 2;
+				float right  = -left;
 
 				// apply centre offset and adapt viewport
 				float offX = hmdConfig.xOffset * (left - right) / 2;
-				if (eye == VRNode.LeftEye) { cam.rect = new Rect(0.0f, 0, 0.5f, 1); }
+				if      (eye == VRNode.LeftEye ) { cam.rect = new Rect(0.0f, 0, 0.5f, 1); }
 				else if (eye == VRNode.RightEye) { cam.rect = new Rect(0.5f, 0, 0.5f, 1); offX = -offX; }
-				else { cam.rect = new Rect(0.0f, 0, 1.0f, 1); offX = 0; }
+				else                             { cam.rect = new Rect(0.0f, 0, 1.0f, 1); offX = 0;     }
 
 				// calculate off-centre projection matrix
 				Matrix4x4 projectionMatrix = cam.projectionMatrix;
@@ -219,7 +219,7 @@ namespace SentienceLab
 					distortion.DistortionShader = Shader.Find("VR/LensDistortion");
 				}
 				distortion.ApplyConfig(hmdConfig);
-				distortion.ScaleIn = 1.1f;  // TODO: Hardcoded values > calculate automatically
+				distortion.ScaleIn  = 1.1f;  // TODO: Hardcoded values > calculate automatically
 				distortion.ScaleOut = 0.82f; // TODO: Hardcoded values > calculate automatically
 			}
 		}
