@@ -29,6 +29,8 @@ namespace SentienceLab.MoCap
 		[Tooltip("Action name for pausing/running the client")]
 		public string pauseAction = "pause";
 
+		[Tooltip("Name of the MoCap Client (\"$scene\" will be replaced by the active scene name)")]
+		public string clientName = "$scene";
 
 		private byte[] clientAppVersion = new byte[] { 1, 2, 0, 0 };
 
@@ -205,7 +207,9 @@ namespace SentienceLab.MoCap
 							// is client already the right type?
 							if (!(client is NatNetClient))
 							{
-								string appName = SceneManager.GetActiveScene().name;
+								// construct client name
+								string appName = clientName;
+								appName = appName.Replace("$scene", SceneManager.GetActiveScene().name);
 								client = new NatNetClient(appName, clientAppVersion);
 							}
 						}
