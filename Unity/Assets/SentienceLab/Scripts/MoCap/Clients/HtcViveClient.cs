@@ -61,7 +61,7 @@ namespace SentienceLab.MoCap
 
 				for (int idx = 0; idx < controllerIndices.Length; idx++)
 				{
-					string name = "Controller" + (idx + 1);
+					string name = "ViveController" + (idx + 1);
 
 					Actor actor        = new Actor(scene, name, idx);
 					actor.bones        = new Bone[1];
