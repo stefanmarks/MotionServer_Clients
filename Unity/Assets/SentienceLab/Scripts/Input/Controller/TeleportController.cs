@@ -43,14 +43,14 @@ namespace SentienceLab
 			{
 				// activate and release doesn't make much sense without the ray
 				activationType  = ActivationType.OnTrigger;
-                rayAlwaysActive = false;
+				rayAlwaysActive = false;
 			}
 			else
 			{
-                rayAlwaysActive = ray.rayEnabled;
+				rayAlwaysActive = ray.rayEnabled;
 			}
 
-			teleporter      = GameObject.FindObjectOfType<Teleporter>();
+			teleporter = GameObject.FindObjectOfType<Teleporter>();
 		}
 
 
@@ -90,7 +90,7 @@ namespace SentienceLab
 				Physics.Raycast(tempRay, out hit);
 			}
 
-			if ((hit.distance > 0) && (hit.transform.gameObject != null) && hit.transform.gameObject.tag.Equals(groundTag))
+			if ((hit.distance > 0) && (hit.transform != null) && hit.transform.gameObject.tag.Equals(groundTag))
 			{
 				if (doTransport && (teleporter != null))
 				{

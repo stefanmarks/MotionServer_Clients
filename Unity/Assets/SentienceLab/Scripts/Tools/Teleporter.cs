@@ -20,6 +20,8 @@ namespace SentienceLab
 		public TransitionType transitionType = TransitionType.MoveLinear;
 		public float          transitionTime = 0.1f;
 
+		public AudioSource    teleportSound;
+
 
 		public enum TransitionType
 		{
@@ -60,11 +62,17 @@ namespace SentienceLab
 		{
 			if (!IsReady()) return;
 
+			if (teleportSound != null)
+			{
+				teleportSound.pitch = UnityEngine.Random.Range(0.9f, 1.1f);
+				teleportSound.Play();
+			}
+
 			// calculate offset to target point
 			Vector3 offset = targetPoint - originPoint;
 			offset.y = 0;
 			Vector3 startPoint = this.transform.position;
-			Vector3 endPoint = startPoint + offset;
+			Vector3 endPoint   = startPoint + offset;
 
 			// activate transition
 			switch (transitionType)

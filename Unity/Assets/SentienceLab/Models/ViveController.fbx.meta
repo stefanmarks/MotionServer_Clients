@@ -1,30 +1,40 @@
 fileFormatVersion: 2
-guid: cbe3ae5757b47504a8a929544bb8f728
-timeCreated: 1475208477
+guid: 07eb9f2dbe719df49a5293ae4cfec32e
+timeCreated: 1488428875
 licenseType: Free
 ModelImporter:
   serializedVersion: 19
   fileIDToRecycleName:
     100000: Head
-    100002: //RootNode
-    100004: Touchpad
-    100006: Trigger
+    100002: Touchpad
+    100004: Trigger
+    100006: //RootNode
+    100008: LED
+    100010: MenuButton
     400000: Head
-    400002: //RootNode
-    400004: Touchpad
-    400006: Trigger
+    400002: Touchpad
+    400004: Trigger
+    400006: //RootNode
+    400008: LED
+    400010: MenuButton
     2300000: Head
-    2300002: //RootNode
-    2300004: Touchpad
-    2300006: Trigger
+    2300002: Touchpad
+    2300004: Trigger
+    2300006: //RootNode
+    2300008: LED
+    2300010: MenuButton
     3300000: Head
-    3300002: //RootNode
-    3300004: Touchpad
-    3300006: Trigger
+    3300002: Touchpad
+    3300004: Trigger
+    3300006: //RootNode
+    3300008: LED
+    3300010: MenuButton
     4300000: Handle
-    4300002: Head
-    4300004: Touchpad
-    4300006: Trigger
+    4300002: Touchpad
+    4300004: Trigger
+    4300006: Head
+    4300008: LED
+    4300010: MenuButton
   materials:
     importMaterials: 1
     materialName: 1
@@ -71,6 +81,7 @@ ModelImporter:
   importAnimation: 0
   copyAvatar: 0
   humanDescription:
+    serializedVersion: 2
     human: []
     skeleton: []
     armTwist: 0.5
@@ -81,7 +92,10 @@ ModelImporter:
     legStretch: 0.05
     feetSpacing: 0
     rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
     hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   animationType: 0
   humanoidOversampling: 1

@@ -160,7 +160,9 @@ namespace SentienceLab.MoCap
 				// update inputs
 				system.GetControllerStateWithPose(
 					ETrackingUniverseOrigin.TrackingUniverseStanding, 
-					(uint) controller, ref states[idx], ref poses[idx]);
+					(uint) controller, 
+					ref states[idx], (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VRControllerState_t)),
+					ref poses[idx]);
 				Device device = scene.devices[idx];
 				// trigger button
 				device.channels[0].value = states[idx].rAxis1.x;
