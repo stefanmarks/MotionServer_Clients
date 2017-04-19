@@ -117,7 +117,7 @@ namespace SentienceLab.Input
 			bool returnValue = false;
 			foreach (IDevice d in devices)
 			{
-				returnValue |= (d.GetValue() > 0);
+				returnValue |= d.IsActive();
 			}
 			return returnValue;
 		}
@@ -182,7 +182,7 @@ namespace SentienceLab.Input
 			pressThreshold = value;
 			foreach (IDevice device in devices)
 			{
-				device.SetPressThreshold(value);
+				device.SetPressThreshold(pressThreshold);
 			}
 		}
 
@@ -211,6 +211,7 @@ namespace SentienceLab.Input
 		{
 			bool  Initialise(string inputName);
 			void  Process();
+			bool  IsActive();
 			bool  IsActivated();
 			bool  IsDeactivated();
 			float GetValue();
@@ -254,6 +255,11 @@ namespace SentienceLab.Input
 			{
 				oldValue = value;
 				value    = UnityEngine.Input.GetAxis(axisName);
+			}
+
+			public bool IsActive()
+			{
+				return (value >= pressThreshold);
 			}
 
 			public bool IsActivated()
@@ -358,6 +364,23 @@ namespace SentienceLab.Input
 			public void Process()
 			{
 				// nothing to do
+			}
+
+			public bool IsActive()
+			{
+				switch (mode)
+				{
+					case Mode.PlusMinus:
+						return UnityEngine.Input.GetKey(keyName1) ||
+							   UnityEngine.Input.GetKey(keyName2);
+
+					case Mode.Combination:
+						return (UnityEngine.Input.GetKey(keyName1) &&
+								UnityEngine.Input.GetKey(keyName2));
+
+					default:
+						return UnityEngine.Input.GetKey(keyName1);
+				}
 			}
 
 			public bool IsActivated()
@@ -470,6 +493,11 @@ namespace SentienceLab.Input
 			public void Process()
 			{
 				// nothing to do
+			}
+
+			public bool IsActive()
+			{
+				return device.GetButton();
 			}
 
 			public bool IsActivated()
