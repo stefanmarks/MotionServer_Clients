@@ -71,7 +71,7 @@ namespace SentienceLab.Input
 			foreach (InputHandler h in handlers.Values)
 			{
 				logTxt += ((logTxt.Length > 0) ? ", " : "") + h.ToString();
-		}
+			}
 			Debug.Log("Loaded input handlers: " + logTxt);
 		}
 
@@ -92,12 +92,12 @@ namespace SentienceLab.Input
 			foreach (string configTxt in inputMappings)
 			{
 				try
-		{
+				{
 					string configTxtTrim = "{" + configTxt + "}";
 					InputMap map = JsonUtility.FromJson<InputMap>(configTxtTrim);
 					InputHandler handler;
 					if (!handlers.TryGetValue(map.inputName, out handler))
-			{
+					{
 						handler = new InputHandler(map.inputName);
 						handlers[map.inputName] = handler;
 					}
@@ -120,7 +120,7 @@ namespace SentienceLab.Input
 			{
 				InputHandler handler;
 				if (!handlers.TryGetValue(map.inputName, out handler))
-			{
+				{
 					handler = new InputHandler(map.inputName);
 					handlers[map.inputName] = handler;
 				}

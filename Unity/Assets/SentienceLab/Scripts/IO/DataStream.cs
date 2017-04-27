@@ -2,6 +2,7 @@
 // Sentience Lab VR Framework
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
+
 using System.IO;
 using UnityEngine;
 

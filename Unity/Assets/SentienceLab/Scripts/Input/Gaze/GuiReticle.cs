@@ -53,7 +53,7 @@ public class GuiReticle : MonoBehaviour, IGazePointer
 		{
 			GazeInputModule.gazePointer = null;
 		}
-		}
+	}
 
 
 	void Update()

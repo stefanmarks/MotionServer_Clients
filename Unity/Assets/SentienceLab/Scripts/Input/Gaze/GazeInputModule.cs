@@ -268,7 +268,7 @@ public class GazeInputModule : BaseInputModule
 				gazeStartTime = Time.unscaledTime;
 				GazeBehaviourModifier gbm = gazeObject.GetComponent<GazeBehaviourModifier>();
 				fuseTime  = (gbm != null) && (gbm.fuseTimeOverride > 0) ? gbm.fuseTimeOverride : defaultFuseTime;
-				fuseState     = FuseState.Arming;
+				fuseState = FuseState.Arming;
 			}
 		}
 	}
@@ -304,6 +304,7 @@ public class GazeInputModule : BaseInputModule
 			ExecuteEvents.Execute(pointerData.pointerDrag, pointerData, ExecuteEvents.dragHandler);
 		}
 	}
+
 
 	private void HandlePendingClick()
 	{
@@ -440,7 +441,7 @@ public class GazeInputModule : BaseInputModule
 	}
 
 
-	private InputHandler    triggerAction;
+	private InputHandler     triggerAction;
 	private PointerEventData pointerData;
 	private Vector2          lastHeadPose, pointerPos;
 	private float            gazeStartTime, fuseTime;

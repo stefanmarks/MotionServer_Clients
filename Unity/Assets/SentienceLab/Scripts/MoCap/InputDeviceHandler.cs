@@ -115,8 +115,8 @@ namespace SentienceLab.MoCap
 			{
 				// SceneUpdates might happen several times per Unity Update.
 				// Reset flags only when a new Unity frame has come
-			released = false;
-			pressed  = false;
+				released = false;
+				pressed  = false;
 			}
 
 			// store values and flags for queries

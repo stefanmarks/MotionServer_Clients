@@ -38,6 +38,7 @@ namespace SentienceLab.MoCap
 					if (result != null) break; // found it > get me out here
 				}
 			}
+
 			return result;
 		}
 	}

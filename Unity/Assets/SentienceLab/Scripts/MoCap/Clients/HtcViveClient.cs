@@ -25,7 +25,16 @@ namespace SentienceLab.MoCap
 		{
 			sceneListeners  = new List<SceneListener>();
 			scene           = new Scene();
+			trackedDevices  = new List<TrackedDevice>();
 			connected       = false;
+		}
+
+
+		private class TrackedDevice
+		{
+			public string name;
+			public int    controllerIdx;
+			public int    deviceIdx;
 		}
 
 
@@ -51,61 +60,78 @@ namespace SentienceLab.MoCap
 
 			if (connected)
 			{
-				poses     = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
+				// allocate structures
+				state = new VRControllerState_t();
+				poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
 				gamePoses = new TrackedDevicePose_t[0];
 
-				FindControllerIndices();
-				scene.actors  = new Actor[controllerIndices.Length];
-				scene.devices = new Device[controllerIndices.Length];
-				states        = new VRControllerState_t[controllerIndices.Length];
-
-				for (int idx = 0; idx < controllerIndices.Length; idx++)
+				// find HMDs and controllers
+				trackedDevices.Clear();
+				int controllerCount = 0;
+				int hmdCount        = 0;
+				for (int index = 0; index < OpenVR.k_unMaxTrackedDeviceCount; index++)
 				{
-					string name = "ViveController" + (idx + 1);
+					ETrackedDeviceClass deviceClass = system.GetTrackedDeviceClass((uint)index);
+					TrackedDevice device = null;
+					if ( (deviceClass == ETrackedDeviceClass.Controller) &&
+						 (controllerCount < 2) )// no more than 2 controllers
+					{
+						device = new TrackedDevice();
+						device.controllerIdx = index;
+						device.deviceIdx     = 0; // read input from this controller
+						controllerCount++;
+						device.name = "ViveController" + controllerCount;
+					}
+					else if (deviceClass == ETrackedDeviceClass.HMD)
+					{
+						device = new TrackedDevice();
+						device.controllerIdx = index;
+						device.deviceIdx     = -1; // no input from this tracked device
+						hmdCount++;
+						device.name = "ViveHMD" + hmdCount;
+					}
 
-					Actor actor        = new Actor(scene, name, idx);
-					actor.bones        = new Bone[1];
-					actor.bones[0]     = new Bone(actor, "root", 0);
-					scene.actors[idx]  = actor;
+					if ( device != null )
+					{
+						trackedDevices.Add(device);
+					}
+				}
 
-					Device device      = new Device(scene, name, idx);
-					device.channels     = new Channel[11];
-					device.channels[0] = new Channel(device, "button1");  // fire
-					device.channels[1] = new Channel(device, "button2");  // menu
-					device.channels[2] = new Channel(device, "button3");  // grip
-					device.channels[3] = new Channel(device, "axis1");    // touchpad + press
-					device.channels[4] = new Channel(device, "axis2");
-					device.channels[5] = new Channel(device, "axis1raw"); // touchpad touch
-					device.channels[6] = new Channel(device, "axis2raw");
-					device.channels[7]  = new Channel(device, "right");    // touchpad as buttons
-					device.channels[8]  = new Channel(device, "left");
-					device.channels[9]  = new Channel(device, "up");
-					device.channels[10] = new Channel(device, "down");
+				// construct scene description
+				scene.actors  = new Actor[trackedDevices.Count];
+				scene.devices = new Device[controllerCount];
+				int deviceIndex = 0;
+				for (int idx = 0; idx < trackedDevices.Count; idx++)
+				{
+					Actor actor = new Actor(scene, trackedDevices[idx].name, idx);
+					actor.bones = new Bone[1];
+					actor.bones[0] = new Bone(actor, "root", 0);
+					scene.actors[idx] = actor;
 
-					scene.devices[idx] = device;
+					// is this an input device, too?
+					if (trackedDevices[idx].deviceIdx == 0)
+					{
+						Device device   = new Device(scene, actor.name, deviceIndex);
+						device.channels = new Channel[11];
+						device.channels[0] = new Channel(device, "button1");  // fire
+						device.channels[1] = new Channel(device, "button2");  // menu
+						device.channels[2] = new Channel(device, "button3");  // grip
+						device.channels[3] = new Channel(device, "axis1");    // touchpad + press
+						device.channels[4] = new Channel(device, "axis2");
+						device.channels[5] = new Channel(device, "axis1raw"); // touchpad touch
+						device.channels[6] = new Channel(device, "axis2raw");
+						device.channels[7] = new Channel(device, "right");    // touchpad as buttons
+						device.channels[8] = new Channel(device, "left");
+						device.channels[9] = new Channel(device, "up");
+						device.channels[10] = new Channel(device, "down");
+
+						scene.devices[deviceIndex]    = device;
+						trackedDevices[idx].deviceIdx = deviceIndex;
+						deviceIndex++;
+					}
 				}
 			}
 			return connected;
-		}
-
-
-		/// <summary>
-		/// Finds all the OpenVR device indices for hand controllers.
-		/// </summary>
-		/// 
-		private void FindControllerIndices()
-		{
-			List<int> indices = new List<int>();
-			for (int index = 0; index < OpenVR.k_unMaxTrackedDeviceCount; index++)
-			{
-				if (system.GetTrackedDeviceClass((uint) index) == ETrackedDeviceClass.Controller)
-				{
-					indices.Add(index);
-				}
-				// limit to 2 controllers
-				if (indices.Count == 2) break;
-			}
-			controllerIndices = indices.ToArray();
 		}
 
 
@@ -141,13 +167,13 @@ namespace SentienceLab.MoCap
 			// TODO: is this necessary?
 			compositor.GetLastPoses(poses, gamePoses);
 
-			for (int idx = 0; idx < controllerIndices.Length; idx++)
+			for (int idx = 0; idx < trackedDevices.Count; idx++)
 			{
 				// update position, orientation, and tracking state
-				int controller = controllerIndices[idx];
+				int controllerIdx = trackedDevices[idx].controllerIdx;
 				Bone bone = scene.actors[idx].bones[0];
 
-				HmdMatrix34_t pose = poses[controller].mDeviceToAbsoluteTracking;
+				HmdMatrix34_t pose = poses[controllerIdx].mDeviceToAbsoluteTracking;
 				Matrix4x4     m    = Matrix4x4.identity;
 				m[0,0] = pose.m0; m[0,1] = pose.m1; m[0,2] = pose.m2;  m[0,3] = pose.m3;
 				m[1,0] = pose.m4; m[1,1] = pose.m5; m[1,2] = pose.m6;  m[1,3] = pose.m7;
@@ -155,32 +181,36 @@ namespace SentienceLab.MoCap
 				MathUtil.ToggleLeftRightHandedMatrix(ref m);
 				bone.CopyTransform(MathUtil.GetTranslation(m), MathUtil.GetRotation(m));
 
-				bone.tracked = poses[controller].bDeviceIsConnected && poses[controller].bPoseIsValid;
+				bone.tracked = poses[controllerIdx].bDeviceIsConnected && poses[controllerIdx].bPoseIsValid;
 
-				// update inputs
-				system.GetControllerStateWithPose(
-					ETrackingUniverseOrigin.TrackingUniverseStanding, 
-					(uint) controller, 
-					ref states[idx], (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VRControllerState_t)),
-					ref poses[idx]);
-				Device device = scene.devices[idx];
-				// trigger button
-				device.channels[0].value = states[idx].rAxis1.x;
-				// menu button
-				device.channels[1].value = (states[idx].ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_ApplicationMenu)) != 0 ? 1 : 0;
-				// grip button
-				device.channels[2].value = (states[idx].ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_Grip)) != 0 ? 1 : 0;
-				// touchpad (axis1/2 and axis1/2raw)
-				float touchpadPressed = (states[idx].ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_SteamVR_Touchpad)) != 0 ? 1 : 0;
-				device.channels[3].value = states[idx].rAxis0.x * touchpadPressed;
-				device.channels[4].value = states[idx].rAxis0.y * touchpadPressed;
-				device.channels[5].value = states[idx].rAxis0.x;
-				device.channels[6].value = states[idx].rAxis0.y;
-				// touchpad as buttons
-				device.channels[7].value  = (states[idx].rAxis0.x > +0.5) ? touchpadPressed : 0;
-				device.channels[8].value  = (states[idx].rAxis0.x < -0.5) ? touchpadPressed : 0;
-                device.channels[9].value  = (states[idx].rAxis0.y > +0.5) ? touchpadPressed : 0;
-                device.channels[10].value = (states[idx].rAxis0.y < -0.5) ? touchpadPressed : 0;
+				// if this is a controller, update inputs as well
+				int deviceIdx = trackedDevices[idx].deviceIdx;
+				if (deviceIdx >= 0)
+				{
+					system.GetControllerStateWithPose(
+						ETrackingUniverseOrigin.TrackingUniverseStanding,
+						(uint)controllerIdx,
+						ref state, (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VRControllerState_t)),
+						ref poses[controllerIdx]);
+					Device device = scene.devices[deviceIdx];
+					// trigger button
+					device.channels[0].value = state.rAxis1.x;
+					// menu button
+					device.channels[1].value = (state.ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_ApplicationMenu)) != 0 ? 1 : 0;
+					// grip button
+					device.channels[2].value = (state.ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_Grip)) != 0 ? 1 : 0;
+					// touchpad (axis1/2 and axis1/2raw)
+					float touchpadPressed = (state.ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_SteamVR_Touchpad)) != 0 ? 1 : 0;
+					device.channels[3].value  = state.rAxis0.x * touchpadPressed;
+					device.channels[4].value  = state.rAxis0.y * touchpadPressed;
+					device.channels[5].value  = state.rAxis0.x;
+					device.channels[6].value  = state.rAxis0.y;
+					// touchpad as buttons
+					device.channels[7].value  = (state.rAxis0.x > +0.5f) ? touchpadPressed : 0;
+					device.channels[8].value  = (state.rAxis0.x < -0.5f) ? touchpadPressed : 0;
+					device.channels[9].value  = (state.rAxis0.y > +0.5f) ? touchpadPressed : 0;
+					device.channels[10].value = (state.rAxis0.y < -0.5f) ? touchpadPressed : 0;
+				}
 			}
 			NotifyListeners_Update();
 		}
@@ -230,14 +260,14 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private bool                        connected;
-		private Scene                       scene;
-		private List<SceneListener>         sceneListeners;
-		private CVRCompositor               compositor;
+		private bool                   connected;
+		private Scene                  scene;
+		private List<SceneListener>    sceneListeners;
+		private CVRCompositor          compositor;
 		private CVRSystem              system;
-		private int[]                  controllerIndices;
-		private TrackedDevicePose_t[]       poses, gamePoses;
-		private VRControllerState_t[]  states;
+		private List<TrackedDevice>    trackedDevices;
+		private TrackedDevicePose_t[]  poses, gamePoses;
+		private VRControllerState_t    state;
 	}
 
 }

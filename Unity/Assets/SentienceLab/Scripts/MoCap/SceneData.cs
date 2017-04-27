@@ -296,7 +296,7 @@ namespace SentienceLab.MoCap
 		}
 
 		/// <summary>
-		/// Copys data froma position/rotation from Unity classes into the structure
+		/// Copies data from a position/rotation from Unity classes into the structure
 		/// </summary>
 		/// <param name="pos">Position data</param>
 		/// <param name="rot">Rotation data</param>

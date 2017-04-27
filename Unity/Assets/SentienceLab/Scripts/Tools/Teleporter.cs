@@ -18,6 +18,7 @@ namespace SentienceLab
 	public class Teleporter : MonoBehaviour
 	{
 		public TransitionType transitionType = TransitionType.MoveLinear;
+
 		public float          transitionTime = 0.1f;
 
 		public AudioSource    teleportSound;

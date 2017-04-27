@@ -67,27 +67,6 @@ namespace SentienceLab.MoCap
 					GetSceneDescription();
 
 					Debug.Log("Reading from MOT file '" + dataStream.GetName() + "'.");
-					// print list of actor and device names
-					if (scene.actors.Length > 0)
-					{
-						string actorNames = "";
-						foreach (Actor a in scene.actors)
-						{
-							if (actorNames.Length > 0) { actorNames += ", "; }
-							actorNames += a.name;
-						}
-						Debug.Log("Actors (" + scene.actors.Length + "): " + actorNames);
-					}
-					if (scene.devices.Length > 0)
-					{
-						string deviceNames = "";
-						foreach (Device d in scene.devices)
-						{
-							if (deviceNames.Length > 0) { deviceNames += ", "; }
-							deviceNames += d.name;
-						}
-						Debug.Log("Devices (" + scene.devices.Length + "): " + deviceNames);
-					}
 
 					// immediately get first packet of frame data
 					GetFrameData();
@@ -196,13 +175,14 @@ namespace SentienceLab.MoCap
 			{
 				throw new FileLoadException("Invalid MOT file header");
 			}
+
 			fileVersion = dataStream.GetNextInt();
 			if ((fileVersion < 1) || (fileVersion > 1))
 			{
 				throw new FileLoadException("Invalid MOT file version number");
 			}
 
-			updateRate  = dataStream.GetNextInt();
+			updateRate = dataStream.GetNextInt();
 
 			int descriptionParts = dataStream.ReadNextLine();
 			if ((descriptionParts < 2) ||
@@ -289,8 +269,8 @@ namespace SentienceLab.MoCap
 
 			Bone bone = new Bone(actor, name, id);
 
-			dataStream.GetNextInt();             // Parent ID (ignore for rigid body)
-			bone.parent = null;              // rigid bodies should not have a parent
+			dataStream.GetNextInt();            // Parent ID (ignore for rigid body)
+			bone.parent = null;                 // rigid bodies should not have a parent
 			bone.ox = dataStream.GetNexFloat(); // X offset
 			bone.oy = dataStream.GetNexFloat(); // Y offset
 			bone.oz = dataStream.GetNexFloat(); // Z offset
@@ -515,41 +495,8 @@ namespace SentienceLab.MoCap
 		private void TransformToUnity(ref Bone bone)
 		{
 			bone.pz *= -1; // flip Z pos
-
-			/*
-			Quaternion q = new Quaternion(bone.qx, bone.qy, bone.qz, bone.qw);
-			Vector3 e = q.eulerAngles;
-			Quaternion x = Quaternion.AngleAxis( e.x, Vector3.right);
-			Quaternion y = Quaternion.AngleAxis(-e.y + 180, Vector3.up);
-			Quaternion z = Quaternion.AngleAxis( e.z, Vector3.forward);
-			q = (z * y * x);
-
-			bone.qx = q.x;
-			bone.qy = q.y;
-			bone.qz = q.z;
-			bone.qw = q.w;
-			*/
-			
-			bone.qx *= -1;
+			bone.qx *= -1; // flip X/Y quaternion component
 			bone.qy *= -1;
-			
-			/*
-			Quaternion q = new Quaternion(bone.qx, bone.qy, bone.qz, bone.qw);
-			float   angle = 0.0f;
-			Vector3 axis = Vector3.zero;
-			q.ToAngleAxis(out angle, out axis);
-			axis.z = -axis.z;
-			q = Quaternion.AngleAxis(-angle, axis);
-
-			Debug.Log(
-				"from X=" + bone.qx + ",Y=" + bone.qy + ",Z=" + bone.qz + ",W=" + bone.qw +
-				"  to  X=" + q.x + ",Y=" + q.y + ",Z=" + q.z + ",W=" + q.w);				
-
-			bone.qx = q.x;
-			bone.qy = q.y;
-			bone.qz = q.z;
-			bone.qw = q.w;
-			*/
 		}
 
 
@@ -582,14 +529,14 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private DataStream          dataStream;
-		private int                 fileVersion, updateRate;
-		private Timer               streamingTimer;
+		private DataStream  dataStream;
+		private int         fileVersion, updateRate;
+		private Timer       streamingTimer;
 		private bool        paused;
 
 		private Scene               scene;
 		private Mutex               sceneMutex;
 		private List<SceneListener> sceneListeners;
 		private bool                notifyListeners;
-			}
+	}
 }

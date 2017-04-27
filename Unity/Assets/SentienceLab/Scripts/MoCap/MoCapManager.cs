@@ -239,6 +239,29 @@ namespace SentienceLab.MoCap
 					if (client.IsConnected())
 					{
 						Debug.Log("MoCap client connected to " + client.GetDataSourceName() + ".");
+
+						// print list of actor and device names
+						Scene scene = client.GetScene();
+						if (scene.actors.Length > 0)
+						{
+							string actorNames = "";
+							foreach (Actor a in scene.actors)
+							{
+								if (actorNames.Length > 0) { actorNames += ", "; }
+								actorNames += a.name;
+							}
+							Debug.Log("Actors (" + scene.actors.Length + "): " + actorNames);
+						}
+						if (scene.devices.Length > 0)
+						{
+							string deviceNames = "";
+							foreach (Device d in scene.devices)
+							{
+								if (deviceNames.Length > 0) { deviceNames += ", "; }
+								deviceNames += d.name;
+							}
+							Debug.Log("Devices (" + scene.devices.Length + "): " + deviceNames);
+						}
 					}
 				}
 

@@ -17,71 +17,71 @@ namespace SentienceLab
 	[AddComponentMenu("Event/Tracked Controller Input Module")]
 	public class TrackedControllerInputModule : BaseInputModule
 	{
-	[System.Serializable]
+		[System.Serializable]
 		public class ControllerInfo
-	{
-		public Transform  trackedObject;
-		public string     actionName;
-	}
+		{
+			public Transform trackedObject;
+			public string    actionName;
+		}
 
-	[Tooltip("Layers that this tracked controller reacts to")]
-	public LayerMask layerMask;
+		[Tooltip("Layers that this tracked controller reacts to")]
+		public LayerMask layerMask;
 
-	[Tooltip("Tracked controllers and their action name for clicking")]
+		[Tooltip("Tracked controllers and their action name for clicking")]
 		public ControllerInfo[] controllers;
 
 
-	public override bool ShouldActivateModule()
-	{
-		bool activate = base.ShouldActivateModule();
-		if (activate && !activated && (controllers != null))
+		public override bool ShouldActivateModule()
 		{
-			// is at least one of the controller objects active?
-			bool controllersActive = false;
-				foreach (ControllerInfo controller in controllers)
+			bool activate = base.ShouldActivateModule();
+			if (activate && !activated && (controllers != null))
 			{
+				// is at least one of the controller objects active?
+				bool controllersActive = false;
+				foreach (ControllerInfo controller in controllers)
+				{
 					if ((controller.trackedObject != null) &&
 						controller.trackedObject.gameObject.activeInHierarchy)
-				{
-					controllersActive = true;
-					break;
+					{
+						controllersActive = true;
+						break;
+					}
 				}
+				// if so, activate this module
+				activate = controllersActive;
 			}
-			// if so, activate this module
-			activate = controllersActive;
+			return activate;
 		}
-		return activate;
-	}
 
 
-	public override void ActivateModule()
-	{
-		base.ActivateModule();
-
-		if (!activated)
+		public override void ActivateModule()
 		{
+			base.ActivateModule();
+
+			if (!activated)
+			{
 				// create event camera
-			controllerCamera = new GameObject("Controller UI Camera").AddComponent<Camera>();
-			controllerCamera.clearFlags      = CameraClearFlags.Depth;
-			controllerCamera.cullingMask = layerMask; 
-			controllerCamera.depth       = -100;
-			controllerCamera.nearClipPlane   = 0.05f;
-			controllerCamera.farClipPlane    = 10.0f;
-			controllerCamera.stereoTargetEye = StereoTargetEyeMask.None;
-			PhysicsRaycaster prc = (PhysicsRaycaster) controllerCamera.gameObject.AddComponent<PhysicsRaycaster>();
-			prc.eventMask = layerMask;
+				controllerCamera = new GameObject("Controller UI Camera").AddComponent<Camera>();
+				controllerCamera.clearFlags      = CameraClearFlags.Depth;
+				controllerCamera.cullingMask     = layerMask;
+				controllerCamera.depth           = -100;
+				controllerCamera.nearClipPlane   = 0.05f;
+				controllerCamera.farClipPlane    = 10.0f;
+				controllerCamera.stereoTargetEye = StereoTargetEyeMask.None;
+				PhysicsRaycaster prc = (PhysicsRaycaster) controllerCamera.gameObject.AddComponent<PhysicsRaycaster>();
+				prc.eventMask = layerMask;
 
 				// assign event camera to all canvasses
-			Canvas[] canvases = GameObject.FindObjectsOfType<Canvas>();
-			foreach (Canvas canvas in canvases)
-			{
-				canvas.worldCamera = controllerCamera;
-			}
+				Canvas[] canvases = GameObject.FindObjectsOfType<Canvas>();
+				foreach (Canvas canvas in canvases)
+				{
+					canvas.worldCamera = controllerCamera;
+				}
 
 				// create controller data strctures
 				List<ControllerData> controllerDataList = new List<ControllerData>();
-			for (int idx = 0; idx < controllers.Length; idx++)
-			{
+				for (int idx = 0; idx < controllers.Length; idx++)
+				{
 					if (controllers[idx].trackedObject != null)
 					{
 						ControllerData data = new ControllerData();
@@ -89,37 +89,38 @@ namespace SentienceLab
 						data.actionHandler = InputHandler.Find(controllers[idx].actionName);
 						data.ray = controllers[idx].trackedObject.GetComponentInChildren<PointerRay>();
 						controllerDataList.Add(data);
-			}
+					}
 				}
 				controllerData = controllerDataList.ToArray();
 
-			activated = true;
-		}
+				activated = true;
 			}
-	
+		}
 
-	public override void DeactivateModule()
-	{
-		base.DeactivateModule();
 
-		if (activated)
+		public override void DeactivateModule()
 		{
-			Destroy(controllerCamera);
-			controllerCamera = null;
+			base.DeactivateModule();
+
+			if (activated)
+			{
+				Destroy(controllerCamera);
+				controllerCamera = null;
 
 				controllerData = null;
-			activated = false;
+				activated = false;
+			}
 		}
-	}
 
-	// use screen midpoint as locked pointer location, enabling look location to be the "mouse"
+
+		// use screen midpoint as locked pointer location, enabling look location to be the "mouse"
 		private void GetLookPointerEventData(ref ControllerData info)
-	{
+		{
 			if (info.eventData == null)
 			{
 				info.eventData = new PointerEventData(base.eventSystem);
 			}
-		else
+			else
 			{
 				info.eventData.Reset();
 			}
@@ -132,39 +133,40 @@ namespace SentienceLab
 			base.eventSystem.RaycastAll(info.eventData, m_RaycastResultCache);
 			info.eventData.pointerCurrentRaycast = FindFirstRaycast(m_RaycastResultCache);
 
-		m_RaycastResultCache.Clear();
-	}
-
-	// update the cursor location and whether it is enabled
-	// this code is based on Unity's DragMe.cs code provided in the UI drag and drop example
-		private void UpdateCursor(ref ControllerData ctrl)
-	{
-			if (ctrl.ray != null)
-		{
-				ctrl.ray.OverrideRayTarget(Vector3.zero);
+			m_RaycastResultCache.Clear();
 		}
 
-			if (ctrl.eventData.pointerCurrentRaycast.gameObject != null)
+
+		// update the cursor location and whether it is enabled
+		// this code is based on Unity's DragMe.cs code provided in the UI drag and drop example
+		private void UpdateCursor(ref ControllerData ctrl)
 		{
-				if (ctrl.eventData.pointerEnter != null)
+			if (ctrl.ray != null)
 			{
+				ctrl.ray.OverrideRayTarget(Vector3.zero);
+			}
+
+			if (ctrl.eventData.pointerCurrentRaycast.gameObject != null)
+			{
+				if (ctrl.eventData.pointerEnter != null)
+				{
 					RectTransform draggingPlane = ctrl.eventData.pointerEnter.GetComponent<RectTransform>();
-				Vector3 globalLookPos;
+					Vector3 globalLookPos;
 					if ((draggingPlane != null) && 
 						RectTransformUtility.ScreenPointToWorldPointInRectangle(
 							draggingPlane, 
 							ctrl.eventData.position, 
 							ctrl.eventData.enterEventCamera, 
 							out globalLookPos))
-				{
-						if (ctrl.ray)
 					{
+						if (ctrl.ray)
+						{
 							ctrl.ray.OverrideRayTarget(globalLookPos);
-					}
+						}
 	//					Cursors[index].position = globalLookPos;
 	//					Cursors[index].rotation = draggingPlane.rotation;
 
-					// scale cursor based on distance to camera
+						// scale cursor based on distance to camera
 	//					float lookPointDistance = (Cursors[index].position - Camera.main.transform.position).magnitude;
 	//					float cursorScale = lookPointDistance * NormalCursorScale;
 	//					if (cursorScale < NormalCursorScale)
@@ -173,82 +175,85 @@ namespace SentienceLab
 	//					}
 
 	//					Cursors[index].localScale = Vector3.one * cursorScale;
+					}
+				}
+			}
+			else
+			{
+				//			Cursors[index].gameObject.SetActive(false);
+				if (ctrl.ray)
+				{
+					ctrl.ray.OverrideRayTarget(Vector3.zero);
 				}
 			}
 		}
-		else
+
+
+		// clear the current selection
+		public void ClearSelection()
 		{
-			//			Cursors[index].gameObject.SetActive(false);
-				if (ctrl.ray)
+			if (base.eventSystem.currentSelectedGameObject)
 			{
-					ctrl.ray.OverrideRayTarget(Vector3.zero);
+				base.eventSystem.SetSelectedGameObject(null);
 			}
 		}
-	}
 
-	// clear the current selection
-	public void ClearSelection()
-	{
-		if (base.eventSystem.currentSelectedGameObject)
+
+		// select a game object
+		private void Select(GameObject go)
 		{
-			base.eventSystem.SetSelectedGameObject(null);
+			ClearSelection();
+
+			if (ExecuteEvents.GetEventHandler<ISelectHandler>(go))
+			{
+				base.eventSystem.SetSelectedGameObject(go);
+			}
 		}
-	}
 
-	// select a game object
-	private void Select(GameObject go)
-	{
-		ClearSelection();
 
-		if (ExecuteEvents.GetEventHandler<ISelectHandler>(go))
+		// send update event to selected object
+		// needed for InputField to receive keyboard input
+		private bool SendUpdateEventToSelectedObject()
 		{
-			base.eventSystem.SetSelectedGameObject(go);
-		}
-	}
+			if (base.eventSystem.currentSelectedGameObject == null)
+				return false;
 
-	// send update event to selected object
-	// needed for InputField to receive keyboard input
-	private bool SendUpdateEventToSelectedObject()
-	{
-		if (base.eventSystem.currentSelectedGameObject == null)
-			return false;
-
-		BaseEventData data = GetBaseEventData();
+			BaseEventData data = GetBaseEventData();
 			ExecuteEvents.Execute(
 				base.eventSystem.currentSelectedGameObject, 
 				data, 
 				ExecuteEvents.updateSelectedHandler);
 
-		return data.used;
-	}
+			return data.used;
+		}
 
 
 		private void UpdateCameraPosition(ref ControllerData ctrl)
-	{
+		{
 			controllerCamera.transform.position = ctrl.transform.position;
 			controllerCamera.transform.rotation = ctrl.transform.rotation;
-	}
+		}
 
 
-	// Process is called by UI system to process events
-	public override void Process()
-	{
-		// send update events if there is a selected object - this is important for InputField to receive keyboard events
-		SendUpdateEventToSelectedObject();
-
-		// see if there is a UI element that is currently being looked at
-			for (int index = 0; index < controllerData.Length; index++)
+		// Process is called by UI system to process events
+		public override void Process()
 		{
+			// send update events if there is a selected object - this is important for InputField to receive keyboard events
+			SendUpdateEventToSelectedObject();
+
+			// see if there is a UI element that is currently being looked at
+			for (int index = 0; index < controllerData.Length; index++)
+			{
 				ControllerData ctrl = controllerData[index];
 
 				if (ctrl.transform.gameObject.activeInHierarchy == false)
-			{
-	//				if (Cursors[index].gameObject.activeInHierarchy == true)
 				{
+	//				if (Cursors[index].gameObject.activeInHierarchy == true)
+					{
 	//					Cursors[index].gameObject.SetActive(false);
+					}
+					continue;
 				}
-				continue;
-			}
 
 				UpdateCameraPosition(ref ctrl);
 				GetLookPointerEventData(ref ctrl);
@@ -262,10 +267,10 @@ namespace SentienceLab
 					ctrl.currentPoint = null;
 				}
 
-			// handle enter and exit events (highlight)
+				// handle enter and exit events (highlight)
 				base.HandlePointerExitAndEnter(ctrl.eventData, ctrl.currentPoint);
 
-			// update cursor
+				// update cursor
 				UpdateCursor(ref ctrl);
 
 				if (ctrl.actionHandler.IsActivated())
@@ -355,11 +360,11 @@ namespace SentienceLab
 			public GameObject       currentDragging;
 			public PointerEventData eventData;
 			public PointerRay       ray;
-	}
+		}
 
 
-	private bool               activated = false;
+		private bool               activated = false;
 		private ControllerData[]   controllerData;
-	private Camera controllerCamera;
+		private Camera             controllerCamera;
 	}
 }
