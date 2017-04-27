@@ -483,11 +483,11 @@ namespace SentienceLab.Input
 			public bool Initialise(string inputName)
 			{
 				string[] parts = inputName.Split('/');
-				if (parts.Length >= 2)
+				if ((parts.Length >= 2) && MoCap.MoCapManager.GetInstance() != null)
 				{
 					device = new MoCap.InputDeviceHandler(parts[0], parts[1]);
 				}
-				return true;
+				return device != null;
 			}
 
 			public void Process()

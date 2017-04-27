@@ -329,12 +329,21 @@ namespace SentienceLab.MoCap
 		/// 
 		public static MoCapManager GetInstance()
 		{
-			if (instance == null) Debug.LogWarning("Null");
+			if (instance == null)
+			{
+				if (!warningIssued)
+				{
+					Debug.LogWarning("No MoCapManager in scene");
+					warningIssued = true;
+				}
+			}
+
 			return instance;
 		}
 
 
 		private static MoCapManager instance    = null;
+		private static bool         warningIssued = false;
 		private static IMoCapClient client      = null;
 		private static Mutex        clientMutex = new Mutex();
 
