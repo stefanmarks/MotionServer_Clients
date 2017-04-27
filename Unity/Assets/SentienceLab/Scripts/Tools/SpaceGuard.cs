@@ -38,6 +38,12 @@ public class SpaceGuard : MonoBehaviour
 	[Tooltip("Colour gradient for fading in the walls")]
 	public Gradient colourGradient;
 
+	[Tooltip("Material for floor indicator (null for no floor)")]
+	public Material floorMaterial = null;
+
+	[Tooltip("Floor offset along Y axis")]
+	public float floorOffsetY = 0.01f;
+
 
 	/// <summary>
 	/// Called at start of the script.
@@ -63,10 +69,8 @@ public class SpaceGuard : MonoBehaviour
 		}
 
 		// create walls
+		walls = new List<MeshRenderer>();
 		CreateSpaceGuardWalls();
-
-		// all components with a renderer are considered walls
-		walls = transform.GetComponentsInChildren<MeshRenderer>();
 	}
 	
 
@@ -82,6 +86,7 @@ public class SpaceGuard : MonoBehaviour
 				CreateWall(area.vCorners1.v0, area.vCorners1.v2, area.vCorners2.v0, area.vCorners2.v2, "Wall2");
 				CreateWall(area.vCorners2.v0, area.vCorners2.v2, area.vCorners3.v0, area.vCorners3.v2, "Wall3");
 				CreateWall(area.vCorners3.v0, area.vCorners3.v2, area.vCorners0.v0, area.vCorners0.v2, "Wall4");
+				CreateFloor(area.vCorners0.v0, area.vCorners0.v2, area.vCorners2.v0, area.vCorners2.v2);
 				chaperone.ForceBoundsVisible(false);
 				break;
 
@@ -90,6 +95,7 @@ public class SpaceGuard : MonoBehaviour
 				CreateWall( 2, -2,  2,  2, "Right");
 				CreateWall( 2,  2, -2,  2, "Back");
 				CreateWall(-2,  2, -2, -2, "Left");
+				CreateFloor(-2, -2, 2, 2);
 				break;
 
 			default:
@@ -120,6 +126,32 @@ public class SpaceGuard : MonoBehaviour
 		Vector2 scale  = renderer.material.GetTextureScale("_MainTex");
 		scale.Scale(new Vector2(Mathf.Max(1, Mathf.Round(wall.magnitude)), wallHeight));
 		renderer.material.SetTextureScale("_MainTex", scale);
+
+		walls.Add(renderer);
+	}
+
+
+	private void CreateFloor(float x1, float z1, float x2, float z2)
+	{
+		if (floorMaterial == null) return;
+
+		// Debug.Log(x1 + "/" + z1 + " > " + x2 + " / " + z2);
+		GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+		Destroy(quad.GetComponent<Collider>());  // no need for physics
+		Destroy(quad.GetComponent<Rigidbody>());
+
+		Vector3 corner1 = new Vector3(x1, floorOffsetY, z1);
+		Vector3 corner2 = new Vector3(x2, floorOffsetY, z2);
+		Vector3 floor   = corner2 - corner1;
+		Vector3 centre = 0.5f * (corner2 + corner1);
+		quad.name = "Floor";
+		quad.transform.parent        = this.transform;
+		quad.transform.localPosition = centre;
+		quad.transform.localScale    = new Vector3(floor.x, floor.z, 1);
+		quad.transform.localRotation = Quaternion.AngleAxis(90, Vector3.right);
+
+		MeshRenderer renderer = quad.GetComponent<MeshRenderer>();
+		renderer.material = floorMaterial;
 	}
 
 
@@ -159,5 +191,5 @@ public class SpaceGuard : MonoBehaviour
 		}
 	}
 
-	private MeshRenderer[] walls;
+	private List<MeshRenderer> walls;
 }
