@@ -55,6 +55,14 @@ namespace SentienceLab.MoCap
 
 
 		/// <summary>
+		/// Gets the amount of frames per second that the Mocap system provides.
+		/// </summary>
+		/// <returns>the amount of frames per second that the moCap system provides</returns>
+		/// 
+		float GetFramerate();
+
+
+		/// <summary>
 		/// Pauses or continues the data stream.
 		/// </summary>
 		/// <param name="paused"><c>true</c> to pause the stream</param>

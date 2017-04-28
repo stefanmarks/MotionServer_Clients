@@ -127,9 +127,9 @@ namespace SentienceLab.MoCap
 				Debug.LogWarning("Could not connect to NatNet server " + serverAddress + " (" + e.Message + ").");
 			}
 
-			// request streaming IP address
 			if (connected)
 			{
+				// request streaming IP address
 				try
 				{
 					if (SendRequest("getDataStreamAddress") && (serverResponse.Length > 0))
@@ -155,6 +155,19 @@ namespace SentienceLab.MoCap
 						dataClient.Close();
 						dataClient = null;
 					}
+				}
+
+				// request framerate
+				try
+				{
+					if (SendRequest("getFramerate") && (serverResponse.Length > 0))
+					{
+						updateRate = float.Parse(serverResponse);
+					}
+				}
+				catch (Exception e)
+				{
+					Debug.LogWarning("Could not establish framerate (" + e.Message + ").");
 				}
 			}
 
@@ -196,6 +209,12 @@ namespace SentienceLab.MoCap
 			return serverInfo.serverName + " v" +
 			       serverInfo.versionServer[0] + "." + serverInfo.versionServer[1] + "." +
 			       serverInfo.versionServer[2] + "." + serverInfo.versionServer[3];
+		}
+
+
+		public float GetFramerate()
+		{
+			return updateRate;
 		}
 
 
@@ -946,6 +965,7 @@ namespace SentienceLab.MoCap
 		private bool                connected, streamingEnabled;
 		private Scene               scene;
 		private List<SceneListener> sceneListeners;
+		private float               updateRate;
 
 		private static Marker DUMMY_MARKER  = new Marker(null, "dummy");
 		private static Bone   DUMMY_BONE    = new Bone(null, "dummy", 0);

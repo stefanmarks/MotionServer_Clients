@@ -135,6 +135,17 @@ namespace SentienceLab.MoCap
 
 
 		/// <summary>
+		/// Gets the amount of frames per second that the MoCap system provides.
+		/// </summary>
+		/// <returns>Update rate of the Mocap system in frames per second</returns>
+		/// 
+		public float GetFramerate()
+		{
+			return (client != null) ? client.GetFramerate() : 0.0f;
+		}
+
+
+		/// <summary>
 		/// Gets the latest scene data structure.
 		/// </summary>
 		/// <returns>Scene data or <c>null</c> if client is not connected</returns>
@@ -238,7 +249,8 @@ namespace SentienceLab.MoCap
 
 					if (client.IsConnected())
 					{
-						Debug.Log("MoCap client connected to " + client.GetDataSourceName() + ".");
+						Debug.Log("MoCap client connected to " + client.GetDataSourceName() + ".\n" +
+						          "Framerate: " + client.GetFramerate() + " fps");
 
 						// print list of actor and device names
 						Scene scene = client.GetScene();
@@ -270,7 +282,6 @@ namespace SentienceLab.MoCap
 					// not active or not able to connect to any data source: create dummy singleton 
 					client = new DummyClient();
 				}
-
 			}
 			clientMutex.ReleaseMutex();
 		}

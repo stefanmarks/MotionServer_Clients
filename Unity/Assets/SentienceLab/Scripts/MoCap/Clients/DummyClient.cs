@@ -3,6 +3,7 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 
@@ -50,6 +51,13 @@ namespace SentienceLab.MoCap
 		public String GetDataSourceName()
 		{
 			return "Dummy Data Source";
+		}
+
+
+		public float GetFramerate()
+		{
+			// there are no tracked objects anyway, so the rate doesn't matter
+			return 60.0f; 
 		}
 
 

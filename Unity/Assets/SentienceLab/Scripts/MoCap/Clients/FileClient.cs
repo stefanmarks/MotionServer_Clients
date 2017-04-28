@@ -121,6 +121,12 @@ namespace SentienceLab.MoCap
 		}
 
 
+		public float GetFramerate()
+		{
+			return updateRate;
+		}
+
+
 		public void SetPaused(bool pause)
 		{
 			paused = pause;

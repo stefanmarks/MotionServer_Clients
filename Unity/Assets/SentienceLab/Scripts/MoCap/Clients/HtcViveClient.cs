@@ -56,6 +56,16 @@ namespace SentienceLab.MoCap
 					connected = false;
 					Debug.LogWarning("Could not find OpenVR Compositor instance.");
 				}
+				else
+				{
+					/* TODO: This doesn't work. Any other solution?
+					Compositor_FrameTiming timing = new Compositor_FrameTiming();
+					timing.m_nSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(Compositor_FrameTiming));
+					compositor.GetFrameTimings(ref timing, 1);
+					updateRate = 1000.0f / timing.m_flClientFrameIntervalMs;
+					*/
+					updateRate = 90; // hardcoded for now...
+				}
 			}
 
 			if (connected)
@@ -153,6 +163,12 @@ namespace SentienceLab.MoCap
 		public String GetDataSourceName()
 		{
 			return "HTC Vive";
+		}
+
+
+		public float GetFramerate()
+		{
+			return updateRate;
 		}
 
 
@@ -268,6 +284,7 @@ namespace SentienceLab.MoCap
 		private List<TrackedDevice>    trackedDevices;
 		private TrackedDevicePose_t[]  poses, gamePoses;
 		private VRControllerState_t    state;
+		private float                  updateRate;
 	}
 
 }
