@@ -67,14 +67,14 @@ namespace SentienceLab
 						// body can move freely - apply forces at centre
 						relBodyPoint         = Vector3.zero;
 						relTargetPoint       = transform.InverseTransformPoint(activeBody.transform.position);
-						relTargetOrientation = Quaternion.Inverse(transform.rotation) * activeBody.transform.rotation;
+						//relTargetOrientation = Quaternion.Inverse(transform.rotation) * activeBody.transform.rotation;
 					}
 					else
 					{
 						// body is restrained - apply forces on contact point
 						relBodyPoint         = activeBody.transform.InverseTransformPoint(target.point);
 						relTargetPoint       = transform.InverseTransformPoint(target.point);
-						relTargetOrientation = Quaternion.Inverse(transform.rotation) * activeBody.transform.rotation;
+						//relTargetOrientation = Quaternion.Inverse(transform.rotation) * activeBody.transform.rotation;
 					}
 					// make target object weightless
 					previousGravityFlag = r.useGravity;
@@ -128,6 +128,6 @@ namespace SentienceLab
 		private Rigidbody     activeBody;
 		private bool          previousGravityFlag;
 		private Vector3       relTargetPoint, relBodyPoint;
-		private Quaternion    relTargetOrientation;
+		//private Quaternion   relTargetOrientation;
 	}
-	}
+}
