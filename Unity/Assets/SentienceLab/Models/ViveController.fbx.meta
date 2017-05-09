@@ -36,7 +36,7 @@ ModelImporter:
     4300008: LED
     4300010: MenuButton
   materials:
-    importMaterials: 1
+    importMaterials: 0
     materialName: 1
     materialSearch: 1
   animations:
