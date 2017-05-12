@@ -40,7 +40,7 @@ namespace SentienceLab
 		void Start()
 		{
 			line = GetComponent<LineRenderer>();
-			line.numPositions = 2;
+			line.positionCount = 2;
 			line.useWorldSpace = true;
 			overrideTarget = false;
 

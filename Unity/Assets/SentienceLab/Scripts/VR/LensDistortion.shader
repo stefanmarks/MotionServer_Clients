@@ -5,12 +5,12 @@ Shader "VR/LensDistortion"
 {
 	Properties
 	{
-		_Distortion("Distortion Coefficients", Vector) = (1.0,0,0,0)
+		_Distortion(         "Distortion Coefficients", Vector) = (1.0,0,0,0)
 		_ChromaticAberration("_ChromaticAberration", Vector) = (0, 0, 0, 0)
-		_ScaleIn("ScaleIn",   Range(0.00,1.00)) = 0.0 
-		_ScaleOut("ScaleOut", Range(0.00,1.00)) = 0.0
-		_Center("Center of Projection", Vector) = (.5,.5,0,0)
-		_MainTex("Base (RGB)", 2D) = "" {}
+		_ScaleIn(            "ScaleIn",                 Float)  = 0.0 
+		_ScaleOut(           "ScaleOut",                Float)  = 0.0
+		_Center(             "Center of Projection",    Vector) = (.5,.5,0,0)
+		_MainTex(            "Base (RGB)",              2D)     = "" {}
 	}
 		
 	CGINCLUDE
@@ -34,7 +34,7 @@ Shader "VR/LensDistortion"
 	v2f vert(appdata_img v)
 	{
 		v2f o;
-		o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
+		o.pos = UnityObjectToClipPos(v.vertex);
 		o.uv  = v.texcoord.xy;
 		return o;
 	}
