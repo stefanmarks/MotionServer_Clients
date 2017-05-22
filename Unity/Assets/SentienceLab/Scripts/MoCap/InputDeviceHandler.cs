@@ -33,7 +33,6 @@ namespace SentienceLab.MoCap
 			this.deviceName  = deviceName;
 			this.channelName = channelName;
 
-			lastFrame      = 0;
 			PressThreshold = 1.0f;
 
 			MoCapManager.GetInstance().AddSceneListener(this);
@@ -90,7 +89,6 @@ namespace SentienceLab.MoCap
 			oldValue = 0;
 			pressed  = false;
 			released = false;
-			lastFrame = 0;
 
 			channel = null;
 			Device device = scene.FindDevice(deviceName);
@@ -109,14 +107,19 @@ namespace SentienceLab.MoCap
 		}
 
 
+		public void ResetFlags()
+		{
+			resetFlags = true;
+		}
+
+
 		public void SceneUpdated(Scene scene)
 		{
-			if (Time.frameCount != lastFrame)
+			if ( resetFlags )
 			{
-				// SceneUpdates might happen several times per Unity Update.
-				// Reset flags only when a new Unity frame has come
-				released = false;
-				pressed  = false;
+				released   = false;
+				pressed    = false;
+				resetFlags = false;
 			}
 
 			// store values and flags for queries
@@ -132,7 +135,6 @@ namespace SentienceLab.MoCap
 					oldValue = value;
 				}
 			}
-			lastFrame = Time.frameCount;
 		}
 
 
@@ -146,9 +148,9 @@ namespace SentienceLab.MoCap
 
 
 		private string  deviceName, channelName;
-		private int     lastFrame;
 		private Channel channel;
 		private float   value, oldValue;
 		private bool    pressed, released;
+		private bool    resetFlags;
 	}
 }

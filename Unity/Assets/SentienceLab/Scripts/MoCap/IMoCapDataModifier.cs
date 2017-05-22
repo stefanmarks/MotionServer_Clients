@@ -9,7 +9,7 @@ namespace SentienceLab.MoCap
 	/// Interface for components that influence MoCap data, e.g., scaling, mirroring
 	/// </summary>
 	/// 
-	public interface IModifier
+	public interface IMoCapDataModifier
 	{
 		/// <summary>
 		/// Modifies a MoCap data point.
@@ -17,5 +17,13 @@ namespace SentienceLab.MoCap
 		/// <param name="data">data point to be modified</param>
 		/// 
 		void Process(ref MoCapData data);
+
+
+		/// <summary>
+		/// Queries how many buffer elements the modifier needs.
+		/// </summary>
+		/// <returns>Number of buffer elements for this modifier to function (minimum 1)</returns>
+		///  
+		int GetRequiredBufferSize();
 	}
 }

@@ -15,7 +15,7 @@ namespace SentienceLab.MoCap
 	[DisallowMultipleComponent]
 	[AddComponentMenu("Motion Capture/Modifier/Selective Scale")]
 
-	public class SelectiveScaleModifier : MonoBehaviour, IModifier
+	public class SelectiveScaleModifier : MonoBehaviour, IMoCapDataModifier
 	{
 		[Tooltip("Homogeneous scale factor.")]
 		public float scaleFactor = 1.0f;
@@ -47,6 +47,11 @@ namespace SentienceLab.MoCap
 				}
 			}
 		}
-	}
 
+
+		public int GetRequiredBufferSize()
+		{
+			return 1;
+		}
+	}
 }

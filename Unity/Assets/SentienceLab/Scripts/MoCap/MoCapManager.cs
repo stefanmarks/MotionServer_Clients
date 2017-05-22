@@ -124,11 +124,11 @@ namespace SentienceLab.MoCap
 
 
 		/// <summary>
-		/// Gets the name of the connected MotionServer.
+		/// Gets the name of the connected data source.
 		/// </summary>
-		/// <returns>Name of the connected MotionServer</returns>
+		/// <returns>Name of the connected data source</returns>
 		/// 
-		public string GetServerName()
+		public string GetDataSourceName()
 		{
 			return (client != null) ? client.GetDataSourceName() : "";
 		}

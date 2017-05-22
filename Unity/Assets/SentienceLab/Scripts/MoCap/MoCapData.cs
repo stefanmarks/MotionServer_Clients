@@ -20,6 +20,21 @@ namespace SentienceLab.MoCap
 		public bool  tracked;  // tracking flag
 		public float length;   // length of bone
 
+
+		/// <summary>
+		/// Creates a cloned MoCap data object.
+		/// </summary>
+		/// 
+		public MoCapData(MoCapData clone)
+		{
+			buffer  = clone.buffer;
+			pos     = clone.pos;
+			rot     = clone.rot;
+			tracked = clone.tracked;
+			length  = clone.length;
+		}
+
+
 		/// <summary>
 		/// Creates a new MoCap data object.
 		/// </summary>

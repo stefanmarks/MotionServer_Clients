@@ -15,7 +15,7 @@ namespace SentienceLab.MoCap
 	[AddComponentMenu("Motion Capture/Modifier/Remove")]
 	[DisallowMultipleComponent]
 
-	public class RemoveModifier : MonoBehaviour, IModifier
+	public class RemoveModifier : MonoBehaviour, IMoCapDataModifier
 	{
 		[Tooltip("Prefix for any bone or marker name.")]
 		public string namePrefix = "";
@@ -42,6 +42,11 @@ namespace SentienceLab.MoCap
 					break;
 				}
 			}
+		}
+
+		public int GetRequiredBufferSize()
+		{
+			return 1;
 		}
 	}
 }

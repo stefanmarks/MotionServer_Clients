@@ -42,13 +42,13 @@ namespace SentienceLab.MoCap
 		///
 		public FileClient()
 		{
-			this.sceneListeners = new List<SceneListener>();
+			sceneListeners = new List<SceneListener>();
 			scene               = new Scene();
-			sceneMutex          = new Mutex();
 			dataStream          = null;
 			streamingTimer      = null;
+			frameMutex     = new Mutex();
 			paused              = false;
-			notifyListeners     = false;
+			framesToRead   = 0;
 		}
 
 
@@ -135,14 +135,17 @@ namespace SentienceLab.MoCap
 
 		public void Update()
 		{
-			sceneMutex.WaitOne();
-			if (notifyListeners)
+			frameMutex.WaitOne();
+			int iterations = framesToRead;
+			framesToRead = 0;
+			frameMutex.ReleaseMutex();
+			while (iterations > 0)
 			{
 				// if one or more frames have been read
+				GetFrameData();
 				NotifyListeners_Update();
-				notifyListeners = false;
+				iterations--;
 			}
-			sceneMutex.ReleaseMutex();
 		}
 
 
@@ -528,21 +531,20 @@ namespace SentienceLab.MoCap
 		{
 			if (paused) return;
 
-			sceneMutex.WaitOne();
-			GetFrameData();
-			notifyListeners = true;
-			sceneMutex.ReleaseMutex();
+			frameMutex.WaitOne();
+			framesToRead++;
+			frameMutex.ReleaseMutex();
 		}
 
 
 		private DataStream  dataStream;
 		private int         fileVersion, updateRate;
 		private Timer       streamingTimer;
+		private Mutex       frameMutex;
 		private bool        paused;
 
 		private Scene               scene;
-		private Mutex               sceneMutex;
 		private List<SceneListener> sceneListeners;
-		private bool                notifyListeners;
+		private volatile int        framesToRead;
 	}
 }

@@ -43,6 +43,9 @@ namespace SentienceLab.MoCap
 				Debug.LogWarning("No bone template defined");
 			}
 
+			// find any MoCap data modifiers and store them
+			modifiers = GetComponents<IMoCapDataModifier>();
+
 			// start receiving MoCap data
 			MoCapManager.GetInstance().AddSceneListener(this);
 		}
@@ -99,6 +102,8 @@ namespace SentienceLab.MoCap
 				}
 
 				dataBuffers[bone] = new MoCapDataBuffer(bone.name, this.gameObject, boneNode, boneRepresentation);
+				dataBuffers[bone].EnsureCapacityForModifiers(modifiers);
+
 				boneTemplate.SetActive(false);
 			}
 		}
@@ -116,12 +121,10 @@ namespace SentienceLab.MoCap
 			// update bones
 			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
 			{
-				Bone bone = entry.Key;
 				MoCapDataBuffer buffer = entry.Value;
-				GameObject obj = buffer.GameObject;
-
-				// pump bone data through buffer
-				MoCapData data = buffer.Process(bone);
+				Bone            bone   = entry.Key;
+				GameObject      obj    = buffer.GameObject;
+				MoCapData       data   = buffer.RunModifiers(modifiers);
 
 				// update bone game object
 				if (data.tracked)
@@ -160,6 +163,15 @@ namespace SentienceLab.MoCap
 			{
 				CreateBones(actor.bones);
 			}
+
+			// update bone data
+			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
+			{
+				Bone            bone   = entry.Key;
+				MoCapDataBuffer buffer = entry.Value;
+				// pump bone data through buffer
+				buffer.Push(bone);
+			}
 		}
 
 
@@ -188,6 +200,7 @@ namespace SentienceLab.MoCap
 		private GameObject                        skeletonNode;
 		private Actor                             actor;
 		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
+		private IMoCapDataModifier[]              modifiers; // list of modifiers for this renderer
 	}
 
 }

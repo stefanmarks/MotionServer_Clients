@@ -67,6 +67,10 @@ namespace SentienceLab.MoCap
 		void Start()
 		{
 			dataBuffers = null;
+
+			// find any MoCap data modifiers and store them
+			modifiers = GetComponents<IMoCapDataModifier>();
+
 			MoCapManager.GetInstance().AddSceneListener(this);
 		}
 
@@ -91,6 +95,7 @@ namespace SentienceLab.MoCap
 				if (boneNode != null)
 				{
 					dataBuffers[bone] = new MoCapDataBuffer(bone.name, this.gameObject, boneNode.gameObject, entry);
+					dataBuffers[bone].EnsureCapacityForModifiers(modifiers);
 				}
 				else
 				{
@@ -152,12 +157,10 @@ namespace SentienceLab.MoCap
 			Quaternion rot = new Quaternion();
 			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
 			{
-				Bone bone = entry.Key;
+				Bone            bone   = entry.Key;
 				MoCapDataBuffer buffer = entry.Value;
-				GameObject obj = buffer.GameObject;
-
-				// pump bone data through buffer
-				MoCapData data = buffer.Process(bone);
+				GameObject      obj    = buffer.GameObject;
+				MoCapData       data   = buffer.RunModifiers(modifiers);
 
 				// update bone game object
 				if (data.tracked)
@@ -200,6 +203,15 @@ namespace SentienceLab.MoCap
 			{
 				MatchBones(actor.bones);
 			}
+
+			// update bone data
+			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
+			{
+				Bone            bone   = entry.Key;
+				MoCapDataBuffer buffer = entry.Value;
+				// pump bone data through buffer
+				buffer.Push(bone);
+			}
 		}
 
 
@@ -221,5 +233,6 @@ namespace SentienceLab.MoCap
 
 		private Actor                             actor;
 		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
+		private IMoCapDataModifier[]              modifiers; // list of modifiers for this renderer
 	}
 }

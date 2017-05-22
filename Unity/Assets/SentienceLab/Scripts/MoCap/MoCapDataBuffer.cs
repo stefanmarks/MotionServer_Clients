@@ -3,6 +3,7 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
+using System.Threading;
 using UnityEngine;
 
 namespace SentienceLab.MoCap
@@ -33,35 +34,63 @@ namespace SentienceLab.MoCap
 		/// 
 		public MoCapDataBuffer(string name, GameObject owner, GameObject obj, System.Object data = null)
 		{
-			// find any manipulators and store them
-			modifiers = owner.GetComponents<IModifier>();
 
-			// specifically find the delay manipulator and set the FIFO size accordingly
-			DelayModifier delayComponent = owner.GetComponent<DelayModifier>();
-			float delay = (delayComponent != null) ? delayComponent.delay : 0;
-			int   delayInFrames = Mathf.Max(1, 1 + (int)(delay * 60)); // TODO: Find out or define framerate somewhere central
-			pipeline = new MoCapData[delayInFrames];
-			for (int i = 0; i < pipeline.Length; i++)
-			{
-				pipeline[i] = new MoCapData(this);
-			}
-			index = 0;
-
-			firstPush       = true;
-			this.Name       = name;
+			this.Name = name;
 			this.GameObject = obj;
 			this.DataObject = data;
+
+			// initialise pipeline
+			pipelineMutex = new Mutex();
+			pipeline      = null;
+			EnsureCapacity(10);
 		}
 
 
 		/// <summary>
-		/// Put a marker dataset into the pipeline
-		/// and extract the delayed dataset.
+		/// Makes sure the buffer pipeline has at least this amount of elements.
+		/// If not, the buffer is enlarged.
 		/// </summary>
-		/// <param name="marker">the marker data to add into the queue</param>
-		/// <returns>the delayed dataset</returns>
+		/// <param name="minimumCapacity">the minimum amount of elements in the pieline</param>
 		/// 
-		public MoCapData Process(Marker marker)
+		public void EnsureCapacity(int minimumCapacity)
+		{
+			if ((pipeline == null) || (minimumCapacity > pipeline.Length))
+			{
+				// create new buffer
+				pipelineMutex.WaitOne();
+				pipeline = new MoCapData[minimumCapacity];
+				for (int i = 0; i < pipeline.Length; i++)
+				{
+					pipeline[i] = new MoCapData(this);
+				}
+				pipelineIndex = 0;
+				firstPush     = true;
+				pipelineMutex.ReleaseMutex();
+			}
+		}
+
+
+		/// <summary>
+		/// Makes sure the buffer pipeline is large enough for operating a chain of modifiers.
+		/// If not, the buffer is enlarged.
+		/// </summary>
+		/// <param name="modifiers">the modifiers to check against</param>
+		/// 
+		public void EnsureCapacityForModifiers(IMoCapDataModifier[] modifiers)
+		{
+			foreach (IMoCapDataModifier modifier in modifiers)
+			{
+				EnsureCapacity(modifier.GetRequiredBufferSize());
+			}
+		}
+
+
+		/// <summary>
+		/// Push a marker dataset into the buffer pipeline.
+		/// </summary>
+		/// <param name="marker">the marker data to add into the buffer</param>
+		/// 
+		public void Push(Marker marker)
 		{
 			if (firstPush)
 			{
@@ -74,29 +103,22 @@ namespace SentienceLab.MoCap
 			}
 			else
 			{
-				pipeline[index].Store(marker);
-			}
-			index = (index + 1) % pipeline.Length;
-
-			// manipulate data before returning
-			MoCapData retValue = pipeline[index];
-			foreach (IModifier m in modifiers)
-			{
-				m.Process(ref retValue);
+				pipeline[pipelineIndex].Store(marker);
 			}
 
-			return retValue;
+			// advance write index
+			pipelineMutex.WaitOne();
+			pipelineIndex = (pipelineIndex + 1) % pipeline.Length;
+			pipelineMutex.ReleaseMutex();
 		}
 
 
 		/// <summary>
-		/// Put a bone dataset into the pipeline
-		/// and extract the delayed dataset.
+		/// Push a bone dataset into the buffer pipeline.
 		/// </summary>
-		/// <param name="bone">the bone data to add into the queue</param>
-		/// <returns>the delayed dataset</returns>
+		/// <param name="bone">the bone data to add into the buffer</param>
 		/// 
-		public MoCapData Process(Bone bone)
+		public void Push(Bone bone)
 		{
 			if (firstPush)
 			{
@@ -109,25 +131,57 @@ namespace SentienceLab.MoCap
 			}
 			else
 			{
-				pipeline[index].Store(bone);
+				pipeline[pipelineIndex].Store(bone);
 			}
-			index = (index + 1) % pipeline.Length;
 
-			// manipulate data before returning
-			MoCapData retValue = pipeline[index];
-			foreach (IModifier m in modifiers)
+			// advance write index
+			pipelineMutex.WaitOne();
+			pipelineIndex = (pipelineIndex + 1) % pipeline.Length;
+			pipelineMutex.ReleaseMutex();
+		}
+	
+
+		/// <summary>
+		/// Runs a chain of MoCap data modifiers on the buffer.
+		/// </summary>
+		/// <param name="modifiers">The array of modifiers to run</param>
+		/// <returns>the result of running the modifier chain</returns>
+		/// 
+		public MoCapData RunModifiers(IMoCapDataModifier[] modifiers)
+		{
+			pipelineMutex.WaitOne();
+
+			MoCapData result = new MoCapData(GetElement(0));
+			foreach (IMoCapDataModifier m in modifiers)
 			{
-				m.Process(ref retValue);
+				m.Process(ref result);
 			}
 
-			return retValue;
+			pipelineMutex.ReleaseMutex();
+
+			return result;
 		}
 
 
-		private MoCapData[]   pipeline;     // pipeline for the bone data
-		private IModifier[]   modifiers;    // list of modifiers for this buffer
-		private int           index;        // current buffer index for writing, index-1 for reading
-		private bool          firstPush;    // first push of data flag
+		/// <summary>
+		/// Gets a data point from the buffer.
+		/// </summary>
+		/// <param name="relativeIndex">relative Index (0: newest element, 1: previous element, ...)</param>
+		/// <returns>the relative data point in the buffer</returns>
+		/// 
+		public MoCapData GetElement(int relativeIndex)
+		{
+			relativeIndex = Mathf.Clamp(relativeIndex, 0, pipeline.Length - 1);
+			int idx = pipelineIndex - 1 - relativeIndex;
+			if (idx < 0) { idx += pipeline.Length; }
+			return pipeline[idx];
+		}
+
+
+		private MoCapData[] pipeline;      // pipeline for the bone data
+		private int         pipelineIndex; // current buffer index for writing, index-1 for reading
+		private Mutex       pipelineMutex; // mutex around pipeline
+		private bool        firstPush;     // first push of data flag
 	}
 
 }

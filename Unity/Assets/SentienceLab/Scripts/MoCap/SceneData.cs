@@ -135,7 +135,7 @@ namespace SentienceLab.MoCap
 	{
 		public readonly Scene  scene; // scene this actor belongs to
 		public readonly string name;  // Name of the actor
-		public          int id;       // ID of the actor (not readonly because skeleton description might change it)
+		public          int    id;    // ID of the actor (not readonly because skeleton description might change it)
 
 		public Marker[] markers;      // Marker data
 		public Bone[]   bones;        // Bone data

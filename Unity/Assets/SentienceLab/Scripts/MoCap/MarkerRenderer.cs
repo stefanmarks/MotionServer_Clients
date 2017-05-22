@@ -37,6 +37,9 @@ namespace SentienceLab.MoCap
 				Debug.LogWarning("No marker template defined");
 			}
 
+			// find any MoCap data modifiers and store them
+			modifiers = GetComponents<IMoCapDataModifier>();
+
 			// start receiving MoCap data
 			MoCapManager.GetInstance().AddSceneListener(this);
 		}
@@ -66,6 +69,7 @@ namespace SentienceLab.MoCap
 					markerRepresentation.name = marker.name;
 					markerRepresentation.transform.parent = markerNode.transform;
 					dataBuffers[marker] = new MoCapDataBuffer(marker.name, this.gameObject, markerRepresentation);
+					dataBuffers[marker].EnsureCapacityForModifiers(modifiers);
 				}
 			}
 		}
@@ -81,14 +85,11 @@ namespace SentienceLab.MoCap
 				return;
 
 			// update markers
-			foreach (KeyValuePair<Marker, MoCapDataBuffer> entry in dataBuffers)
+			foreach (MoCapDataBuffer buffer in dataBuffers.Values)
 			{
-				Marker marker = entry.Key;
-				MoCapDataBuffer buffer = entry.Value;
 				GameObject obj = buffer.GameObject;
 
-				// pump marker data through buffer
-				MoCapData data = buffer.Process(marker);
+				MoCapData  data = buffer.RunModifiers(modifiers);
 
 				// update marker game object
 				if (data.tracked)
@@ -108,9 +109,18 @@ namespace SentienceLab.MoCap
 		public void SceneUpdated(Scene scene)
 		{
 			// create marker position array if necessary
-			if ((markerNode == null) && (actor !=null))
+			if ((markerNode == null) && (actor != null))
 			{
 				CreateMarkers(actor.markers);
+			}
+
+			// update marker data
+			foreach (KeyValuePair<Marker, MoCapDataBuffer> entry in dataBuffers)
+			{
+				Marker          marker = entry.Key;
+				MoCapDataBuffer buffer = entry.Value;
+				// pump marker data through buffer
+				buffer.Push(marker);
 			}
 		}
 
@@ -140,6 +150,8 @@ namespace SentienceLab.MoCap
 		private GameObject                          markerNode;
 		private Actor                               actor;
 		private Dictionary<Marker, MoCapDataBuffer> dataBuffers;
+
+		private IMoCapDataModifier[] modifiers; // list of modifiers for this renderer
 	}
 
 }

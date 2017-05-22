@@ -15,7 +15,7 @@ namespace SentienceLab.MoCap
 	[DisallowMultipleComponent]
 	[AddComponentMenu("Motion Capture/Modifier/Mirror")]
 
-	public class MirrorModifier : MonoBehaviour, IModifier
+	public class MirrorModifier : MonoBehaviour, IMoCapDataModifier
 	{
 		public enum Axis
 		{
@@ -57,6 +57,11 @@ namespace SentienceLab.MoCap
 					data.rot.w = -data.rot.w;
 					break;
 			}
+		}
+
+		public int GetRequiredBufferSize()
+		{
+			return 1;
 		}
 	}
 }

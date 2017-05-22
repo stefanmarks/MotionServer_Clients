@@ -15,7 +15,7 @@ namespace SentienceLab.MoCap
 	[DisallowMultipleComponent]
 	[AddComponentMenu("Motion Capture/Modifier/Delay")]
 
-	public class DelayModifier : MonoBehaviour, IModifier
+	public class DelayModifier : MonoBehaviour, IMoCapDataModifier
 	{
 		[Tooltip("Delay of the MoCap data in seconds.")]
 		[Range(0.0f, 10.0f)]
@@ -24,18 +24,24 @@ namespace SentienceLab.MoCap
 
 		public void Start()
 		{
-			// empty, but necessary to get the "Enable" button in the inspector
+			framerate = MoCapManager.GetInstance().GetFramerate();
 		}
 
 
 		public void Process(ref MoCapData data)
 		{
-			// if (!enabled) return;
-
-			// The actual delay happens in the MoCapDataBuffer class
-			// by storing the data in a FIFO the length of which
-			// is determined by the "delay" value of this component
+			// replace by object further down in the pipeline depending on the delay
+			data = data.buffer.GetElement(GetRequiredBufferSize() - 1);
 		}
+
+
+		public int GetRequiredBufferSize()
+		{
+			return Mathf.Max(1, 1 + (int)(delay * framerate));
+		}
+
+
+		private float framerate;
 	}
 
 }

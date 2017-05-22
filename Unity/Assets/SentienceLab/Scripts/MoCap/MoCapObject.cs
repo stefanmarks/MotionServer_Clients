@@ -82,6 +82,9 @@ namespace SentienceLab.MoCap
 			controllingBone = null;
 			dataBuffers     = new Dictionary<Bone, MoCapDataBuffer>();
 
+			// find any MoCap data modifiers and store them
+			modifiers = GetComponents<IMoCapDataModifier>();
+
 			MoCapManager.GetInstance().AddSceneListener(this);
 		}
 
@@ -122,6 +125,7 @@ namespace SentienceLab.MoCap
 				boneNode.transform.localScale = Vector3.one;
 
 				dataBuffers[bone] = new MoCapDataBuffer(bone.name, this.gameObject, boneNode);
+				dataBuffers[bone].EnsureCapacityForModifiers(modifiers);
 			}
 
 			// move this transform to the end of the hierarchy
@@ -141,14 +145,10 @@ namespace SentienceLab.MoCap
 				return;
 
 			// update bones
-			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
+			foreach (MoCapDataBuffer buffer in dataBuffers.Values)
 			{
-				Bone            bone   = entry.Key;
-				MoCapDataBuffer buffer = entry.Value;
-				GameObject      obj    = buffer.GameObject;
-
-				// pump data through buffer
-				MoCapData data = buffer.Process(bone);
+				GameObject obj  = buffer.GameObject;
+				MoCapData  data = buffer.RunModifiers(modifiers);
 
 				// update hierarchy object
 				if (data.tracked)
@@ -185,6 +185,16 @@ namespace SentienceLab.MoCap
 			{
 				CreateHierarchy();
 			}
+
+			// update bone data
+			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
+			{
+				Bone            bone   = entry.Key;
+				MoCapDataBuffer buffer = entry.Value;
+				// pump bone data through buffer
+				buffer.Push(bone);
+			}
+
 			if (!this.gameObject.activeInHierarchy)
 			{
 				// game object is inactive, so Update() doesn't get called any more
@@ -240,6 +250,7 @@ namespace SentienceLab.MoCap
 		private Bone                              controllingBone;
 		private GameObject                        rootNode;
 		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
+		private IMoCapDataModifier[]              modifiers; // list of modifiers for this renderer
 	}
 
 }

@@ -15,7 +15,7 @@ namespace SentienceLab.MoCap
 	[DisallowMultipleComponent]
 	[AddComponentMenu("Motion Capture/Modifier/Adaptive Scale")]
 
-	public class AdaptiveScaleModifier : MonoBehaviour, IModifier
+	public class AdaptiveScaleModifier : MonoBehaviour, IMoCapDataModifier
 	{
 		[Tooltip("Transform to measure the relative distance to")]
 		public Transform centreObject;
@@ -56,6 +56,11 @@ namespace SentienceLab.MoCap
 			// turn back to absolute coordinate
 			data.pos += offset;
 		}
-	}
 
+
+		public int GetRequiredBufferSize()
+		{
+			return 1;
+		}
+	}
 }

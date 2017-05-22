@@ -54,7 +54,7 @@ namespace SentienceLab
 			// fallback
 			configuration = Configuration.Standalone;
 
-			if ( MoCapManager.GetInstance().GetServerName().Contains("MotionServer") )
+			if ( MoCapManager.GetInstance().GetDataSourceName().Contains("MotionServer") )
 			{
 				configuration = Configuration.MoCapRoom;
 			}

@@ -14,7 +14,7 @@ namespace SentienceLab.MoCap
 
 	[AddComponentMenu("Motion Capture/Modifier/Randomize")]
 
-	public class RandomizeModifier : MonoBehaviour, IModifier
+	public class RandomizeModifier : MonoBehaviour, IMoCapDataModifier
 	{
 		public enum Influence
 		{
@@ -45,6 +45,11 @@ namespace SentienceLab.MoCap
 					data.pos.z += amount * Mathf.PerlinNoise(data.pos.x, data.pos.y);
 					break;
 			}
+		}
+
+		public int GetRequiredBufferSize()
+		{
+			return 1;
 		}
 	}
 
