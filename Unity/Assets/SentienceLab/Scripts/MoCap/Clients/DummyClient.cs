@@ -4,7 +4,6 @@
 #endregion Copyright Information
 
 using System;
-using System.Collections.Generic;
 
 namespace SentienceLab.MoCap
 {
@@ -17,12 +16,14 @@ namespace SentienceLab.MoCap
 		/// <summary>
 		/// Constructs a dummy MoCap client
 		/// </summary>
+		/// <param name="manager">the MoCapManager instance</param>
 		///
-		public DummyClient()
+		public DummyClient(MoCapManager manager)
 		{
-			this.sceneListeners  = new List<SceneListener>();
-			scene                = new Scene();
-			connected            = false;
+			this.manager = manager;
+
+			scene     = new Scene();
+			connected = false;
 		}
 
 
@@ -30,6 +31,7 @@ namespace SentienceLab.MoCap
 		{
 			// successful every time
 			connected = true;
+			manager.NotifyListeners_Change(scene);
 			return true;
 		}
 
@@ -43,7 +45,6 @@ namespace SentienceLab.MoCap
 		public void Disconnect()
 		{
 			connected = false; 
-			sceneListeners.Clear();
 		}
 		
 		
@@ -67,6 +68,7 @@ namespace SentienceLab.MoCap
 
 		public void Update()
 		{
+			manager.NotifyListeners_Update(scene);
 		}
 
 
@@ -76,38 +78,9 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public bool AddSceneListener(SceneListener listener)
-		{
-			bool added = false;
-			if (!sceneListeners.Contains(listener))
-			{
-				sceneListeners.Add(listener);
-				added = true;
-				// immediately trigger callback
-				listener.SceneChanged(scene);
-			}
-			return added;
-		}
-
-
-		public bool RemoveSceneListener(SceneListener listener)
-		{
-			return sceneListeners.Remove(listener);
-		}
-
-
-		private void RefreshListeners()
-		{
-			foreach (SceneListener listener in sceneListeners)
-			{
-				listener.SceneChanged(scene);
-			}
-		}
-
-
-		private bool                connected;
-		private Scene               scene;
-		private List<SceneListener> sceneListeners;
+		private readonly MoCapManager manager;
+		private          bool         connected;
+		private          Scene        scene;
 	}
 
 }

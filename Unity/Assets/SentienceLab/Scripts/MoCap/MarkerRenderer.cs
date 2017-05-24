@@ -3,8 +3,8 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SentienceLab.MoCap
 {
@@ -29,7 +29,7 @@ namespace SentienceLab.MoCap
 			// initialise variables
 			markerNode  = null;
 			actor       = null;
-			dataBuffers = new Dictionary<Marker, MoCapDataBuffer>();
+			markerList = new Dictionary<Marker, GameObject>();
 
 			// sanity checks
 			if (markerTemplate == null)
@@ -68,8 +68,8 @@ namespace SentienceLab.MoCap
 					GameObject markerRepresentation = GameObject.Instantiate(markerTemplate);
 					markerRepresentation.name = marker.name;
 					markerRepresentation.transform.parent = markerNode.transform;
-					dataBuffers[marker] = new MoCapDataBuffer(marker.name, this.gameObject, markerRepresentation);
-					dataBuffers[marker].EnsureCapacityForModifiers(modifiers);
+					markerList[marker] = markerRepresentation;
+					marker.buffer.EnsureCapacityForModifiers(modifiers);
 				}
 			}
 		}
@@ -82,14 +82,25 @@ namespace SentienceLab.MoCap
 		void Update()
 		{
 			if (markerNode == null)
-				return;
-
-			// update markers
-			foreach (MoCapDataBuffer buffer in dataBuffers.Values)
 			{
-				GameObject obj = buffer.GameObject;
+				if (actor != null)
+				{
+					// did we just find the actor > create markers
+					CreateMarkers(actor.markers);
+				}
+				else
+				{
+					// nothing to work with > get out
+				return;
+				}
+			}
 
-				MoCapData  data = buffer.RunModifiers(modifiers);
+			// update marker positions
+			foreach (KeyValuePair<Marker, GameObject> entry in markerList)
+			{
+				GameObject obj    = entry.Value;
+				Marker     marker = entry.Key;
+				MoCapData  data   = marker.buffer.RunModifiers(modifiers);
 
 				// update marker game object
 				if (data.tracked)
@@ -108,20 +119,7 @@ namespace SentienceLab.MoCap
 
 		public void SceneUpdated(Scene scene)
 		{
-			// create marker position array if necessary
-			if ((markerNode == null) && (actor != null))
-			{
-				CreateMarkers(actor.markers);
-			}
-
-			// update marker data
-			foreach (KeyValuePair<Marker, MoCapDataBuffer> entry in dataBuffers)
-			{
-				Marker          marker = entry.Key;
-				MoCapDataBuffer buffer = entry.Value;
-				// pump marker data through buffer
-				buffer.Push(marker);
-			}
+			// nothing to do here
 		}
 
 
@@ -149,7 +147,7 @@ namespace SentienceLab.MoCap
 
 		private GameObject                          markerNode;
 		private Actor                               actor;
-		private Dictionary<Marker, MoCapDataBuffer> dataBuffers;
+		private Dictionary<Marker, GameObject> markerList;
 
 		private IMoCapDataModifier[] modifiers; // list of modifiers for this renderer
 	}

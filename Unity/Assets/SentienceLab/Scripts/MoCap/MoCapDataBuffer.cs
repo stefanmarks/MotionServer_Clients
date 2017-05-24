@@ -3,7 +3,6 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
-using System.Threading;
 using UnityEngine;
 
 namespace SentienceLab.MoCap
@@ -14,35 +13,51 @@ namespace SentienceLab.MoCap
 	///
 	public class MoCapDataBuffer
 	{
-		/// name of this buffer (= marker or bone name)
-		public readonly string Name;
-
-		/// game object associated with this buffer
-		public readonly GameObject GameObject;
-
-		/// arbitrary object associated with this buffer
-		public readonly System.Object DataObject;
+		/// scene objects associated with this buffer
+		public readonly Marker marker;
+		public readonly Bone   bone;
 
 
 		/// <summary>
-		/// Creates a new MoCap data buffer object.
+		/// Creates a new MoCap data buffer object for marker.
 		/// </summary>
-		/// <param name="name">name of this buffer</param>
-		/// <param name="owner">game object that owns this buffer</param>
-		/// <param name="obj">game object to associate with this buffer</param>
-		/// <param name="data">arbitrary object to associate with this buffer</param>
+		/// <param name="marker">marker to associate with this buffer</param>
 		/// 
-		public MoCapDataBuffer(string name, GameObject owner, GameObject obj, System.Object data = null)
+		public MoCapDataBuffer(Marker marker)
 		{
-
-			this.Name = name;
-			this.GameObject = obj;
-			this.DataObject = data;
+			this.marker = marker;
+			this.bone   = null;
 
 			// initialise pipeline
-			pipelineMutex = new Mutex();
 			pipeline      = null;
-			EnsureCapacity(10);
+			EnsureCapacity(INITIAL_CAPACITY);
+		}
+
+
+		/// <summary>
+		/// Creates a new MoCap data buffer object for marker.
+		/// </summary>
+		/// <param name="marker">marker to associate with this buffer</param>
+		/// 
+		public MoCapDataBuffer(Bone bone)
+		{
+			this.marker = null;
+			this.bone   = bone;
+
+			// initialise pipeline
+			pipeline      = null;
+			EnsureCapacity(INITIAL_CAPACITY);
+		}
+
+
+		/// <summary>
+		/// Gets the name of the marker or bone.
+		/// </summary>
+		/// <returns>name of the marker or bone</returns>
+		/// 
+		public string GetName()
+		{
+			return (bone != null) ? bone.name : marker.name;
 		}
 
 
@@ -57,7 +72,6 @@ namespace SentienceLab.MoCap
 			if ((pipeline == null) || (minimumCapacity > pipeline.Length))
 			{
 				// create new buffer
-				pipelineMutex.WaitOne();
 				pipeline = new MoCapData[minimumCapacity];
 				for (int i = 0; i < pipeline.Length; i++)
 				{
@@ -65,7 +79,7 @@ namespace SentienceLab.MoCap
 				}
 				pipelineIndex = 0;
 				firstPush     = true;
-				pipelineMutex.ReleaseMutex();
+				// Debug.Log("Extended buffer size to " + minimumCapacity + " for " + GetName());
 			}
 		}
 
@@ -86,58 +100,29 @@ namespace SentienceLab.MoCap
 
 
 		/// <summary>
-		/// Push a marker dataset into the buffer pipeline.
+		/// Push the latest dataset into the buffer pipeline.
 		/// </summary>
-		/// <param name="marker">the marker data to add into the buffer</param>
 		/// 
-		public void Push(Marker marker)
+		public void Push()
 		{
 			if (firstPush)
 			{
 				// first piece of data > fill the whole pipeline with it
 				for (int i = 0; i < pipeline.Length; i++)
 				{
-					pipeline[i].Store(marker);
+					if (bone != null) pipeline[i].Store(bone);
+					else              pipeline[i].Store(marker);
 				}
 				firstPush = false;
 			}
 			else
 			{
-				pipeline[pipelineIndex].Store(marker);
+				if (bone != null) pipeline[pipelineIndex].Store(bone);
+				else              pipeline[pipelineIndex].Store(marker);				
 			}
 
 			// advance write index
-			pipelineMutex.WaitOne();
 			pipelineIndex = (pipelineIndex + 1) % pipeline.Length;
-			pipelineMutex.ReleaseMutex();
-		}
-
-
-		/// <summary>
-		/// Push a bone dataset into the buffer pipeline.
-		/// </summary>
-		/// <param name="bone">the bone data to add into the buffer</param>
-		/// 
-		public void Push(Bone bone)
-		{
-			if (firstPush)
-			{
-				// first piece of data > fill the whole pipeline with it
-				for (int i = 0; i < pipeline.Length; i++)
-				{
-					pipeline[i].Store(bone);
-				}
-				firstPush = false;
-			}
-			else
-			{
-				pipeline[pipelineIndex].Store(bone);
-			}
-
-			// advance write index
-			pipelineMutex.WaitOne();
-			pipelineIndex = (pipelineIndex + 1) % pipeline.Length;
-			pipelineMutex.ReleaseMutex();
 		}
 	
 
@@ -149,16 +134,11 @@ namespace SentienceLab.MoCap
 		/// 
 		public MoCapData RunModifiers(IMoCapDataModifier[] modifiers)
 		{
-			pipelineMutex.WaitOne();
-
 			MoCapData result = new MoCapData(GetElement(0));
 			foreach (IMoCapDataModifier m in modifiers)
 			{
 				m.Process(ref result);
 			}
-
-			pipelineMutex.ReleaseMutex();
-
 			return result;
 		}
 
@@ -180,8 +160,11 @@ namespace SentienceLab.MoCap
 
 		private MoCapData[] pipeline;      // pipeline for the bone data
 		private int         pipelineIndex; // current buffer index for writing, index-1 for reading
-		private Mutex       pipelineMutex; // mutex around pipeline
 		private bool        firstPush;     // first push of data flag
+
+		// initial buffer capacity
+		private static readonly int INITIAL_CAPACITY = 10;
+
 	}
 
 }

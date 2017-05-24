@@ -140,11 +140,17 @@ namespace SentienceLab.IO
 
 	/// <summary>
 	/// Abstract base class for a data stream.
-	/// It uses a stream reader that does most fo the work.
+	/// It uses a stream reader that does most of the work.
 	/// </summary>
 	public abstract class AbstractDataStream : DataStream
 	{
-		public AbstractDataStream(char separator)
+		/// <summary>
+		/// Creates a data stream from a comma or tab separated stream.
+		/// </summary>
+		/// <param name="separator">the separator to use</param>
+		/// <param name="highPrecision"><c>true</c> when parsing values needs to be precise (but slower) or <c>false</c> when speed is more important</param>
+		/// 
+		public AbstractDataStream(char separator, bool highPrecision)
 		{
 			this.stream         = null;
 			this.filePosition   = 0;
@@ -233,25 +239,68 @@ namespace SentienceLab.IO
 		public int GetInt(int parameterIdx)
 		{
 			return ((parameterIdx >= 0) && (parameterIdx < data.Length)) ?
-				int.Parse(data[parameterIdx]) :
+				ParseInt(data[parameterIdx]) :
 				0;
 		}
 
 		public int GetNextInt()
 		{
-			return int.Parse(data[dataIdx++]);
+			return ParseInt(data[dataIdx++]);
+		}
+
+		private int ParseInt(string s)
+		{
+			int  result   = 0;
+			bool negative = false;
+			for (int idx = 0; idx < s.Length; idx++)
+			{
+				char c = s[idx];
+				if      (c == '-')                 { negative = true; }
+				else if ((c >= '0') && (c <= '9')) { result = result * 10 + (c - '0'); }
+			}
+			return negative ? -result : result;
 		}
 
 		public float GetFloat(int parameterIdx)
 		{
 			return ((parameterIdx >= 0) && (parameterIdx < data.Length)) ?
-				float.Parse(data[parameterIdx]) :
+				ParseFloat(data[parameterIdx]) :
 				0.0f;
 		}
 
 		public float GetNexFloat()
 		{
-			return float.Parse(data[dataIdx++]);
+			return ParseFloat(data[dataIdx++]);
+		}
+
+		static readonly float[] decimalMultipliers =
+			new float[] { 1, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f };
+
+		private float ParseFloat(string s)
+		{
+			if (highPrecision) return float.Parse(s);
+
+			long result   = 0;
+			bool negative = false;
+			int  decimals = 0;
+			int  dDecimal = 0;
+			for (int idx = 0; idx < s.Length; idx++)
+			{
+				char c = s[idx];
+				if      (c == '-')                 { negative = true; }
+				else if (c == '.')                 { dDecimal = 1; }
+				else if ((c == 'E') || (c == 'e')) { return float.Parse(s); } // sorry, can't deal with that easily
+				else if ((c >= '0') && (c <= '9'))
+				{
+					if (decimals < decimalMultipliers.Length - 1)
+					{
+						result = result * 10 + (c - '0');
+						decimals += dDecimal;
+					}
+				}
+			}
+			if (negative) result = -result;
+			return result * decimalMultipliers[decimals];
 		}
 
 		public void Close()
@@ -269,6 +318,7 @@ namespace SentienceLab.IO
 		protected char         separator;
 		protected int          dataIdx;
 		protected int          filePosition, markerPosition;
+		protected bool         highPrecision;
 	}
 
 
@@ -277,7 +327,14 @@ namespace SentienceLab.IO
 	/// </summary>
 	public class DataStream_File : AbstractDataStream
 	{
-		public DataStream_File(string filename, char separator = '\t') : base(separator)
+		/// <summary>
+		/// Creates a data stream from a file.
+		/// </summary>
+		/// <param name="filename">the path of the file to use</param>
+		/// <param name="separator">the value spearator character to use</param>
+		/// <param name="highPrecision"><c>true</c> when parsing values needs to be precise (but slower) or <c>false</c> when speed is more important</param>
+		/// 
+		public DataStream_File(string filename, char separator = '\t', bool highPrecision = true) : base(separator, highPrecision)
 		{
 			this.filename  = filename;
 		}
@@ -292,7 +349,9 @@ namespace SentienceLab.IO
 			if (File.Exists(filename))
 			{
 				Close();
-				stream = new StreamReader(filename);
+				FileStream     fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 65536);
+				BufferedStream bs = new BufferedStream(fs, 65536);
+				stream = new StreamReader(bs);
 				filePosition = 0;
 			}
 			return (stream != null);
@@ -316,7 +375,14 @@ namespace SentienceLab.IO
 	/// </summary>
 	public class DataStream_TextAsset : AbstractDataStream
 	{
-		public DataStream_TextAsset(TextAsset asset, char separator = '\t') : base(separator)
+		/// <summary>
+		/// Creates a data stream from a Unity text asset.
+		/// </summary>
+		/// <param name="asset">the text asset to use</param>
+		/// <param name="separator">the value spearator character to use</param>
+		/// <param name="highPrecision"><c>true</c> when parsing values needs to be precise (but slower) or <c>false</c> when speed is more important</param>
+		/// 
+		public DataStream_TextAsset(TextAsset asset, char separator = '\t', bool highPrecision = true) : base(separator, highPrecision)
 		{
 			this.asset = asset;
 		}

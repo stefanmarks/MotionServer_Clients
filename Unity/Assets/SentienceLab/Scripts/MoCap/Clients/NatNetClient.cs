@@ -75,16 +75,16 @@ namespace SentienceLab.MoCap
 		/// Constructs a NatNet client instance.
 		/// This does not yet attempt to actually connect to the server.
 		/// </summary>
+		/// <param name="manager">the MoCapManager instance</param>
 		/// <param name="clientAppName">Name of the client to report to the server</param>
 		/// <param name="clientAppVersion">Version number of the client to report to the server</param>
 		/// 
-		public NatNetClient(string clientAppName, byte[] clientAppVersion)
+		public NatNetClient(MoCapManager manager, string clientAppName, byte[] clientAppVersion)
 		{
+			this.manager             = manager;
 			this.clientAppName       = clientAppName;
 			this.clientAppVersion    = clientAppVersion;
 			this.clientNatNetVersion = new byte[] {2, 9, 0, 0};
-
-			this.sceneListeners  = new List<SceneListener>();
 
 			serverInfo.serverName = "";
 			multicastAddress      = null;
@@ -196,9 +196,6 @@ namespace SentienceLab.MoCap
 				commandClient = null;
 			}
 
-			// and then stop
-			sceneListeners.Clear();
-
 			connected = false;
 		}
 
@@ -263,26 +260,6 @@ namespace SentienceLab.MoCap
 		public Scene GetScene()
 		{
 			return scene;
-		}
-
-
-		public bool AddSceneListener(SceneListener listener)
-		{
-			bool added = false;
-			if (!sceneListeners.Contains(listener))
-			{
-				sceneListeners.Add(listener);
-				added = true;
-				// immediately trigger callback
-				listener.SceneChanged(scene);
-			}
-			return added;
-		}
-
-
-		public bool RemoveSceneListener(SceneListener listener)
-		{
-			return sceneListeners.Remove(listener);
 		}
 
 
@@ -497,7 +474,7 @@ namespace SentienceLab.MoCap
 			scene.devices = devices.ToArray();
 
 			// scene description has possibly changed > update device and actor listeners
-			NotifyListeners_Change();
+			manager.NotifyListeners_Change(scene);
 
 			return true;
 		}
@@ -905,7 +882,7 @@ namespace SentienceLab.MoCap
 				scene.latency = packet.GetFloat();
 			}
 
-			NotifyListeners_Update();
+			manager.NotifyListeners_Update(scene);
 
 			return true;
 		}
@@ -935,23 +912,7 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private void NotifyListeners_Update()
-		{
-			foreach (SceneListener listener in sceneListeners)
-			{
-				listener.SceneUpdated(scene);
-			}
-		}
-
-
-		private void NotifyListeners_Change()
-		{
-			foreach (SceneListener listener in sceneListeners)
-			{
-				listener.SceneChanged(scene);
-			}
-		}
-
+		private readonly MoCapManager manager;
 
 		private string              clientAppName;
 		private byte[]              clientAppVersion;
@@ -964,7 +925,6 @@ namespace SentienceLab.MoCap
 		private string              serverResponse;
 		private bool                connected, streamingEnabled;
 		private Scene               scene;
-		private List<SceneListener> sceneListeners;
 		private float               updateRate;
 
 		private static Marker DUMMY_MARKER  = new Marker(null, "dummy");

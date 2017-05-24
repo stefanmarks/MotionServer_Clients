@@ -20,10 +20,12 @@ namespace SentienceLab.MoCap
 		/// <summary>
 		/// Constructs a MoCap client that tracks HTC Vive HMDs and controllers.
 		/// </summary>
+		/// <param name="manager">the MoCapManager instance</param>
 		///
-		public HtcViveClient()
+		public HtcViveClient(MoCapManager manager)
 		{
-			sceneListeners  = new List<SceneListener>();
+			this.manager = manager;
+
 			scene           = new Scene();
 			trackedDevices  = new List<TrackedDevice>();
 			connected       = false;
@@ -156,7 +158,6 @@ namespace SentienceLab.MoCap
 			connected = false; 
 			system     = null;
 			compositor = null;
-			sceneListeners.Clear();
 		}
 		
 		
@@ -180,7 +181,6 @@ namespace SentienceLab.MoCap
 
 		public void Update()
 		{
-			// TODO: is this necessary?
 			compositor.GetLastPoses(poses, gamePoses);
 
 			for (int idx = 0; idx < trackedDevices.Count; idx++)
@@ -228,7 +228,7 @@ namespace SentienceLab.MoCap
 					device.channels[10].value = (state.rAxis0.y < -0.5f) ? touchpadPressed : 0;
 				}
 			}
-			NotifyListeners_Update();
+			manager.NotifyListeners_Update(scene);
 		}
 
 
@@ -238,47 +238,10 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public bool AddSceneListener(SceneListener listener)
-		{
-			bool added = false;
-			if (!sceneListeners.Contains(listener))
-			{
-				sceneListeners.Add(listener);
-				added = true;
-				// immediately trigger callback
-				listener.SceneChanged(scene);
-			}
-			return added;
-		}
-
-
-		public bool RemoveSceneListener(SceneListener listener)
-		{
-			return sceneListeners.Remove(listener);
-		}
-
-
-		private void NotifyListeners_Update()
-		{
-			foreach (SceneListener listener in sceneListeners)
-			{
-				listener.SceneUpdated(scene);
-			}
-		}
-
-
-		private void NotifyListeners_Change()
-		{
-			foreach (SceneListener listener in sceneListeners)
-			{
-				listener.SceneChanged(scene);
-			}
-		}
-
+		private readonly MoCapManager manager;
 
 		private bool                   connected;
 		private Scene                  scene;
-		private List<SceneListener>    sceneListeners;
 		private CVRCompositor          compositor;
 		private CVRSystem              system;
 		private List<TrackedDevice>    trackedDevices;

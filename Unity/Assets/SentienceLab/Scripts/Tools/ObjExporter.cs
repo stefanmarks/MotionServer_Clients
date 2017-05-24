@@ -3,10 +3,10 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
-using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using UnityEngine;
 
 /// <summary>
 /// Class for exporting meshes within a GameObject as an OBJ file.

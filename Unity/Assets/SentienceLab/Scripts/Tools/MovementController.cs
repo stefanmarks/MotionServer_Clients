@@ -3,8 +3,8 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
-using UnityEngine;
 using SentienceLab.Input;
+using UnityEngine;
 
 /// <summary>
 /// Script to move an object forwards/sideways

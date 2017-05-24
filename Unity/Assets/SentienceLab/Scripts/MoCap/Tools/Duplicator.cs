@@ -75,6 +75,7 @@ namespace SentienceLab.MoCap
 				foreach (DelayModifier delayable in arrDelayable)
 				{
 					delayable.delay = delay;
+					delayable.enabled = true;
 				}
 
 				counter++;

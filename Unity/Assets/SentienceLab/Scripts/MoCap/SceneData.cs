@@ -4,6 +4,7 @@
 #endregion Copyright Information
 
 using System.Collections.Generic;
+using System.Threading;
 
 /// <summary>
 /// Scene description and data.
@@ -22,6 +23,8 @@ namespace SentienceLab.MoCap
 		public Actor[]  actors;      // actor data 
 		public Device[] devices;     // data for interaction devices
 
+		public readonly Mutex mutex; // mutex for controlling acceess to the scene data
+
 
 		/// <summary>
 		/// Initializes a new and empty instance of the <see cref="MoCap.Scene"/> class.
@@ -33,7 +36,9 @@ namespace SentienceLab.MoCap
 			latency     = 0;
 			actors      = new Actor[0];
 			devices     = new Device[0];
+			mutex       = new Mutex();
 		}
+
 
 		/// <summary>
 		/// Finds an actor by name.
@@ -49,6 +54,7 @@ namespace SentienceLab.MoCap
 			}
 			return null;
 		}
+
 
 		/// <summary>
 		/// Finds an actor by id.
@@ -72,6 +78,7 @@ namespace SentienceLab.MoCap
 			return null;
 		}
 
+
 		/// <summary>
 		/// Finds an interaction device by name.
 		/// </summary>
@@ -86,6 +93,7 @@ namespace SentienceLab.MoCap
 			}
 			return null;
 		}
+
 
 		/// <summary>
 		/// Finds an interaction device by ID.
@@ -135,7 +143,7 @@ namespace SentienceLab.MoCap
 	{
 		public readonly Scene  scene; // scene this actor belongs to
 		public readonly string name;  // Name of the actor
-		public          int    id;    // ID of the actor (not readonly because skeleton description might change it)
+		public          int id;       // ID of the actor (not readonly because skeleton description might change it)
 
 		public Marker[] markers;      // Marker data
 		public Bone[]   bones;        // Bone data
@@ -219,6 +227,9 @@ namespace SentienceLab.MoCap
 		public          float  px, py, pz; // position of the marker
 		public          bool   tracked;    // tracking state
 
+		public readonly MoCapDataBuffer buffer; // buffer for data
+
+
 		/// <summary>
 		/// Creates a new marker with a name.
 		/// </summary>
@@ -231,6 +242,7 @@ namespace SentienceLab.MoCap
 			this.name  = name;
 			px = py = pz = 0;
 			tracked = false;
+			buffer  = new MoCapDataBuffer(this);
 		}
 	}
 
@@ -254,6 +266,8 @@ namespace SentienceLab.MoCap
 
 		public List<Bone> children;   // children of this bone
 		public List<Bone> chain;      // chain from root bone to this bone
+
+		public readonly MoCapDataBuffer buffer; // buffer for data
 
 
 		/// <summary>
@@ -279,6 +293,8 @@ namespace SentienceLab.MoCap
 			children = new List<Bone>();
 			chain    = new List<Bone>();
 			chain.Add(this); // this bone is part of the chain
+
+			buffer = new MoCapDataBuffer(this);
 		}
 
 

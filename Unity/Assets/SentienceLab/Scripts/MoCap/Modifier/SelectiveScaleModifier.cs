@@ -39,7 +39,7 @@ namespace SentienceLab.MoCap
 
 			foreach (string name in names)
 			{
-				if (data.buffer.Name.Equals(namePrefix + name))
+				if (data.buffer.GetName().Equals(namePrefix + name))
 				{
 					data.pos    *= scaleFactor;
 					data.length *= scaleFactor;

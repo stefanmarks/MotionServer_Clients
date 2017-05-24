@@ -107,33 +107,29 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public void ResetFlags()
+		public void Process()
 		{
-			resetFlags = true;
+			released = false;
+			pressed  = false;
+			if (value != oldValue)
+			{
+				// changed value: set booleans accordingly
+				if ((oldValue >= PressThreshold) && (value < PressThreshold)) { released = true; }
+				if ((oldValue < PressThreshold) && (value >= PressThreshold)) { pressed = true; }
+
+				oldValue = value;
+			}
 		}
 
 
 		public void SceneUpdated(Scene scene)
 		{
-			if ( resetFlags )
-			{
-				released   = false;
-				pressed    = false;
-				resetFlags = false;
-			}
+				
 
 			// store values and flags for queries
 			if (channel != null)
 			{
 				value = channel.value;
-				if (value != oldValue)
-				{
-					// changed value: set booleans accordingly
-					if ((oldValue >= PressThreshold) && (value <  PressThreshold)) { released = true; }
-					if ((oldValue <  PressThreshold) && (value >= PressThreshold)) { pressed  = true; }
-
-					oldValue = value;
-				}
 			}
 		}
 
@@ -151,6 +147,5 @@ namespace SentienceLab.MoCap
 		private Channel channel;
 		private float   value, oldValue;
 		private bool    pressed, released;
-		private bool    resetFlags;
 	}
 }

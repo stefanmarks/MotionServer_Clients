@@ -3,8 +3,8 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SentienceLab.MoCap
 {
@@ -35,7 +35,7 @@ namespace SentienceLab.MoCap
 			// initialise variables
 			skeletonNode = null;
 			actor        = null;
-			dataBuffers  = new Dictionary<Bone, MoCapDataBuffer>();
+			boneList     = new Dictionary<Bone, BoneObject>();
 
 			// sanity checks
 			if (boneTemplate == null)
@@ -92,7 +92,7 @@ namespace SentienceLab.MoCap
 				if (bone.parent != null)
 				{
 					// attach to parent node
-					GameObject parentObject = dataBuffers[bone.parent].GameObject;
+					GameObject parentObject = boneList[bone.parent].node;
 					boneNode.transform.parent = parentObject.transform;
 				}
 				else
@@ -101,8 +101,8 @@ namespace SentienceLab.MoCap
 					boneNode.transform.parent = skeletonNode.transform;
 				}
 
-				dataBuffers[bone] = new MoCapDataBuffer(bone.name, this.gameObject, boneNode, boneRepresentation);
-				dataBuffers[bone].EnsureCapacityForModifiers(modifiers);
+				boneList[bone] = new BoneObject() { node = boneNode, visual = boneRepresentation };
+				bone.buffer.EnsureCapacityForModifiers(modifiers);
 
 				boneTemplate.SetActive(false);
 			}
@@ -115,48 +115,6 @@ namespace SentienceLab.MoCap
 		/// 
 		void Update()
 		{
-			if (skeletonNode == null)
-				return;
-
-			// update bones
-			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
-			{
-				MoCapDataBuffer buffer = entry.Value;
-				Bone            bone   = entry.Key;
-				GameObject      obj    = buffer.GameObject;
-				MoCapData       data   = buffer.RunModifiers(modifiers);
-
-				// update bone game object
-				if (data.tracked)
-				{
-					obj.transform.localPosition = data.pos;
-					obj.transform.localRotation = data.rot;
-
-					// update length of representation
-					GameObject boneRepresentation = (GameObject)buffer.DataObject;
-					if (boneRepresentation != null)
-					{
-						boneRepresentation.transform.localScale = data.length * Vector3.one;
-					}
-
-					obj.SetActive(true);
-
-					if (bone.parent != null)
-					{
-						Debug.DrawLine(obj.transform.parent.position, obj.transform.position, Color.red);
-					}
-				}
-				else
-				{
-					// bone not tracked anymore
-					obj.SetActive(false);
-				}
-			}
-		}
-
-
-		public void SceneUpdated(Scene scene)
-		{
 			// create marker position array if necessary
 			// but only when tracking is OK, otherwise the bone lengths are undefined
 			if ((skeletonNode == null) && (actor != null) && actor.bones[0].tracked)
@@ -164,14 +122,51 @@ namespace SentienceLab.MoCap
 				CreateBones(actor.bones);
 			}
 
-			// update bone data
-			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
+			if (skeletonNode == null)
+				return;
+
+			// update bones
+			foreach (KeyValuePair<Bone, BoneObject> entry in boneList)
 			{
+				BoneObject  obj  = entry.Value;
 				Bone            bone   = entry.Key;
-				MoCapDataBuffer buffer = entry.Value;
-				// pump bone data through buffer
-				buffer.Push(bone);
+				MoCapData   data = bone.buffer.RunModifiers(modifiers);
+
+				// update bone game object
+				if (data.tracked)
+				{
+					obj.node.transform.localPosition = data.pos;
+					obj.node.transform.localRotation = data.rot;
+
+					// update length of representation
+					GameObject boneRepresentation = obj.visual;
+					if (boneRepresentation != null)
+					{
+						boneRepresentation.transform.localScale = data.length * Vector3.one;
+					}
+
+					obj.node.SetActive(true);
+
+					if (bone.parent != null)
+					{
+						Debug.DrawLine(
+							obj.node.transform.parent.position, 
+							obj.node.transform.position, 
+							Color.red);
+					}
+				}
+				else
+				{
+					// bone not tracked anymore
+					obj.node.SetActive(false);
+				}
 			}
+		}
+
+
+		public void SceneUpdated(Scene scene)
+		{
+			// nothing to do here
 		}
 
 
@@ -197,10 +192,16 @@ namespace SentienceLab.MoCap
 		}
 
 
+		struct BoneObject
+		{
+			public GameObject node;
+			public GameObject visual;
+		}
 		private GameObject                        skeletonNode;
 		private Actor                             actor;
-		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
+		private Dictionary<Bone, BoneObject> boneList;
 		private IMoCapDataModifier[]              modifiers; // list of modifiers for this renderer
+
 	}
 
 }

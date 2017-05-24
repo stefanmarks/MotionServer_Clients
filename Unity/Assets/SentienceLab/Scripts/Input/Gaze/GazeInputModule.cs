@@ -20,10 +20,10 @@
 //   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //   THE SOFTWARE.
 
+using SentienceLab.Input;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.VR;
-using SentienceLab.Input;
 
 /// This script provides an implemention of Unity's `BaseInputModule` class, so
 /// that Canvas-based (_uGUI_) UI elements can be selected by looking at them and

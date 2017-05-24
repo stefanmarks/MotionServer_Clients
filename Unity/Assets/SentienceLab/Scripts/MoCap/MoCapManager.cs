@@ -3,12 +3,12 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
-using UnityEngine;
-using UnityEngine.SceneManagement;
+using SentienceLab.Input;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
-using System.Collections.Generic;
-using SentienceLab.Input;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace SentienceLab.MoCap
 {
@@ -32,7 +32,8 @@ namespace SentienceLab.MoCap
 		[Tooltip("Name of the MoCap Client (\"$scene\" will be replaced by the active scene name)")]
 		public string clientName = "$scene";
 
-		private byte[] clientAppVersion = new byte[] { 1, 2, 0, 0 };
+		private byte[] clientAppVersion = new byte[] { 1, 3, 0, 0 };
+
 
 		/// <summary>
 		/// Called once at the start of the scene. 
@@ -70,6 +71,8 @@ namespace SentienceLab.MoCap
 			{
 				client.Disconnect();
 				client = null;
+
+				sceneListeners.Clear();
 			}
 			clientMutex.ReleaseMutex();
 		}
@@ -164,7 +167,21 @@ namespace SentienceLab.MoCap
 		/// 
 		public bool AddSceneListener(SceneListener listener)
 		{
-			return (client != null) ? client.AddSceneListener(listener) : false;
+			bool added = false;
+			if (!sceneListeners.Contains(listener))
+			{
+				sceneListeners.Add(listener);
+				added = true;
+				// immediately trigger callback
+				if (client != null)
+				{
+					Scene scene = GetScene();
+					scene.mutex.WaitOne();
+					listener.SceneChanged(scene);
+					scene.mutex.ReleaseMutex();
+				}
+			}
+			return added;
 		}
 
 
@@ -172,12 +189,54 @@ namespace SentienceLab.MoCap
 		/// Removes a scene data listener.
 		/// </summary>
 		/// <param name="listener">The listener to remove</param>
-		/// <returns><c>true</c>, if the actor listener was removed, <c>false</c> otherwise.</returns>
+		/// <returns><c>true</c>, if the scene listener was removed, <c>false</c> otherwise.</returns>
 		/// 
 		public bool RemoveSceneListener(SceneListener listener)
 		{
-			return (client != null) ? client.RemoveSceneListener(listener) : true;
+			return sceneListeners.Remove(listener);
 		}
+
+
+		/// <summary>
+		/// Notifies scene listeners of an update.
+		/// </summary>
+		/// <param name="scene"> the scene has been updated</param>
+		/// 
+		public void NotifyListeners_Update(Scene scene)
+		{
+			scene.mutex.WaitOne();
+			// pump latest data through the buffers before calling listeners
+			foreach (Actor a in scene.actors)
+			{
+				foreach (Marker m in a.markers) { m.buffer.Push(); }
+				foreach (Bone   b in a.bones)   { b.buffer.Push(); }
+		}
+
+			// call listeners
+			foreach (SceneListener listener in sceneListeners)
+			{
+				listener.SceneUpdated(scene);
+			}
+			scene.mutex.ReleaseMutex();
+		}
+
+
+		/// <summary>
+		/// Notifies scene listeners of a description change.
+		/// </summary>
+		/// <param name="scene"> the scene has been changed</param>
+		/// 
+		public void NotifyListeners_Change(Scene scene)
+		{
+			scene.mutex.WaitOne();
+			foreach (SceneListener listener in sceneListeners)
+			{
+				listener.SceneChanged(scene);
+			}
+			scene.mutex.ReleaseMutex();
+		}
+
+
 
 
 
@@ -200,6 +259,8 @@ namespace SentienceLab.MoCap
 		/// 
 		private void CreateManager()
 		{
+			sceneListeners = new List<SceneListener>();
+
 			clientMutex.WaitOne();
 			if (client == null)
 			{
@@ -221,7 +282,7 @@ namespace SentienceLab.MoCap
 								// construct client name
 								string appName = clientName;
 								appName = appName.Replace("$scene", SceneManager.GetActiveScene().name);
-								client = new NatNetClient(appName, clientAppVersion);
+								client = new NatNetClient(this, appName, clientAppVersion);
 							}
 						}
 						else if (info is FileClient.ConnectionInfo) 
@@ -229,7 +290,7 @@ namespace SentienceLab.MoCap
 							// is client already the right type?
 							if (!(client is FileClient))
 							{
-								client = new FileClient();
+								client = new FileClient(this);
 							}
 						}
 
@@ -243,7 +304,7 @@ namespace SentienceLab.MoCap
 					// no client yet > try VR
 					if (!client.IsConnected() && UnityEngine.VR.VRDevice.isPresent)
 					{
-						client = new HtcViveClient();
+						client = new HtcViveClient(this);
 						client.Connect(null);
 					}
 
@@ -280,7 +341,7 @@ namespace SentienceLab.MoCap
 				if ((client == null) || !client.IsConnected())
 				{
 					// not active or not able to connect to any data source: create dummy singleton 
-					client = new DummyClient();
+					client = new DummyClient(this);
 				}
 			}
 			clientMutex.ReleaseMutex();
@@ -354,6 +415,7 @@ namespace SentienceLab.MoCap
 
 
 		private static MoCapManager instance    = null;
+		private static List<SceneListener> sceneListeners = null;
 		private static bool         warningIssued = false;
 		private static IMoCapClient client      = null;
 		private static Mutex        clientMutex = new Mutex();

@@ -82,24 +82,6 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// 
 		Scene GetScene();
-
-
-		/// <summary>
-		/// Adds a scene data listener.
-		/// </summary>
-		/// <param name="listener">The listener to add</param>
-		/// <returns><c>true</c>, if the scene listener was added, <c>false</c> otherwise.</returns>
-		/// 
-		bool AddSceneListener(SceneListener listener);
-
-
-		/// <summary>
-		/// Removes a scene data listener.
-		/// </summary>
-		/// <param name="listener">The listener to remove</param>
-		/// <returns><c>true</c>, if the scene listener was removed, <c>false</c> otherwise.</returns>
-		///
-		bool RemoveSceneListener(SceneListener listener);
 	}
 
 }

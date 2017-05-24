@@ -492,7 +492,7 @@ namespace SentienceLab.Input
 
 			public void Process()
 			{
-				device.ResetFlags();
+				device.Process();
 			}
 
 			public bool IsActive()

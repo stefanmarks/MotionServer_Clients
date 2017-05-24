@@ -3,8 +3,9 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
-using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SentienceLab.MoCap
 {
@@ -80,12 +81,29 @@ namespace SentienceLab.MoCap
 			// initialise variables
 			rootNode        = null;
 			controllingBone = null;
-			dataBuffers     = new Dictionary<Bone, MoCapDataBuffer>();
+			boneList        = new Dictionary<Bone, GameObject>();
+			disabled        = false;
 
 			// find any MoCap data modifiers and store them
 			modifiers = GetComponents<IMoCapDataModifier>();
 
+			// let the MoCap manager handle the forced Update calls
+			MoCapManager.GetInstance().StartCoroutine(ForceUpdateCall(this));
+
 			MoCapManager.GetInstance().AddSceneListener(this);
+		}
+
+
+		private IEnumerator ForceUpdateCall(MoCapObject o)
+		{
+			// When the game object is inactive, Update() doesn't get called any more
+			// which would mean once deactivated, the object stays hidden forever
+			// Workaround > when deactivated, call from here
+			while (true)
+			{
+				if (o.disabled) o.Update();
+				yield return new WaitForSeconds(0.1f);
+			}
 		}
 
 
@@ -114,7 +132,7 @@ namespace SentienceLab.MoCap
 				if (bone.parent != null)
 				{
 					// attach to parent node
-					GameObject parentObject = dataBuffers[bone.parent].GameObject;
+					GameObject parentObject = boneList[bone.parent];
 					boneNode.transform.parent = parentObject.transform;
 				}
 				else
@@ -124,8 +142,8 @@ namespace SentienceLab.MoCap
 				}
 				boneNode.transform.localScale = Vector3.one;
 
-				dataBuffers[bone] = new MoCapDataBuffer(bone.name, this.gameObject, boneNode);
-				dataBuffers[bone].EnsureCapacityForModifiers(modifiers);
+				boneList[bone] = boneNode;
+				bone.buffer.EnsureCapacityForModifiers(modifiers);
 			}
 
 			// move this transform to the end of the hierarchy
@@ -141,14 +159,22 @@ namespace SentienceLab.MoCap
 		/// 
 		void Update()
 		{
+			// create node hierarchy if not already built.
+			// but only when tracking is OK, otherwise the bone lengths are undefined
+			if ((rootNode == null) && (controllingBone != null))
+			{
+				CreateHierarchy();
+			}
+
 			if (controllingBone == null)
 				return;
 
 			// update bones
-			foreach (MoCapDataBuffer buffer in dataBuffers.Values)
+			foreach (KeyValuePair<Bone, GameObject> pair in boneList)
 			{
-				GameObject obj  = buffer.GameObject;
-				MoCapData  data = buffer.RunModifiers(modifiers);
+				GameObject obj  = pair.Value;
+				Bone       bone = pair.Key;
+				MoCapData  data = bone.buffer.RunModifiers(modifiers);
 
 				// update hierarchy object
 				if (data.tracked)
@@ -164,6 +190,7 @@ namespace SentienceLab.MoCap
 						obj.transform.localPosition = data.pos;
 					}
 					obj.SetActive(true);
+					disabled = false;
 				}
 				else
 				{
@@ -171,6 +198,7 @@ namespace SentienceLab.MoCap
 					if (trackingLostBehaviour == TrackingLostBehaviour.Disable)
 					{
 						obj.SetActive(false);
+						disabled = true;
 					}
 				}
 			}
@@ -179,31 +207,8 @@ namespace SentienceLab.MoCap
 
 		public void SceneUpdated(Scene scene)
 		{
-			// create node hierarchy if not already built.
-			// but only when tracking is OK, otherwise the bone lengths are undefined
-			if ((rootNode == null) && (controllingBone != null))
-			{
-				CreateHierarchy();
+			// nothing to do here
 			}
-
-			// update bone data
-			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
-			{
-				Bone            bone   = entry.Key;
-				MoCapDataBuffer buffer = entry.Value;
-				// pump bone data through buffer
-				buffer.Push(bone);
-			}
-
-			if (!this.gameObject.activeInHierarchy)
-			{
-				// game object is inactive, so Update() doesn't get called any more
-				// which would mean once deactivated, the object stays hidden forever
-				// Workaround > call from here
-				Update();
-			}
-		}
-
 
 		public void SceneChanged(Scene scene)
 		{
@@ -249,7 +254,8 @@ namespace SentienceLab.MoCap
 
 		private Bone                              controllingBone;
 		private GameObject                        rootNode;
-		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
+		private Dictionary<Bone, GameObject> boneList;
+		private bool                         disabled;
 		private IMoCapDataModifier[]              modifiers; // list of modifiers for this renderer
 	}
 

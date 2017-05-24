@@ -3,11 +3,11 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
+using SentienceLab.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using SentienceLab.IO;
 using UnityEngine;
 
 namespace SentienceLab.MoCap
@@ -22,14 +22,14 @@ namespace SentienceLab.MoCap
 		{
 			public ConnectionInfo(TextAsset asset)
 			{
-				dataStream = new DataStream_TextAsset(asset);
+				dataStream = new DataStream_TextAsset(asset, '\t', false); // read TSV file as fast as possible
 			}
 
 			public ConnectionInfo(string filename)
 			{
 				// cut any leading character
 				filename = filename.TrimStart('/');
-				dataStream = new DataStream_File(Path.Combine(Application.streamingAssetsPath, filename));
+				dataStream = new DataStream_File(Path.Combine(Application.streamingAssetsPath, filename), '\t', false);
 			}
 
 			public DataStream dataStream;
@@ -39,16 +39,16 @@ namespace SentienceLab.MoCap
 		/// <summary>
 		/// Constructs a .MOT file client instance.
 		/// </summary>
+		/// <param name="manager">the MoCapManager instance</param>
 		///
-		public FileClient()
+		public FileClient(MoCapManager manager)
 		{
-			sceneListeners = new List<SceneListener>();
-			scene               = new Scene();
-			dataStream          = null;
-			streamingTimer      = null;
-			frameMutex     = new Mutex();
-			paused              = false;
-			framesToRead   = 0;
+			this.manager = manager;
+
+			scene          = new Scene();
+			dataStream     = null;
+			streamingTimer = null;
+			paused         = false;
 		}
 
 
@@ -70,8 +70,7 @@ namespace SentienceLab.MoCap
 
 					// immediately get first packet of frame data
 					GetFrameData();
-
-					NotifyListeners_Change();
+					manager.NotifyListeners_Change(scene);
 
 					streamingTimer = new Timer(new TimerCallback(StreamingTimerCallback));
 					streamingTimer.Change(0, 1000 / updateRate);
@@ -109,9 +108,6 @@ namespace SentienceLab.MoCap
 				dataStream.Close();
 				dataStream = null;
 			}
-
-			// and then stop
-			sceneListeners.Clear();
 		}
 
 
@@ -135,43 +131,13 @@ namespace SentienceLab.MoCap
 
 		public void Update()
 		{
-			frameMutex.WaitOne();
-			int iterations = framesToRead;
-			framesToRead = 0;
-			frameMutex.ReleaseMutex();
-			while (iterations > 0)
-			{
-				// if one or more frames have been read
-				GetFrameData();
-				NotifyListeners_Update();
-				iterations--;
-			}
+			// nothing to do here
 		}
 
 
 		public Scene GetScene()
 		{
 			return scene;
-		}
-
-
-		public bool AddSceneListener(SceneListener listener)
-		{
-			bool added = false;
-			if (!sceneListeners.Contains(listener))
-			{
-				sceneListeners.Add(listener);
-				added = true;
-				// immediately trigger callback
-				listener.SceneChanged(scene);
-			}
-			return added;
-		}
-
-
-		public bool RemoveSceneListener(SceneListener listener)
-		{
-			return sceneListeners.Remove(listener);
 		}
 
 
@@ -365,6 +331,7 @@ namespace SentienceLab.MoCap
 
 		private void GetFrameData()
 		{
+			scene.mutex.WaitOne();
 			if (dataStream.EndOfStream())
 			{
 				Debug.Log("End of MOT file reached > looping");
@@ -482,6 +449,7 @@ namespace SentienceLab.MoCap
 					device.channels[chn].value = value;
 				}
 			}
+			scene.mutex.ReleaseMutex();
 		}
 
 
@@ -509,42 +477,20 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private void NotifyListeners_Update()
-		{
-			foreach (SceneListener listener in sceneListeners)
-			{
-				listener.SceneUpdated(scene);
-			}
-		}
-
-
-		private void NotifyListeners_Change()
-		{
-			foreach (SceneListener listener in sceneListeners)
-			{
-				listener.SceneChanged(scene);
-			}
-		}
-
-
 		private void StreamingTimerCallback(object state)
 		{
 			if (paused) return;
-
-			frameMutex.WaitOne();
-			framesToRead++;
-			frameMutex.ReleaseMutex();
+			GetFrameData();
+			manager.NotifyListeners_Update(scene);
 		}
 
 
-		private DataStream  dataStream;
-		private int         fileVersion, updateRate;
-		private Timer       streamingTimer;
-		private Mutex       frameMutex;
-		private bool        paused;
+		private readonly MoCapManager manager;
 
-		private Scene               scene;
-		private List<SceneListener> sceneListeners;
-		private volatile int        framesToRead;
+		private Scene      scene;
+		private DataStream dataStream;
+		private int        fileVersion, updateRate;
+		private Timer      streamingTimer;
+		private bool       paused;
 	}
 }

@@ -3,8 +3,8 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SentienceLab.MoCap
 {
@@ -66,7 +66,7 @@ namespace SentienceLab.MoCap
 		/// 
 		void Start()
 		{
-			dataBuffers = null;
+			boneList = null;
 
 			// find any MoCap data modifiers and store them
 			modifiers = GetComponents<IMoCapDataModifier>();
@@ -82,7 +82,7 @@ namespace SentienceLab.MoCap
 		/// 
 		private void MatchBones(Bone[] bones)
 		{
-			dataBuffers = new Dictionary<Bone, MoCapDataBuffer>();
+			boneList = new Dictionary<Bone, BoneObject>();
 			string unmatchedBones = "";
 
 			// create copies of the marker template
@@ -94,8 +94,8 @@ namespace SentienceLab.MoCap
 				Transform boneNode = Utilities.FindInHierarchy(boneName, transform);
 				if (boneNode != null)
 				{
-					dataBuffers[bone] = new MoCapDataBuffer(bone.name, this.gameObject, boneNode.gameObject, entry);
-					dataBuffers[bone].EnsureCapacityForModifiers(modifiers);
+					boneList[bone] = new BoneObject() { node = boneNode.gameObject, entry = entry };
+					bone.buffer.EnsureCapacityForModifiers(modifiers);
 				}
 				else
 				{
@@ -150,17 +150,22 @@ namespace SentienceLab.MoCap
 		/// 
 		void Update()
 		{
-			if (dataBuffers == null)
+			// create bone array if necessary
+			if ((boneList == null) && (actor != null))
+			{
+				MatchBones(actor.bones);
+			}
+
+			if (boneList == null)
 				return;
 
 			// update bones
 			Quaternion rot = new Quaternion();
-			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
+			foreach (KeyValuePair<Bone, BoneObject> entry in boneList)
 			{
 				Bone            bone   = entry.Key;
-				MoCapDataBuffer buffer = entry.Value;
-				GameObject      obj    = buffer.GameObject;
-				MoCapData       data   = buffer.RunModifiers(modifiers);
+				BoneObject obj  = entry.Value;
+				MoCapData  data = bone.buffer.RunModifiers(modifiers);
 
 				// update bone game object
 				if (data.tracked)
@@ -169,13 +174,13 @@ namespace SentienceLab.MoCap
 						 (bone.parent == null) )
 					{
 						// change position only when desired, or when a root bone
-						obj.transform.localRotation = Quaternion.identity;
-						obj.transform.localPosition = data.pos;
+						obj.node.transform.localRotation = Quaternion.identity;
+						obj.node.transform.localPosition = data.pos;
 					}
 
 					rot = Quaternion.identity;
 
-					string transforms = ((BoneNameTranslationEntry)buffer.DataObject).axisTransformation;
+					string transforms = obj.entry.axisTransformation;
 					foreach (char c in transforms)
 					{
 						switch (c)
@@ -189,7 +194,7 @@ namespace SentienceLab.MoCap
 						}
 					}
 
-					obj.transform.localRotation = data.rot * rot;
+					obj.node.transform.localRotation = data.rot * rot;
 				}
 			}
 		}
@@ -197,28 +202,14 @@ namespace SentienceLab.MoCap
 
 		public void SceneUpdated(Scene scene)
 		{
-			// create marker position array if necessary
-			// but only when tracking is OK, otherwise the bone lengths are undefined
-			if ((dataBuffers == null) && (actor != null))
-			{
-				MatchBones(actor.bones);
-			}
-
-			// update bone data
-			foreach (KeyValuePair<Bone, MoCapDataBuffer> entry in dataBuffers)
-			{
-				Bone            bone   = entry.Key;
-				MoCapDataBuffer buffer = entry.Value;
-				// pump bone data through buffer
-				buffer.Push(bone);
-			}
+			// nothing to do here
 		}
 
 
 		public void SceneChanged(Scene scene)
 		{
 			// re-match bone names with the next update
-			dataBuffers = null;
+			boneList = null;
 
 			actor = scene.FindActor(actorName);
 			if (actor != null)
@@ -231,8 +222,14 @@ namespace SentienceLab.MoCap
 			}
 		}
 
+
+		struct BoneObject
+		{
+			public GameObject               node;
+			public BoneNameTranslationEntry entry;
+		}
 		private Actor                             actor;
-		private Dictionary<Bone, MoCapDataBuffer> dataBuffers;
+		private Dictionary<Bone, BoneObject> boneList;
 		private IMoCapDataModifier[]              modifiers; // list of modifiers for this renderer
 	}
 }
