@@ -22,6 +22,7 @@ public class MovementController : MonoBehaviour
 	public float  maxRotationSpeed    = 45.0f;
 	public float  rotationLerp        = 1.0f;
 
+	public bool      translationIgnoresPitch = true;
 	public Transform rotationBasisNode;
 
 
@@ -61,8 +62,10 @@ public class MovementController : MonoBehaviour
 		vecT.z = (handlerMoveZ != null) ? handlerMoveZ.GetValue() : 0;
 		vecTranslate = Vector3.Lerp(vecTranslate, vecT, translationLerp);
 
-		// calculate level forward (Z) direction of camera
-		vec = rotationBasisNode.forward; vec.y = 0; vec.Normalize();
+		// calculate forward (Z) direction of camera
+		vec = rotationBasisNode.forward;
+		if (translationIgnoresPitch) { vec.y = 0; }
+		vec.Normalize();
 		// translate forward
 		transform.Translate(vec * vecTranslate.z * maxTranslationSpeed * Time.deltaTime, Space.World);
 		// calculate upwards (Y) direction of camera
