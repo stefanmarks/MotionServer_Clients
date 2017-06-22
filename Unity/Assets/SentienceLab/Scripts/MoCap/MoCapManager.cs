@@ -302,13 +302,13 @@ namespace SentienceLab.MoCap
 					}
 
 					// no client yet > try VR
-					if (!client.IsConnected() && UnityEngine.VR.VRDevice.isPresent)
+					if (((client == null) || !client.IsConnected()) && UnityEngine.VR.VRDevice.isPresent)
 					{
 						client = new HtcViveClient(this);
 						client.Connect(null);
 					}
 
-					if (client.IsConnected())
+					if ((client != null) && client.IsConnected())
 					{
 						Debug.Log("MoCap client connected to " + client.GetDataSourceName() + ".\n" +
 						          "Framerate: " + client.GetFramerate() + " fps");
