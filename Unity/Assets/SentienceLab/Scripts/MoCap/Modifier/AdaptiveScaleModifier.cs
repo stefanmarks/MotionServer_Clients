@@ -26,6 +26,7 @@ namespace SentienceLab.MoCap
 		[Tooltip("Set flag to ignore the Y axis in the distance calculation and the scaling operation")]
 		public bool ignoreY_Axis = true;
 
+
 		public void Start()
 		{
 			curve.preWrapMode  = WrapMode.Clamp;

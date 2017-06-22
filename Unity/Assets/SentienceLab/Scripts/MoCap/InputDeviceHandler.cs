@@ -124,8 +124,6 @@ namespace SentienceLab.MoCap
 
 		public void SceneUpdated(Scene scene)
 		{
-				
-
 			// store values and flags for queries
 			if (channel != null)
 			{

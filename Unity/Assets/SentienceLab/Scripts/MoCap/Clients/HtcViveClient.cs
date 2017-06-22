@@ -26,9 +26,9 @@ namespace SentienceLab.MoCap
 		{
 			this.manager = manager;
 
-			scene           = new Scene();
-			trackedDevices  = new List<TrackedDevice>();
-			connected       = false;
+			scene          = new Scene();
+			trackedDevices = new List<TrackedDevice>();
+			connected      = false;
 		}
 
 

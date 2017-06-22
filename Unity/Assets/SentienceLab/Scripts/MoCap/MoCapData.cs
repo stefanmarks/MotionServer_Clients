@@ -15,10 +15,10 @@ namespace SentienceLab.MoCap
 	{
 		public readonly MoCapDataBuffer buffer; // buffer that owns this data point
 
-		public Vector3    pos; // position of marker or bone
-		public Quaternion rot; // orientation of bone
-		public bool  tracked;  // tracking flag
-		public float length;   // length of bone
+		public Vector3    pos;     // position of marker or bone
+		public Quaternion rot;     // orientation of bone
+		public bool       tracked; // tracking flag
+		public float      length;  // length of bone
 
 
 		/// <summary>

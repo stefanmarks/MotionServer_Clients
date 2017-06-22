@@ -30,7 +30,7 @@ namespace SentienceLab.MoCap
 		public void Process(ref MoCapData data)
 		{
 			if (!enabled) return;
-			data.pos *= scaleFactor;
+			data.pos    *= scaleFactor;
 			data.length *= scaleFactor;
 		}
 

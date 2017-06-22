@@ -31,6 +31,7 @@ namespace SentienceLab
 			return quaternion;
 		}
 
+
 		/// <summary>
 		/// Returns the translation part of a 4x4 matrix.
 		/// </summary>
@@ -44,6 +45,7 @@ namespace SentienceLab
 			vector.z = matrix.m23;
 			return vector;
 		}
+
 
 		/// <summary>
 		/// Converts a matrix from right/left handedness to left/right handedness.
@@ -59,6 +61,7 @@ namespace SentienceLab
 			matrix[2,1] = -matrix[2,1];
 			matrix[2,3] = -matrix[2,3];
 		}
+
 
 		private static Quaternion quaternion = new Quaternion();
 		private static Vector3    vector     = new Vector3();
