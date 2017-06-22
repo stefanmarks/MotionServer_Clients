@@ -53,15 +53,15 @@ Shader "UI/Always on Top"
 
 			struct appdata_t 
 			{
-				float4 vertex : POSITION;
-				fixed4 color : COLOR;
+				float4 vertex   : POSITION;
+				fixed4 color    : COLOR;
 				float2 texcoord : TEXCOORD0;
 			};
 
 			struct v2f
 			{
-				float4 vertex : SV_POSITION;
-				fixed4 color : COLOR;
+				float4 vertex   : SV_POSITION;
+				fixed4 color    : COLOR;
 				float2 texcoord : TEXCOORD0;
 			};
 

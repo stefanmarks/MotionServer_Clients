@@ -6,9 +6,9 @@ Shader "VR/LensDistortion"
 	Properties
 	{
 		_Distortion(         "Distortion Coefficients", Vector) = (1.0,0,0,0)
-		_ChromaticAberration("_ChromaticAberration", Vector) = (0, 0, 0, 0)
-		_ScaleIn(            "ScaleIn",                 Float)  = 0.0 
-		_ScaleOut(           "ScaleOut",                Float)  = 0.0
+		_ChromaticAberration("Chromatic Aberration",    Vector) = (0, 0, 0, 0)
+		_ScaleIn(            "Scale In",                Float)  = 0.0 
+		_ScaleOut(           "Scale Out",               Float)  = 0.0
 		_Center(             "Center of Projection",    Vector) = (.5,.5,0,0)
 		_MainTex(            "Base (RGB)",              2D)     = "" {}
 	}
