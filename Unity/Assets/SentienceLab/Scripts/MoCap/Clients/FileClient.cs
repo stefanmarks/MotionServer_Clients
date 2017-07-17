@@ -244,11 +244,11 @@ namespace SentienceLab.MoCap
 
 			Bone bone = new Bone(actor, name, id);
 
-			dataStream.GetNextInt();            // Parent ID (ignore for rigid body)
-			bone.parent = null;                 // rigid bodies should not have a parent
-			bone.ox = dataStream.GetNexFloat(); // X offset
-			bone.oy = dataStream.GetNexFloat(); // Y offset
-			bone.oz = dataStream.GetNexFloat(); // Z offset
+			dataStream.GetNextInt();             // Parent ID (ignore for rigid body)
+			bone.parent = null;                  // rigid bodies should not have a parent
+			bone.ox = dataStream.GetNextFloat(); // X offset
+			bone.oy = dataStream.GetNextFloat(); // Y offset
+			bone.oz = dataStream.GetNextFloat(); // Z offset
 
 			actor.bones = new Bone[1];
 			actor.bones[0] = bone;
@@ -302,9 +302,9 @@ namespace SentienceLab.MoCap
 				}
 				bone.BuildChain(); // build chain from root to this bone
 
-				bone.ox = dataStream.GetNexFloat(); // X offset
-				bone.oy = dataStream.GetNexFloat(); // Y offset
-				bone.oz = dataStream.GetNexFloat(); // Z offset
+				bone.ox = dataStream.GetNextFloat(); // X offset
+				bone.oy = dataStream.GetNextFloat(); // Y offset
+				bone.oz = dataStream.GetNextFloat(); // Z offset
 
 				actor.bones[boneIdx] = bone;
 			}
@@ -340,8 +340,23 @@ namespace SentienceLab.MoCap
 			}
 
 			dataStream.ReadNextLine();
-			scene.frameNumber = dataStream.GetNextInt();   // frame number
-			scene.latency     = dataStream.GetNexFloat(); // latency in s
+
+			// frame number
+			scene.frameNumber = dataStream.GetNextInt();
+
+			// timestamp (wasn't part of file version 1)
+			if (fileVersion > 1)
+			{
+				scene.timestamp = dataStream.GetNextFloat(); 
+			}
+			else
+			{
+				// no timestamp in file > reconstruct from frame number
+				scene.timestamp = scene.frameNumber / (float) updateRate;
+			}
+			
+			// latency in s
+			scene.latency = dataStream.GetNextFloat(); 
 
 			if (!dataStream.GetNextString().Equals("M"))
 			{
@@ -357,9 +372,9 @@ namespace SentienceLab.MoCap
 				{
 					Marker marker = actor.markers[markerIdx];
 					// Read position
-					marker.px = dataStream.GetNexFloat();
-					marker.py = dataStream.GetNexFloat();
-					marker.pz = dataStream.GetNexFloat();
+					marker.px = dataStream.GetNextFloat();
+					marker.py = dataStream.GetNextFloat();
+					marker.pz = dataStream.GetNextFloat();
 					TransformToUnity(ref marker);
 
 					// marker is tracked when at least one coordinate is not 0
@@ -381,16 +396,16 @@ namespace SentienceLab.MoCap
 				Bone bone = scene.FindActor(rigidBodyID).bones[0];
 
 				// Read position/rotation 
-				bone.px = dataStream.GetNexFloat(); // position
-				bone.py = dataStream.GetNexFloat();
-				bone.pz = dataStream.GetNexFloat();
-				bone.qx = dataStream.GetNexFloat(); // rotation
-				bone.qy = dataStream.GetNexFloat();
-				bone.qz = dataStream.GetNexFloat();
-				bone.qw = dataStream.GetNexFloat();
+				bone.px = dataStream.GetNextFloat(); // position
+				bone.py = dataStream.GetNextFloat();
+				bone.pz = dataStream.GetNextFloat();
+				bone.qx = dataStream.GetNextFloat(); // rotation
+				bone.qy = dataStream.GetNextFloat();
+				bone.qz = dataStream.GetNextFloat();
+				bone.qw = dataStream.GetNextFloat();
 				TransformToUnity(ref bone);
 
-				bone.length = dataStream.GetNexFloat(); // Mean error, used as length
+				bone.length = dataStream.GetNextFloat(); // Mean error, used as length
 				int state = dataStream.GetNextInt();     // state
 				bone.tracked = (state & 0x01) != 0;
 			}
@@ -414,16 +429,16 @@ namespace SentienceLab.MoCap
 					Bone bone = actor.bones[boneId];
 
 					// Read position/rotation 
-					bone.px = dataStream.GetNexFloat(); // position
-					bone.py = dataStream.GetNexFloat();
-					bone.pz = dataStream.GetNexFloat();
-					bone.qx = dataStream.GetNexFloat(); // rotation
-					bone.qy = dataStream.GetNexFloat();
-					bone.qz = dataStream.GetNexFloat();
-					bone.qw = dataStream.GetNexFloat();
+					bone.px = dataStream.GetNextFloat(); // position
+					bone.py = dataStream.GetNextFloat();
+					bone.pz = dataStream.GetNextFloat();
+					bone.qx = dataStream.GetNextFloat(); // rotation
+					bone.qy = dataStream.GetNextFloat();
+					bone.qz = dataStream.GetNextFloat();
+					bone.qw = dataStream.GetNextFloat();
 					TransformToUnity(ref bone);
 
-					bone.length = dataStream.GetNexFloat(); // Mean error, used as length
+					bone.length = dataStream.GetNextFloat(); // Mean error, used as length
 					int state = dataStream.GetNextInt();     // state
 					bone.tracked = (state & 0x01) != 0;
 				}
@@ -445,7 +460,7 @@ namespace SentienceLab.MoCap
 				// channel data
 				for (int chn = 0; chn < nChannels; chn++)
 				{
-					float value = dataStream.GetNexFloat();
+					float value = dataStream.GetNextFloat();
 					device.channels[chn].value = value;
 				}
 			}

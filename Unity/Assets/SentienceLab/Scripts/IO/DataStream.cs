@@ -134,7 +134,7 @@ namespace SentienceLab.IO
 		/// </summary>
 		/// <returns>the next float value</returns>
 		/// 
-		float GetNexFloat();
+		float GetNextFloat();
 	}
 
 
@@ -268,7 +268,7 @@ namespace SentienceLab.IO
 				0.0f;
 		}
 
-		public float GetNexFloat()
+		public float GetNextFloat()
 		{
 			return ParseFloat(data[dataIdx++]);
 		}
