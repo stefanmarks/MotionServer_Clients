@@ -152,7 +152,7 @@ namespace SentienceLab.MoCap
 			}
 
 			fileVersion = dataStream.GetNextInt();
-			if ((fileVersion < 1) || (fileVersion > 1))
+			if ((fileVersion < 1) || (fileVersion > 2))
 			{
 				throw new FileLoadException("Invalid MOT file version number");
 			}
@@ -205,9 +205,9 @@ namespace SentienceLab.MoCap
 
 		private void ReadMarkersetDescription(ref List<Actor> actors)
 		{
-			int    id   = 0;                      // no ID for markersets
-			string name = dataStream.GetNextString(); // markerset name
-			Actor actor = new Actor(scene, name, id);
+			int    id    = 0;                          // no ID for markersets
+			string name  = dataStream.GetNextString(); // markerset name
+			Actor  actor = new Actor(scene, name, id);
 
 			int nMarkers  = dataStream.GetNextInt(); // marker count
 			actor.markers = new Marker[nMarkers];
@@ -313,8 +313,8 @@ namespace SentienceLab.MoCap
 
 		private void ReadForcePlateDescription(ref List<Device> devices)
 		{
-			int    id   = dataStream.GetNextInt();    // ID
-			string name = dataStream.GetNextString(); // name
+			int    id     = dataStream.GetNextInt();     // ID
+			string name   = dataStream.GetNextString();  // name
 			Device device = new Device(scene, name, id); // create device
 
 			int nChannels   = dataStream.GetNextInt(); // channel count
