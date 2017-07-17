@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 public class NatNetClient implements MoCapClient
 {
     public static final String CLIENT_NAME      = "Java MoCap Client";
-    public static final byte   CLIENT_VERSION[] = { 1, 1, 0, 0 };
+    public static final byte   CLIENT_VERSION[] = { 1, 1, 1, 0 };
     public static final byte   NATNET_VERSION[] = { 2, 9, 0, 0 };
 
 
@@ -425,6 +425,10 @@ public class NatNetClient implements MoCapClient
                     ( (serverInfo.versionNatNet[0] == 2) &&
                       (serverInfo.versionNatNet[1] >= 9) ) ||
                     (serverInfo.versionNatNet[0] > 2);
+            final boolean timecodeDoublePrecision = // starting at v2.7
+                    ( (serverInfo.versionNatNet[0] == 2) &&
+                      (serverInfo.versionNatNet[1] >= 2) ) ||
+                    (serverInfo.versionNatNet[0] > 2);
 
             synchronized(scene)
             {
@@ -677,6 +681,12 @@ public class NatNetClient implements MoCapClient
                 
                 // read latency and convert from s to ms
                 scene.latency = (int) (buf.getFloat() * 1000);
+                
+                // skip timecode
+                buf.position(buf.position() + 8);
+                
+                // timestamp
+                scene.timestamp = timecodeDoublePrecision ? buf.getDouble() : buf.getFloat();
             }
             
             notifyListeners_Update();

@@ -8,7 +8,9 @@ package mocap;
 public class Scene 
 {
     public int      frameNumber; // current frame number
+    public double   timestamp;   // current timestamp
     public int      latency;     // delay in milliseconds from camera capture to SDK output
+    
     public Actor[]  actors;      // data for the actors
     public Device[] devices;     // data for interaction devices
     

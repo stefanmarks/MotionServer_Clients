@@ -48,6 +48,7 @@ public class MoCapTest_Console
                 synchronized(scene)
                 {
                     System.out.println("Frame " + scene.frameNumber);
+                    System.out.println("Timestamp " + scene.timestamp);
                     System.out.println("Actors count: " + scene.actors.length);
                     for (Actor actor : scene.actors)
                     {
