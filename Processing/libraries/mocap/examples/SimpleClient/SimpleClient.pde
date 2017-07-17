@@ -83,6 +83,8 @@ void draw()
   // prepare canvas
   background(0);
   
+  pushMatrix();
+  
   // position camera (mouse acts as turntable control)
   float rotY = radians(cameraRotY);
   float rotX = radians(cameraRotX);
@@ -132,6 +134,9 @@ void draw()
         }
       }
       
+      textSize(32);
+      textAlign(CENTER, CENTER);
+  
       // draw skeletons
       for ( Bone bone : actor.bones )
       {
@@ -194,6 +199,14 @@ void draw()
         cameraRadius -= chnY_Axis.value;
       }
     }
+    
+    popMatrix();
+    
+    fill(255);
+    textSize(16);
+    textAlign(LEFT, TOP);
+    text("Frame: " + scene.frameNumber, 5, 5); 
+    text("Timestamp: " + nf((float) scene.timestamp, 0, 2), 5, 25); 
   }
 }
 
