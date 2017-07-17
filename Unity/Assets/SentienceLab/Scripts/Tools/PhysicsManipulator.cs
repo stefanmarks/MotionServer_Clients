@@ -9,12 +9,12 @@ using UnityEngine;
 namespace SentienceLab
 {
 	/// <summary>
-	 /// Component for moving a physical object by clicking and moving it.
-	 /// When clicked, the script will try to maintain the relative position of the rigid body using forces applied to its centre.
-	 /// If a sound component is attached, this will be played in loop mode.
-	 /// </summary>
-	 ///
-		public class PhysicsManipulator : MonoBehaviour
+	/// Component for moving a physical object by clicking and moving it.
+	/// When clicked, the script will try to maintain the relative position of the rigid body using forces applied to its centre.
+	/// If a sound component is attached, this will be played in loop mode.
+	/// </summary>
+	///
+	public class PhysicsManipulator : MonoBehaviour
 	{
 		[Tooltip("Name of the action to control the physics manipulator")]
 		public string actionName  = "fire";
