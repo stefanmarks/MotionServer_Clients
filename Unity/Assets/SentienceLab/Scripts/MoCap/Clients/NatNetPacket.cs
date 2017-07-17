@@ -145,6 +145,19 @@ namespace SentienceLab.MoCap
 
 
 		/// <summary>
+		/// Reads a 64 bit float value and advances the data buffer pointer.
+		/// </summary>
+		/// <returns>the 64 bit float</returns>
+		/// 
+		public double GetDouble()
+		{
+			double value = BitConverter.ToDouble(data, idx);
+			idx += 8;
+			return value;
+		}
+
+
+		/// <summary>
 		/// Reads a zero terminated string and advances the data buffer pointer accordingly.
 		/// </summary>
 		/// <returns>the string</returns>

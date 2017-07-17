@@ -643,6 +643,10 @@ namespace SentienceLab.MoCap
 					((serverInfo.versionNatNet[0] == 2) &&
 					  (serverInfo.versionNatNet[1] >= 9)) ||
 					(serverInfo.versionNatNet[0] > 2);
+			bool timestampDoublePrecision = // starting at v2.7
+					((serverInfo.versionNatNet[0] == 2) &&
+					  (serverInfo.versionNatNet[1] >= 7)) ||
+					(serverInfo.versionNatNet[0] > 2);
 
 			int frameNumber = packet.GetInt32(); // frame number
 
@@ -880,6 +884,12 @@ namespace SentienceLab.MoCap
 
 				// read latency in s
 				scene.latency = packet.GetFloat();
+
+				// skip timecode
+				packet.Skip(8);
+
+				// timestamp
+				scene.timestamp = timestampDoublePrecision ? packet.GetDouble() : packet.GetFloat();
 			}
 
 			manager.NotifyListeners_Update(scene);

@@ -19,7 +19,9 @@ namespace SentienceLab.MoCap
 	public class Scene
 	{
 		public int      frameNumber; // current frame number
+		public double   timestamp;   // current timestamp
 		public float    latency;     // latency in seconds from camera capture to the SDK sending the data
+
 		public Actor[]  actors;      // actor data 
 		public Device[] devices;     // data for interaction devices
 
@@ -33,6 +35,7 @@ namespace SentienceLab.MoCap
 		public Scene()
 		{
 			frameNumber = 0;
+			timestamp   = 0;
 			latency     = 0;
 			actors      = new Actor[0];
 			devices     = new Device[0];

@@ -183,6 +183,10 @@ namespace SentienceLab.MoCap
 		{
 			compositor.GetLastPoses(poses, gamePoses);
 
+			// frame number and timestamp
+			scene.frameNumber = Time.frameCount;
+			scene.timestamp   = Time.time;
+
 			for (int idx = 0; idx < trackedDevices.Count; idx++)
 			{
 				// update position, orientation, and tracking state
