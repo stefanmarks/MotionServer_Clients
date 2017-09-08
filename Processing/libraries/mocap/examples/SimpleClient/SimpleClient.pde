@@ -90,6 +90,7 @@ void draw()
   float rotX = radians(cameraRotX);
   float r    = cameraRadius;
   float r2   = r * cos(rotX);
+  perspective(radians(60), float(width)/float(height), 1, 1000);
   camera(r2 * sin(rotY), r * sin(rotX), r2 * cos(rotY), 
          0, 0, 0, 
          0, 1, 0);
