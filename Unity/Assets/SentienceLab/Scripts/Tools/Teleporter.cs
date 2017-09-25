@@ -17,11 +17,17 @@ namespace SentienceLab
 
 	public class Teleporter : MonoBehaviour
 	{
+		[Tooltip("Type of the teleport transition")]
 		public TransitionType transitionType = TransitionType.MoveLinear;
 
-		public float          transitionTime = 0.1f;
+		[Tooltip("Duration of the teleport transition in seconds")]
+		public float transitionTime = 0.1f;
 
-		public AudioSource    teleportSound;
+		[Tooltip("Can the user teleport up and down?")]
+		public bool allowVerticalMovement = false;
+
+		[Tooltip("Sound to play during teleport (optional)")]
+		public AudioSource teleportSound;
 
 
 		public enum TransitionType
@@ -69,9 +75,14 @@ namespace SentienceLab
 				teleportSound.Play();
 			}
 
-			// calculate offset to target point
+			// calculate offset to target point (relativ to floor level, not camera height)
+			originPoint.y = this.transform.position.y;
 			Vector3 offset = targetPoint - originPoint;
-			offset.y = 0;
+			if (!allowVerticalMovement)
+			{
+				offset.y = 0;
+			}
+
 			Vector3 startPoint = this.transform.position;
 			Vector3 endPoint   = startPoint + offset;
 
