@@ -302,7 +302,7 @@ namespace SentienceLab.MoCap
 					}
 
 					// no client yet > try VR
-					if (((client == null) || !client.IsConnected()) && UnityEngine.VR.VRDevice.isPresent)
+					if (((client == null) || !client.IsConnected()) && UnityEngine.XR.XRDevice.isPresent)
 					{
 						client = new HtcViveClient(this);
 						client.Connect(null);

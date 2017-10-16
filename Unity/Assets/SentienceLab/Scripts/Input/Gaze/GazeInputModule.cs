@@ -23,7 +23,7 @@
 using SentienceLab.Input;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.VR;
+using UnityEngine.XR;
 
 /// This script provides an implemention of Unity's `BaseInputModule` class, so
 /// that Canvas-based (_uGUI_) UI elements can be selected by looking at them and
@@ -75,7 +75,7 @@ public class GazeInputModule : BaseInputModule
 	{
 		bool activeState = base.ShouldActivateModule();
 
-		activeState = activeState && (VRDevice.isPresent || !vrModeOnly);
+		activeState = activeState && (XRDevice.isPresent || !vrModeOnly);
 
 		if (activeState != isActive)
 		{
@@ -93,8 +93,8 @@ public class GazeInputModule : BaseInputModule
 			// Calculate hotspot for raycasting (center of camera canvas)
 			// Careful with the size of the "canvas" in VR mode
 			pointerPos = new Vector2(
-					(VRSettings.eyeTextureWidth  > 0 ? VRSettings.eyeTextureWidth  : Screen.width ) / 2,
-					(VRSettings.eyeTextureHeight > 0 ? VRSettings.eyeTextureHeight : Screen.height) / 2
+					(XRSettings.eyeTextureWidth  > 0 ? XRSettings.eyeTextureWidth  : Screen.width ) / 2,
+					(XRSettings.eyeTextureHeight > 0 ? XRSettings.eyeTextureHeight : Screen.height) / 2
 				);
 		}
 

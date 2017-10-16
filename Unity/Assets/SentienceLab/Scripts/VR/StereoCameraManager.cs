@@ -4,7 +4,7 @@
 #endregion Copyright Information
 
 using UnityEngine;
-using UnityEngine.VR;
+using UnityEngine.XR;
 
 namespace SentienceLab
 {
@@ -85,7 +85,7 @@ namespace SentienceLab
 			if (!Application.isPlaying)
 				return;
 
-			if (UnityEngine.VR.VRDevice.isPresent)
+			if (XRDevice.isPresent)
 				return;
 
 			//foreach ( string s in VRSettings.supportedDevices )
@@ -125,9 +125,9 @@ namespace SentienceLab
 			if (needsCameraConfigure)
 			{
 				// Check presence of any VR display which would take care of the configuration automatically
-				if (VRDevice.isPresent)
+				if (XRDevice.isPresent)
 				{
-					Debug.Log("VR Display: " + VRDevice.model);
+					Debug.Log("VR Display: " + XRDevice.model);
 					needsCameraConfigure = false;
 				}
 			}
@@ -154,7 +154,7 @@ namespace SentienceLab
 					leftCameraNode.transform.parent        = cameraNode.transform.parent;
 					leftCameraNode.transform.localRotation = cameraNode.transform.localRotation;
 					leftCameraNode.transform.localScale    = Vector3.one;
-					ConfigureCamera(leftCameraNode, VRNode.LeftEye, hmdConfig);
+					ConfigureCamera(leftCameraNode, XRNode.LeftEye, hmdConfig);
 					AudioListener alLeft = leftCameraNode.GetComponentInChildren<AudioListener>();
 
 					rightCameraNode = GameObject.Instantiate(cameraNode);
@@ -162,7 +162,7 @@ namespace SentienceLab
 					rightCameraNode.transform.parent        = cameraNode.transform.parent;
 					rightCameraNode.transform.localRotation = cameraNode.transform.localRotation;
 					rightCameraNode.transform.localScale    = Vector3.one;
-					ConfigureCamera(rightCameraNode, VRNode.RightEye, hmdConfig);
+					ConfigureCamera(rightCameraNode, XRNode.RightEye, hmdConfig);
 					AudioListener alRight = rightCameraNode.GetComponentInChildren<AudioListener>();
 
 					// there can only be one listener
@@ -181,12 +181,12 @@ namespace SentienceLab
 		}
 
 
-		private void ConfigureCamera(GameObject node, VRNode eye, HMD_Config hmdConfig)
+		private void ConfigureCamera(GameObject node, XRNode eye, HMD_Config hmdConfig)
 		{
 			// adjust camera X-positions based on IPD
 			float xDir = 0;
-			if      (eye == VRNode.LeftEye ) { xDir = -1; }
-			else if (eye == VRNode.RightEye) { xDir = +1; }
+			if      (eye == XRNode.LeftEye ) { xDir = -1; }
+			else if (eye == XRNode.RightEye) { xDir = +1; }
 
 			// shift camera sideways considering any offset orientation
 			node.transform.localPosition = (node.transform.localRotation * Vector3.right) * ((hmdConfig.IPD / 2) * xDir);
@@ -202,8 +202,8 @@ namespace SentienceLab
 
 				// apply centre offset and adapt viewport
 				float offX = hmdConfig.xOffset * (left - right) / 2;
-				if      (eye == VRNode.LeftEye ) { cam.rect = new Rect(0.0f, 0, 0.5f, 1); }
-				else if (eye == VRNode.RightEye) { cam.rect = new Rect(0.5f, 0, 0.5f, 1); offX = -offX; }
+				if      (eye == XRNode.LeftEye ) { cam.rect = new Rect(0.0f, 0, 0.5f, 1); }
+				else if (eye == XRNode.RightEye) { cam.rect = new Rect(0.5f, 0, 0.5f, 1); offX = -offX; }
 				else                             { cam.rect = new Rect(0.0f, 0, 1.0f, 1); offX = 0;     }
 
 				// calculate off-centre projection matrix

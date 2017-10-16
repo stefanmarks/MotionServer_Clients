@@ -6,7 +6,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.VR;
+using UnityEngine.XR;
 using Valve.VR;
 
 namespace SentienceLab.MoCap
@@ -42,7 +42,7 @@ namespace SentienceLab.MoCap
 
 		public bool Connect(IMoCapClient_ConnectionInfo connectionInfo)
 		{
-			connected = VRDevice.isPresent;
+			connected = XRDevice.isPresent;
 
 			if (connected)
 			{

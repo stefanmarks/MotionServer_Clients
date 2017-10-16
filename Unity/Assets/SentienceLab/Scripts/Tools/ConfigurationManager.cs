@@ -6,6 +6,7 @@
 using SentienceLab.MoCap;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR;
 
 namespace SentienceLab
 {
@@ -58,9 +59,9 @@ namespace SentienceLab
 			{
 				configuration = Configuration.MoCapRoom;
 			}
-			else if ( UnityEngine.VR.VRDevice.isPresent )
+			else if ( XRDevice.isPresent )
 			{
-				string model = UnityEngine.VR.VRDevice.model.ToLower();
+				string model = XRDevice.model.ToLower();
 				if (model.Contains("oculus"))
 				{
 					configuration = Configuration.OculusRift;
