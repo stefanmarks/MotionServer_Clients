@@ -79,7 +79,7 @@ namespace SentienceLab.Input
 			// remove tabs and linefeeds
 			string txtConfig = mappingFile.text.Replace("\t", "").Replace("\n", "");
 			// cut beginning and end
-			txtConfig = Regex.Replace(txtConfig, "^\\s*{\\s*\"Inputs\":\\[\\s*{", "");
+			txtConfig = Regex.Replace(txtConfig, "^\\s*{\\s*\"Inputs\":\\s*\\[\\s*{", "");
 			txtConfig = Regex.Replace(txtConfig, "}\\s*\\]\\s*}\\s*$", "");
 			// split
 			string[] inputMappings = Regex.Split(txtConfig, "}\\s*,\\s*{");
