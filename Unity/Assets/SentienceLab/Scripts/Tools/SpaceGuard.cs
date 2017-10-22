@@ -14,6 +14,7 @@ namespace SentienceLab
 	/// Script for fading in geometry that signals the limits of the tracking volume.
 	/// </summary>
 	/// 
+	[AddComponentMenu("VR/Space Guard")]
 	public class SpaceGuard : MonoBehaviour
 	{
 		[Tooltip("Automatically include the main camera in the list of guarded objects.")]
