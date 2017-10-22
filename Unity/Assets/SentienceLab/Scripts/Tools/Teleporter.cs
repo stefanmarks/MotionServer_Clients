@@ -4,7 +4,9 @@
 #endregion Copyright Information
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using SentienceLab.PostProcessing;
 
 namespace SentienceLab
 {
@@ -146,18 +148,19 @@ namespace SentienceLab
 				progress = 0;
 				moved = false;
 
-				// create fade texture
-				fadeTexture = parent.AddComponent<GUITexture>();
-				fadeTexture.texture    = Texture2D.whiteTexture;
-				fadeTexture.color      = new Color(0, 0, 0, 0);
-				fadeTexture.pixelInset = new Rect(0f, 0f, Screen.width, Screen.height);
+				// create fade effect
+				fadeEffects = ScreenFader.AttachToAllCameras();
+				foreach (ScreenFader fade in fadeEffects)
+				{
+					fade.FadeColour = Color.black;
+				}
 			}
 
 			public void Update(Transform offsetObject)
 			{
-				// move immediately to B when blink is half way ("eyelids" closed)
+				// move immediately to B when fade is half way (all black)
 				progress += Time.deltaTime / duration;
-				progress = Math.Min(1, progress);
+				progress  = Math.Min(1, progress);
 				if ((progress >= 0.5f) && !moved)
 				{
 					offsetObject.position = endPoint;
@@ -167,8 +170,11 @@ namespace SentienceLab
 
 			public void UpdateUI()
 			{
-				float alpha = 1.0f - Math.Abs(progress * 2 - 1); // Vertical lid position from [0....1....0]
-				fadeTexture.color = new Color(0, 0, 0, alpha);
+				float fadeFactor = 1.0f - Math.Abs(progress * 2 - 1); // from [0....1....0]
+				foreach (ScreenFader fade in fadeEffects)
+				{
+					fade.FadeFactor = fadeFactor;
+				}
 			}
 
 			public bool IsFinished()
@@ -178,14 +184,17 @@ namespace SentienceLab
 
 			public void Cleanup()
 			{
-				GameObject.Destroy(fadeTexture);
+				foreach (ScreenFader fade in fadeEffects)
+				{
+					GameObject.Destroy(fade);
+				}
 			}
 
 
 			private Vector3 endPoint;
 			private float   duration, progress;
 			private bool    moved;
-			private GUITexture fadeTexture;
+			private List<ScreenFader> fadeEffects;
 		}
 
 
