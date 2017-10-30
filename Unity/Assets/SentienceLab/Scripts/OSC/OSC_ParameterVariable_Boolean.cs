@@ -5,23 +5,26 @@
 
 using UnityEngine;
 using System.Collections.Generic;
-using UnityEngine.UI;
+using SentienceLab.Data;
 
 namespace SentienceLab.OSC
 {
-	[AddComponentMenu("OSC/Button Variable")]
-	[RequireComponent(typeof(Button))]
-	public class OSC_ButtonVariable : MonoBehaviour, IOSCVariableContainer
+	[AddComponentMenu("OSC/Boolean Parameter")]
+	[RequireComponent(typeof(Parameter_Boolean))]
+	public class OSC_ParameterVariable_Boolean : MonoBehaviour, IOSCVariableContainer
 	{
-		public string variableName = "/button1";
+		[Tooltip("If not empty, use this name for the OSC variable")]
+		public string NameOverride = "";
 
 
 		public void Start()
 		{
-			m_button = GetComponent<Button>();
-			m_button.onClick.AddListener(OnButtonClicked);
+			m_parameter = GetComponent<Parameter_Boolean>();
+			m_parameter.OnValueChanged += delegate { OnValueChanged(); };
 
-			m_variable = new OSC_BoolVariable(variableName);
+			m_variable = new OSC_BoolVariable((NameOverride == "") ? m_parameter.Name : NameOverride);
+			m_variable.Value = m_parameter.Value;
+
 			m_variable.OnDataReceived += OnReceivedOSC_Data;
 
 			m_updating = false;
@@ -33,23 +36,18 @@ namespace SentienceLab.OSC
 			if (!m_updating)
 			{
 				m_updating = true;
-				if (m_variable.Value)
-				{
-					m_button.onClick.Invoke();
-				}
+				m_parameter.Value = m_variable.Value;
 				m_updating = false;
 			}
 		}
 
 
-		protected void OnButtonClicked()
+		protected void OnValueChanged()
 		{
 			if (!m_updating)
 			{
 				m_updating = true;
-				m_variable.Value = true;
-				m_variable.SendUpdate();
-				m_variable.Value = false;
+				m_variable.Value = m_parameter.Value;
 				m_variable.SendUpdate();
 				m_updating = false;
 			}
@@ -68,8 +66,8 @@ namespace SentienceLab.OSC
 		}
 
 
-		private Button           m_button;
-		private OSC_BoolVariable m_variable;
-		private bool             m_updating;
+		private Parameter_Boolean m_parameter;
+		private OSC_BoolVariable  m_variable;
+		private bool              m_updating;
 	}
 }

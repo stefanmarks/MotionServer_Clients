@@ -19,6 +19,7 @@
 //
 //	  Inspired by http://www.unifycommunity.com/wiki/index.php?title=AManagerClass
 
+using SentienceLab.OSC;
 using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
@@ -29,6 +30,7 @@ using UnityOSC;
 /// Tracks incoming and outgoing messages.
 /// </summary>
 /// 
+[AddComponentMenu("OSC/Manager")]
 [DisallowMultipleComponent]
 public class OSC_Manager : MonoBehaviour
 {
@@ -111,7 +113,7 @@ public class OSC_Manager : MonoBehaviour
 		string varNames = "";
 		foreach (OSC_Variable variable in variableList)
 		{
-			varNames += ((varNames.Length == 0) ? "" : ", ") + variable.name;
+			varNames += ((varNames.Length == 0) ? "" : ", ") + variable.Name;
 			variable.SetManager(this);
 		}
 		Debug.Log("OSC Variables: " + varNames);
