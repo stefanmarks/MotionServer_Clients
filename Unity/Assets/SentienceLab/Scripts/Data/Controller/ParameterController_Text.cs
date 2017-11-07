@@ -5,7 +5,6 @@
 
 using UnityEngine;
 using UnityEngine.UI;
-using System;
 
 namespace SentienceLab.Data
 {
@@ -18,27 +17,35 @@ namespace SentienceLab.Data
 		public ParameterBase Parameter;
 
 		[Tooltip("Number format string")]
-		public string numberFormat = "{0:0.0}...{1:0.0}"; // see https://msdn.microsoft.com/en-us/library/dwhawy9k(v=vs.110).aspx for formats
+		public string NumberFormat = "{0:0.0}...{1:0.0}"; // see https://msdn.microsoft.com/en-us/library/dwhawy9k(v=vs.110).aspx for formats
 
 
 
 		public void Start()
 		{
+			if (Parameter == null)
+			{
+				// parameter not defined > is it a component?
+				Parameter = GetComponent<ParameterBase>();
+			}
+			if (Parameter != null)
+			{
+				Parameter.OnValueChanged += ValueChanged;
+			}
+			else
+			{
+				Debug.LogWarning("Parameter not defined");
+			}
+
 			m_textComponent = GetComponent<Text>();
-			m_prefix = m_textComponent.text;
-			Parameter.OnValueChanged += ValueChanged;
+			m_prefix        = m_textComponent.text;
+			
 		}
 
 
 		private void ValueChanged(ParameterBase _parameter)
 		{
-			m_textComponent.text = m_prefix + _parameter.ToFormattedString(numberFormat);
-		}
-
-
-		public void Update()
-		{
-			// nothing to do here
+			m_textComponent.text = m_prefix + _parameter.ToFormattedString(NumberFormat);
 		}
 
 

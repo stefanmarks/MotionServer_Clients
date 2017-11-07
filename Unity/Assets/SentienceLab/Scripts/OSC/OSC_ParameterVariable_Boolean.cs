@@ -17,7 +17,7 @@ namespace SentienceLab.OSC
 		public string NameOverride = "";
 
 
-		public void Start()
+		public void Awake()
 		{
 			m_parameter = GetComponent<Parameter_Boolean>();
 			m_parameter.OnValueChanged += delegate { OnValueChanged(); };
@@ -51,12 +51,6 @@ namespace SentienceLab.OSC
 				m_variable.SendUpdate();
 				m_updating = false;
 			}
-		}
-
-
-		public void Update()
-		{
-			// nothing to do here
 		}
 
 

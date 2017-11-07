@@ -16,7 +16,7 @@ namespace SentienceLab.OSC
 		public string indexVariableName = "/dropdown1";
 		public string labelVariableName = "/dropdownName1";
 
-		public void Start()
+		public void Awake()
 		{
 			m_dropdown = GetComponent<Dropdown>();
 			m_dropdown.onValueChanged.AddListener(OnValueChanged);
@@ -70,12 +70,6 @@ namespace SentienceLab.OSC
 				m_labelVar.SendUpdate();
 				m_updating = false;
 			}
-		}
-
-
-		public void Update()
-		{
-			// nothing to do here
 		}
 
 

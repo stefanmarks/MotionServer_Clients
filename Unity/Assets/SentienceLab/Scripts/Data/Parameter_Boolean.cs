@@ -51,6 +51,7 @@ namespace SentienceLab.Data
 		}
 
 
+		[SerializeField]
 		protected bool m_value;
 	}
 }

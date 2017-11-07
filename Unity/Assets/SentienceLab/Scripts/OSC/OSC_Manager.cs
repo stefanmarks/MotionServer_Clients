@@ -43,7 +43,7 @@ public class OSC_Manager : MonoBehaviour
 	/// Initializes the OSC Handler.
 	/// Here you can create the OSC servers and clientes.
 	/// </summary>
-	public void Start()
+	public void Awake()
 	{
 		// start server
 		server = new OSCServer(portIncoming);
@@ -85,16 +85,21 @@ public class OSC_Manager : MonoBehaviour
 
 	public void Update()
 	{
+		// do we need to update the variable list
 		if (variableList == null)
 		{
-			GatherOSC_Variables();
+			// wait one frame so every script has started
+			if (Time.frameCount > 1)
+			{
+				GatherOSC_Variables();
+			}
 		}
 		else
 		{
 			// run Update on each variable
 			foreach (OSC_Variable variable in variableList)
 			{
-				variable.Update();
+				if (variable != null) variable.Update();
 			}
 		}
 	}
@@ -109,12 +114,20 @@ public class OSC_Manager : MonoBehaviour
 		{
 			variableList.AddRange(container.GetOSC_Variables());
 		}
+		if (variableList.Contains(null))
+		{
+			Debug.Log("Some OSc variables are not properly initialised");
+		}
+		
 		// register this manager with all OSC variables
 		string varNames = "";
 		foreach (OSC_Variable variable in variableList)
 		{
-			varNames += ((varNames.Length == 0) ? "" : ", ") + variable.Name;
-			variable.SetManager(this);
+			if (variable != null)
+			{
+				varNames += ((varNames.Length == 0) ? "" : ", ") + variable.Name;
+				variable.SetManager(this);
+			}
 		}
 		Debug.Log("OSC Variables: " + varNames);
 		UpdateAllClients();
@@ -125,7 +138,7 @@ public class OSC_Manager : MonoBehaviour
 	{
 		foreach (OSC_Variable variable in variableList)
 		{
-			variable.SendUpdate();
+			if (variable != null) variable.SendUpdate();
 		}
 	}
 
@@ -170,7 +183,7 @@ public class OSC_Manager : MonoBehaviour
 		// check which variable will accept the packet
 		foreach (OSC_Variable var in variableList)
 		{
-			if (var.CanAccept(packet))
+			if ((var != null) && (var.CanAccept(packet)))
 			{
 				var.Accept(packet);
 				var.SendUpdate();

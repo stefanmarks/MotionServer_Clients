@@ -29,6 +29,7 @@ namespace SentienceLab.Data
 		{
 			if (Parameter == null)
 			{
+				// parameter not defined > is it a component?
 				Parameter = GetComponent<ParameterBase>();
 			}
 			if (Parameter != null)

@@ -20,9 +20,21 @@ namespace SentienceLab.Data
 
 		public void Start()
 		{
-			Parameter.OnValueChanged += ValueChanged;
-			Parameter.OnLimitChanged += ValueChanged;
-
+			if (Parameter == null)
+			{
+				// parameter not defined > is it a component?
+				Parameter = GetComponent<Parameter_DoubleRange>();
+			}
+			if (Parameter != null)
+			{
+				Parameter.OnValueChanged += ValueChanged;
+				Parameter.OnLimitChanged += ValueChanged;
+			}
+			else
+			{
+				Debug.LogWarning("Parameter not defined");
+			}
+			
 			maximumSlider.onValueChanged.AddListener(delegate { MaxSliderValueChanged(); });
 			minimumSlider.onValueChanged.AddListener(delegate { MinSliderValueChanged(); });
 
@@ -44,7 +56,7 @@ namespace SentienceLab.Data
 
 		private void MinSliderValueChanged()
 		{
-			if (!m_updating)
+			if (!m_updating && (Parameter != null))
 			{
 				m_updating = true;
 				// transfer slider value into variable
@@ -60,7 +72,7 @@ namespace SentienceLab.Data
 
 		private void MaxSliderValueChanged()
 		{
-			if (!m_updating)
+			if (!m_updating && (Parameter != null))
 			{
 				m_updating = true;
 				// transfer slider value into variable
@@ -79,18 +91,12 @@ namespace SentienceLab.Data
 			if (!m_updating)
 			{
 				m_updating = true;
-				Parameter_DoubleRange parameter = (Parameter_DoubleRange)_parameter;
-				minimumSlider.value = (float)Warp(parameter.MapTo01(parameter.ValueMin));
-				maximumSlider.value = (float)Warp(parameter.MapTo01(parameter.ValueMax));
+				minimumSlider.value = (float)Warp(Parameter.MapTo01(Parameter.ValueMin));
+				maximumSlider.value = (float)Warp(Parameter.MapTo01(Parameter.ValueMax));
 				m_updating = false;
 			}
 		}
 
-
-		public void Update()
-		{
-			// nothing to do here
-		}
 
 		private bool m_updating;
 	}

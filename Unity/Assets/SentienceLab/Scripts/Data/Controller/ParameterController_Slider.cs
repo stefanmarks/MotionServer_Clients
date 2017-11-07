@@ -23,12 +23,24 @@ namespace SentienceLab.Data
 			m_slider = GetComponent<Slider>();
 			m_slider.maxValue = 1;
 			m_slider.minValue = 0;
-			m_slider.value = (float) Warp(Parameter.MapTo01(Parameter.Value));
-
-			Parameter.OnValueChanged += ValueChanged;
-			Parameter.OnLimitChanged += ValueChanged;
 
 			m_slider.onValueChanged.AddListener(delegate { SliderValueChanged(); });
+
+			if (Parameter == null)
+			{
+				// parameter not defined > is it a component?
+				Parameter = GetComponent<Parameter_Double>();
+			}
+			if (Parameter != null)
+			{
+				Parameter.OnValueChanged += ValueChanged;
+				Parameter.OnLimitChanged += ValueChanged;
+				m_slider.value = (float)Warp(Parameter.MapTo01(Parameter.Value));
+			}
+			else
+			{
+				Debug.LogWarning("Parameter not defined");
+			}
 
 			m_updating = false;
 		}
@@ -48,7 +60,7 @@ namespace SentienceLab.Data
 
 		private void SliderValueChanged()
 		{
-			if (!m_updating)
+			if (!m_updating && (Parameter != null))
 			{
 				m_updating = true;
 				// transfer slider value into variable
@@ -63,16 +75,9 @@ namespace SentienceLab.Data
 			if (!m_updating)
 			{
 				m_updating = true;
-				Parameter_Double parameter = (Parameter_Double)_parameter;
-				m_slider.value = (float)Warp(parameter.MapTo01(parameter.Value));
+				m_slider.value = (float)Warp(Parameter.MapTo01(Parameter.Value));
 				m_updating = false;
 			}
-		}
-
-
-		public void Update()
-		{
-			// nothing to do here
 		}
 
 

@@ -20,7 +20,7 @@ namespace SentienceLab.OSC
 		public bool Normalise = false;
 
 
-		public void Start()
+		public void Awake()
 		{
 			m_parameter = GetComponent<Parameter_DoubleRange>();
 			m_parameter.OnValueChanged += delegate { OnValueChanged(); };
@@ -102,12 +102,6 @@ namespace SentienceLab.OSC
 				_value = m_parameter.MapFrom01(_value);
 			}
 			m_parameter.ValueMax = _value;
-		}
-
-
-		public void Update()
-		{
-			// nothing to do here
 		}
 
 
