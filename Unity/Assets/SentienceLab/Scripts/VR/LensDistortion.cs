@@ -27,25 +27,38 @@ namespace SentienceLab
 		public Vector2 Center                 = new Vector2(0.5f, 0.5f);
 		public float   ScaleIn                = 1;
 		public float   ScaleOut               = 1;
-		public Shader  DistortionShader;
-
-		private Material DistortionMaterial;
 
 
 		public void Start()
 		{
-			DistortionMaterial = new Material(DistortionShader);
+			Shader shader = Shader.Find("VR/LensDistortion");
+			if (shader != null)
+			{
+				m_distortionMaterial = new Material(shader);
+			}
+			else
+			{
+				Debug.LogWarning("Shader 'VR/Lens Distortion' not found. Is it included in the list of preloaded shaders or in a 'Resources' folder?");
+			}
 		}
 
 
 		private void OnRenderImage(RenderTexture source, RenderTexture destination)
 		{
-			DistortionMaterial.SetVector("_Distortion", DistortionCoefficients);
-			DistortionMaterial.SetVector("_ChromaticAberration", ChromaticAberration);
-			DistortionMaterial.SetVector("_Center", Center);
-			DistortionMaterial.SetFloat("_ScaleIn", ScaleIn);
-			DistortionMaterial.SetFloat("_ScaleOut", ScaleOut);
-			Graphics.Blit(source, destination, DistortionMaterial);
+			if (m_distortionMaterial != null)
+			{
+				m_distortionMaterial.SetVector("_Distortion", DistortionCoefficients);
+				m_distortionMaterial.SetVector("_ChromaticAberration", ChromaticAberration);
+				m_distortionMaterial.SetVector("_Center", Center);
+				m_distortionMaterial.SetFloat("_ScaleIn", ScaleIn);
+				m_distortionMaterial.SetFloat("_ScaleOut", ScaleOut);
+				Graphics.Blit(source, destination, m_distortionMaterial);
+			}
+			else
+			{
+				// something went wrong: show me at least the original image
+				Graphics.Blit(source, destination);
+			}
 		}
 
 
@@ -67,7 +80,13 @@ namespace SentienceLab
 				ChromaticAberration[i + 0] = config.ChromaticAberrationParametersRed[i];
 				ChromaticAberration[i + 2] = config.ChromaticAberrationParametersBlue[i];
 			}
+
+			ScaleIn  = config.ScaleIn;
+			ScaleOut = config.ScaleOut;
 		}
+
+
+		private Material m_distortionMaterial;
 	}
 
 }

@@ -53,13 +53,16 @@ namespace SentienceLab
 	[System.Serializable]
 	public class HMD_Config : DisplayConfig
 	{
-		public float   IPD           = 0.06f;
-		public float   FieldOfView   = 90;
-		public float   xOffset       = 0;
+		public float   IPD         = 0.06f;
+		public float   FieldOfView = 90;
+		public float   xOffset     = 0;
 
 		public float[] LensDistortionParameters          = { 1, 0, 0, 0 };
 		public float[] ChromaticAberrationParametersRed  = { 1, 0 };
 		public float[] ChromaticAberrationParametersBlue = { 1, 0 };
+
+		public float   ScaleIn  = 1.0f;
+		public float   ScaleOut = 1.0f;
 
 		public HMD_Config()
 		{

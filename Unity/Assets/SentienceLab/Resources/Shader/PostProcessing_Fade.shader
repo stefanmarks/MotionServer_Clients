@@ -1,4 +1,4 @@
-﻿Shader "Hidden/Sentience Lab/Post Processing/Fade"
+﻿Shader "FX/Screen Fade"
 {
 	Properties
 	{

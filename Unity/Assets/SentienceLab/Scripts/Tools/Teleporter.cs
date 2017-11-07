@@ -149,8 +149,8 @@ namespace SentienceLab
 				moved = false;
 
 				// create fade effect
-				fadeEffects = ScreenFader.AttachToAllCameras();
-				foreach (ScreenFader fade in fadeEffects)
+				fadeEffects = ScreenFade.AttachToAllCameras();
+				foreach (ScreenFade fade in fadeEffects)
 				{
 					fade.FadeColour = Color.black;
 				}
@@ -171,7 +171,7 @@ namespace SentienceLab
 			public void UpdateUI()
 			{
 				float fadeFactor = 1.0f - Math.Abs(progress * 2 - 1); // from [0....1....0]
-				foreach (ScreenFader fade in fadeEffects)
+				foreach (ScreenFade fade in fadeEffects)
 				{
 					fade.FadeFactor = fadeFactor;
 				}
@@ -184,7 +184,7 @@ namespace SentienceLab
 
 			public void Cleanup()
 			{
-				foreach (ScreenFader fade in fadeEffects)
+				foreach (ScreenFade fade in fadeEffects)
 				{
 					GameObject.Destroy(fade);
 				}
@@ -194,7 +194,7 @@ namespace SentienceLab
 			private Vector3 endPoint;
 			private float   duration, progress;
 			private bool    moved;
-			private List<ScreenFader> fadeEffects;
+			private List<ScreenFade> fadeEffects;
 		}
 
 

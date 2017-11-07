@@ -216,11 +216,8 @@ namespace SentienceLab
 				if (distortion == null)
 				{
 					distortion = cam.gameObject.AddComponent<LensDistortion>();
-					distortion.DistortionShader = Shader.Find("VR/LensDistortion");
 				}
 				distortion.ApplyConfig(hmdConfig);
-				distortion.ScaleIn  = 1.1f;  // TODO: Hardcoded values > calculate automatically
-				distortion.ScaleOut = 0.82f; // TODO: Hardcoded values > calculate automatically
 			}
 		}
 
