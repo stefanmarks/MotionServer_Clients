@@ -5,7 +5,7 @@ public class ExternalObserverCamera : MonoBehaviour
 {
 	public enum DisplayNumber
 	{
-		Display1, Display2, Display3, Display4, Display5, Displat6, Display7, Display8
+		Display1, Display2, Display3, Display4, Display5, Display6, Display7, Display8
 	}
 
 	[Tooltip("The camera that this observer camera should mirror")]
@@ -61,10 +61,13 @@ public class ExternalObserverCamera : MonoBehaviour
 			{
 				d.Activate();
 			}
+			Debug.Log("Activated external observer camera on " + displayNumber + " with " + d.systemWidth + "x" + d.systemHeight);
+
 			// set some parameters
 			camera.targetDisplay = displayIdx;
 			camera.nearClipPlane = mainCamera.nearClipPlane;
 			camera.farClipPlane  = mainCamera.farClipPlane;
+			camera.stereoTargetEye = StereoTargetEyeMask.None;
 
 			gameObject.SetActive(true);
 			tempLerpFactorOverride = 1; // immediately align
@@ -73,6 +76,7 @@ public class ExternalObserverCamera : MonoBehaviour
 		{
 			// no external display > shut down this node
 			gameObject.SetActive(false);
+			Debug.Log("Could not activate external observer camera on " + displayNumber);
 		}
 	}
 

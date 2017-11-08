@@ -28,12 +28,14 @@ namespace SentienceLab
 		{
 			ParseDisplayProfiles();
 
-			Debug.Log("Connected displays: " + Display.displays.Length);
+			string dbgOutput = "Connected displays: " + Display.displays.Length + "\n";
+			int displayIdx = 1;
 			foreach (Display d in Display.displays)
 			{
-				Debug.Log("Display " + d.renderingWidth + "x" + d.renderingHeight + " / "
-					+ d.systemWidth + "x" + d.systemHeight);
+				dbgOutput += "- Display " + displayIdx + ": " + d.systemWidth + "x" + d.systemHeight + "\n";
+				displayIdx++;
 			}
+			Debug.Log(dbgOutput);
 		}
 
 
