@@ -16,7 +16,7 @@ namespace SentienceLab.OSC
 		public string variableName = "/button1";
 
 
-		public void Awake()
+		public void Start()
 		{
 			m_button = GetComponent<Button>();
 			m_button.onClick.AddListener(OnButtonClicked);

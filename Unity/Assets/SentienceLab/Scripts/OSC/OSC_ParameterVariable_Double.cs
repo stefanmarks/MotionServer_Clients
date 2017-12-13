@@ -20,13 +20,14 @@ namespace SentienceLab.OSC
 		public bool Normalise = false;
 
 
-		public void Awake()
+		public void Start()
 		{
 			m_parameter = GetComponent<Parameter_Double>();
 			m_parameter.OnValueChanged += delegate { OnValueChanged(); };
 
-			m_variable = new OSC_FloatVariable(
-				(NameOverride == "") ? m_parameter.Name : NameOverride,
+			if (NameOverride == "") { NameOverride = m_parameter.Name; }
+
+			m_variable = new OSC_FloatVariable(NameOverride,
 				(float) (Normalise ? 0 : m_parameter.LimitMin),
 				(float) (Normalise ? 1 : m_parameter.LimitMax));
 			m_variable.Value = (float) GetParameterValue();

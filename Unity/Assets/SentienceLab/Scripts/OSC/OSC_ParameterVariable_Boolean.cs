@@ -17,10 +17,12 @@ namespace SentienceLab.OSC
 		public string NameOverride = "";
 
 
-		public void Awake()
+		public void Start()
 		{
 			m_parameter = GetComponent<Parameter_Boolean>();
 			m_parameter.OnValueChanged += delegate { OnValueChanged(); };
+
+			if (NameOverride == "") { NameOverride = m_parameter.Name; }
 
 			m_variable = new OSC_BoolVariable((NameOverride == "") ? m_parameter.Name : NameOverride);
 			m_variable.Value = m_parameter.Value;

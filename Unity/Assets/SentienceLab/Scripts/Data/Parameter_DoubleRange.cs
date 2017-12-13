@@ -5,7 +5,6 @@
 
 using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace SentienceLab.Data
 {
@@ -16,12 +15,10 @@ namespace SentienceLab.Data
 		public event LimitChanged OnLimitChanged;
 
 
-		[System.Serializable]
+		[Serializable]
 		public struct SValue
 		{
-			[FormerlySerializedAs("valueFrom")]
 			public double valueMin;
-			[FormerlySerializedAs("valueTo")]
 			public double valueMax;
 			public double limitMin;
 			public double limitMax;

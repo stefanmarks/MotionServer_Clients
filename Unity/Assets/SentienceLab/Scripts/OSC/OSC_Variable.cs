@@ -117,11 +117,14 @@ namespace SentienceLab.OSC
 	public class OSC_IntVariable : OSC_Variable
 	{
 		public int Value;
+		public int Min, Max;
 
 
-		public OSC_IntVariable(string _name = "") : base(_name)
+		public OSC_IntVariable(string _name = "", int _min = int.MinValue, int _max = int.MaxValue) : base(_name)
 		{
 			Value = 0;
+			Min = _min;
+			Max = _max;
 		}
 
 
@@ -134,6 +137,9 @@ namespace SentienceLab.OSC
 			else if (type == typeof(long)  ) { Value = (int)((long)obj); }
 			else if (type == typeof(float) ) { Value = (int)((float)obj); }
 			else if (type == typeof(double)) { Value = (int)((double)obj); }
+
+			if (Value > Max) { Value = Max; }
+			if (Value < Min) { Value = Min; }
 		}
 
 

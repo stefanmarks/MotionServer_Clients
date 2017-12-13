@@ -116,7 +116,7 @@ public class OSC_Manager : MonoBehaviour
 		}
 		if (variableList.Contains(null))
 		{
-			Debug.Log("Some OSc variables are not properly initialised");
+			Debug.Log("Some OSC variables are not properly initialised");
 		}
 		
 		// register this manager with all OSC variables

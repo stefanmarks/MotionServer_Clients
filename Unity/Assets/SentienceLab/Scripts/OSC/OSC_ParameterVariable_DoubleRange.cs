@@ -20,20 +20,20 @@ namespace SentienceLab.OSC
 		public bool Normalise = false;
 
 
-		public void Awake()
+		public void Start()
 		{
 			m_parameter = GetComponent<Parameter_DoubleRange>();
 			m_parameter.OnValueChanged += delegate { OnValueChanged(); };
 
-			m_variableMin = new OSC_FloatVariable(
-				((NameOverride == "") ? m_parameter.Name : NameOverride) + "/min",
+			if (NameOverride == "") { NameOverride = m_parameter.Name; }
+
+			m_variableMin = new OSC_FloatVariable(NameOverride + "/min",
 				(float) (Normalise ? 0 : m_parameter.LimitMin),
 				(float) (Normalise ? 1 : m_parameter.LimitMax));
 			m_variableMin.Value = (float) GetParameterValueMin();
 			m_variableMin.OnDataReceived += OnReceivedOSC_Data;
 
-			m_variableMax = new OSC_FloatVariable(
-				((NameOverride == "") ? m_parameter.Name : NameOverride) + "/max",
+			m_variableMax = new OSC_FloatVariable(NameOverride + "/max",
 				(float)(Normalise ? 0 : m_parameter.LimitMin),
 				(float)(Normalise ? 1 : m_parameter.LimitMax));
 			m_variableMax.Value = (float)GetParameterValueMax();

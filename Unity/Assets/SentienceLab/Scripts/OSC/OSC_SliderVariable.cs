@@ -16,7 +16,7 @@ namespace SentienceLab.OSC
 		public string variableName = "/slider1";
 
 
-		public void Awake()
+		public void Start()
 		{
 			m_slider = GetComponent<Slider>();
 			m_slider.onValueChanged.AddListener(delegate { OnSliderChanged(); });

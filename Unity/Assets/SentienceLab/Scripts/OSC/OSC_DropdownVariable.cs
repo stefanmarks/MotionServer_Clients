@@ -16,12 +16,13 @@ namespace SentienceLab.OSC
 		public string indexVariableName = "/dropdown1";
 		public string labelVariableName = "/dropdownName1";
 
-		public void Awake()
+
+		public void Start()
 		{
 			m_dropdown = GetComponent<Dropdown>();
 			m_dropdown.onValueChanged.AddListener(OnValueChanged);
 
-			m_indexVar = new OSC_FloatVariable(indexVariableName, -0.5f, 1000);
+			m_indexVar = new OSC_FloatVariable(indexVariableName, -0.5f, m_dropdown.options.Count);
 			m_indexVar.OnDataReceived += OnReceivedOSC_Data;
 
 			m_labelVar = new OSC_StringVariable(labelVariableName);
@@ -35,20 +36,20 @@ namespace SentienceLab.OSC
 			if (!m_updating)
 			{
 				m_updating = true;
-				if (m_indexVar.Value < 0)
+				if (m_indexVar.Value < 0.1f)
 				{
 					// value < 0: select previous item
 					m_dropdown.value--;
 				}
-				else if ((m_indexVar.Value > 0) && (m_indexVar.Value < 0.9f))
+				else if ((m_indexVar.Value > 0.1f) && (m_indexVar.Value < 0.9f))
 				{
 					// value >0 < 1: select next item
 					m_dropdown.value++;
 				}
-				else if ( m_indexVar.Value >= 1)
+				else if ( m_indexVar.Value >= 0)
 				{
-					// value > 1: select item directly
-					m_dropdown.value = (int)m_indexVar.Value - 1;
+					// value > 0: select item directly
+					m_dropdown.value = (int)m_indexVar.Value;
 				}
 
 				m_labelVar.Value = m_dropdown.options[m_dropdown.value].text;

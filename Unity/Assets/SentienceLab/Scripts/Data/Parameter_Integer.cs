@@ -8,8 +8,8 @@ using UnityEngine;
 
 namespace SentienceLab.Data
 {
-	[AddComponentMenu("Parameter/Double")]
-	public class Parameter_Double : ParameterBase, IParameterModify, IParameterToggle
+	[AddComponentMenu("Parameter/Integer")]
+	public class Parameter_Integer : ParameterBase, IParameterModify, IParameterToggle
 	{
 		public delegate void LimitChanged(ParameterBase _value);
 		public event LimitChanged OnLimitChanged;
@@ -18,9 +18,9 @@ namespace SentienceLab.Data
 		[Serializable]
 		public struct SValue
 		{
-			public double limitMin;
-			public double limitMax;
-			public double value;
+			public long limitMin;
+			public long limitMax;
+			public long value;
 		}
 
 		[SerializeField]
@@ -32,9 +32,10 @@ namespace SentienceLab.Data
 		{
 			base.Start();
 			// initialise old value structure with values that will force updates
-			m_oldValue.value    = double.MaxValue;
-			m_oldValue.limitMax = double.MaxValue;
-			m_oldValue.limitMin = double.MinValue;
+			m_oldValue.value    = long.MaxValue;
+			m_oldValue.limitMax = long.MaxValue;
+			m_oldValue.limitMin = long.MinValue;
+			m_delta = 0;
 		}
 
 
@@ -42,7 +43,7 @@ namespace SentienceLab.Data
 		/// Sets the limits.
 		/// </summary>
 		///
-		public void SetLimits(double _min, double _max)
+		public void SetLimits(long _min, long _max)
 		{
 			value.limitMin = System.Math.Min(_min, _max);
 			value.limitMax = System.Math.Max(_min, _max);
@@ -53,7 +54,7 @@ namespace SentienceLab.Data
 		/// <summary>
 		/// The minimum possible value
 		/// </summary>
-		public double LimitMin
+		public long LimitMin
 		{
 			get { return value.limitMin; }
 		}
@@ -61,7 +62,7 @@ namespace SentienceLab.Data
 		/// <summary>
 		/// The maximum possible value
 		/// </summary>
-		public double LimitMax
+		public long LimitMax
 		{
 			get { return value.limitMax; }
 		}
@@ -70,7 +71,7 @@ namespace SentienceLab.Data
 		/// The actual value.
 		/// </summary>
 		///
-		public double Value
+		public long Value
 		{
 			get { return value.value; }
 			set
@@ -86,7 +87,7 @@ namespace SentienceLab.Data
 		/// </summary>
 		/// <param name="_value">the value to include in the limits</param>
 		///
-		public void IncludeInLimits(double _value)
+		public void IncludeInLimits(long _value)
 		{
 			this.value.limitMin = System.Math.Min(this.value.limitMin, _value);
 			this.value.limitMax = System.Math.Max(this.value.limitMax, _value);
@@ -96,60 +97,15 @@ namespace SentienceLab.Data
 
 
 		/// <summary>
-		/// Maps a value between min/max limit to a range of [0...1].
-		/// </summary>
-		/// <param name="_value">the value to map</param>
-		/// <returns>the mapped value in a range from [0...1]</returns>
-		///
-		public double MapTo01(double _value)
-		{
-			return (_value - this.value.limitMin) / (this.value.limitMax - this.value.limitMin);
-		}
-
-		/// <summary>
-		/// Maps a value between min/max limit to a range of [0...MaxInteger].
-		/// </summary>
-		/// <param name="_value">the value to map</param>
-		/// <returns>the mapped value in a range from [0...Max_Integer]</returns>
-		///
-		public int MapToInt(double _value)
-		{
-			return (int)((_value - this.value.limitMin) / (this.value.limitMax - this.value.limitMin) * int.MaxValue);
-		}
-
-		/// <summary>
-		/// Maps a value between [0...1] to the min/max range.
-		/// </summary>
-		/// <param name="_value">the value to map</param>
-		/// <returns>the mapped value in a range from [min...max]</returns>
-		///
-		public double MapFrom01(double _value)
-		{
-			return (_value * (this.value.limitMax - this.value.limitMin)) + this.value.limitMin;
-		}
-
-
-		/// <summary>
 		/// Creates a formatted string.
 		/// The value and limits from/to are passed to the formatting function as parameters #0, 1, 2.
-		/// If the parameter _formatString contains a "y", the elements #3, 4, 5 are of type DateTime.
 		/// </summary>
 		/// <param name="_formatString">the format string to use</param>
 		/// <returns>the formatted string</returns>
 		///
 		public override string ToFormattedString(string _formatString)
 		{
-			if (_formatString.Contains("y"))
-			{
-				// special case Year
-				return string.Format(_formatString, 
-					value.value, value.limitMin, value.limitMax,
-					DateTime.FromOADate(value.value), DateTime.FromOADate(value.limitMin), DateTime.FromOADate(value.limitMax));
-			}
-			else
-			{
-				return string.Format(_formatString, value.value, value.limitMin, value.limitMax);
-			}
+			return string.Format(_formatString, value.value, value.limitMin, value.limitMax);
 		}
 
 
@@ -189,16 +145,30 @@ namespace SentienceLab.Data
 
 		public void ChangeValue(float _delta, int _idx)
 		{
-			Value += _delta;
+			// remember fractional changes to an integer
+			m_delta += _delta;
+			if (m_delta >= 1.0)
+			{
+				long delta = (long)m_delta;
+				Value   += delta;
+				m_delta -= delta;
+			}
+			else if (m_delta <= -1.0)
+			{
+				long delta = (long)(-m_delta);
+				Value   -= delta;
+				m_delta += delta;
+			}
 		}
 
 
 		public override string ToString()
 		{
-			return Name + ":Double:" + value.limitMin + " [" + value.value + "] " + value.limitMax;
+			return Name + ":Integer:" + value.limitMin + " [" + value.value + "] " + value.limitMax;
 		}
 
 
 		protected SValue m_oldValue;
+		protected double m_delta;
 	}
 }

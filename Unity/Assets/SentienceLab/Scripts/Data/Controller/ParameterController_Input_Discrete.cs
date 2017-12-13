@@ -8,9 +8,9 @@ using SentienceLab.Input;
 
 namespace SentienceLab.Data
 {
-	[AddComponentMenu("Parameter/Controller/Input (continuous)")]
+	[AddComponentMenu("Parameter/Controller/Input (discrete)")]
 
-	public class ParameterController_Input_Continuous : MonoBehaviour
+	public class ParameterController_Input_Discrete : MonoBehaviour
 	{
 		[Tooltip("The parameter to control with the input (default: the first component in this game object)")]
 		public ParameterBase Parameter;
@@ -18,11 +18,14 @@ namespace SentienceLab.Data
 		[Tooltip("The index of the value to change (e.g., 0: min, 1: max. Default: 0)")]
 		public int ValueIndex = 0;
 
-		[Tooltip("Name of the input that controls this parameter")]
-		public string InputName;
+		[Tooltip("Name of the input that increases this parameter")]
+		public string InputNameIncrease;
 
-		[Tooltip("Factor to change the parameter by per second")]
-		public float Multiplier = 1.0f;
+		[Tooltip("Name of the input that decreases this parameter")]
+		public string InputNameDecrease;
+
+		[Tooltip("Factor to change the parameter by per step")]
+		public int Multiplier = 1;
 
 
 		public void Start()
@@ -45,23 +48,28 @@ namespace SentienceLab.Data
 				Debug.LogWarning("Parameter not defined");
 			}
 
-			m_handler = InputHandler.Find(InputName);
+			m_handlerInc = InputHandler.Find(InputNameIncrease);
+			m_handlerDec = InputHandler.Find(InputNameDecrease);
 		}
 
 
 		public void Update()
 		{
-			if ((m_modifyParameter != null) && (m_handler != null))
+			if (m_modifyParameter != null)
 			{
-				if (m_handler.GetValue() != 0)
+				if ((m_handlerInc != null) && m_handlerInc.IsActivated())
 				{
-					m_modifyParameter.ChangeValue(m_handler.GetValue() * Multiplier * Time.deltaTime, ValueIndex);
+					m_modifyParameter.ChangeValue(Multiplier, ValueIndex);
+				}
+				if ((m_handlerDec != null) && m_handlerDec.IsActivated())
+				{
+					m_modifyParameter.ChangeValue(-Multiplier, ValueIndex);
 				}
 			}
 		}
 
 
 		private IParameterModify m_modifyParameter;
-		private InputHandler     m_handler;
+		private InputHandler     m_handlerInc, m_handlerDec;
 	}
 }
