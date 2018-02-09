@@ -165,6 +165,8 @@ public class GazeInputModule : BaseInputModule
 
 	private void CastRayFromGaze()
 	{
+		if (gazePointer == null) return;
+
 		Vector2 headPose = (eventCamera == null) ? Vector2.zero : NormalizedCartesianToSpherical(eventCamera.transform.forward);
 
 		if (pointerData == null)
@@ -183,7 +185,7 @@ public class GazeInputModule : BaseInputModule
 		{
 			RaycastResult r = m_RaycastResultCache[idx];
 
-			// what are te limits of the gaze pointer
+			// what are the limits of the gaze pointer
 			float min, max;
 			gazePointer.GetDistanceLimits(out min, out max);
 

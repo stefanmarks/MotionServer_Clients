@@ -414,11 +414,12 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private static MoCapManager instance    = null;
+		private static MoCapManager        instance       = null;
 		private static List<SceneListener> sceneListeners = null;
+
 		private static bool         warningIssued = false;
-		private static IMoCapClient client      = null;
-		private static Mutex        clientMutex = new Mutex();
+		private static IMoCapClient client        = null;
+		private static Mutex        clientMutex   = new Mutex();
 
 		private InputHandler pauseHandler;
 		private bool         pauseClient; 

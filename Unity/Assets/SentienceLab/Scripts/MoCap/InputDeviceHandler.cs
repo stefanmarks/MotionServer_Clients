@@ -33,6 +33,9 @@ namespace SentienceLab.MoCap
 			this.deviceName  = deviceName;
 			this.channelName = channelName;
 
+			value    = 0;
+			oldValue = 0;
+
 			PressThreshold = 1.0f;
 
 			MoCapManager.GetInstance().AddSceneListener(this);

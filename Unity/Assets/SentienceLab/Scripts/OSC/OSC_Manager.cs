@@ -64,10 +64,9 @@ public class OSC_Manager : MonoBehaviour
 
 
 	/// <summary>
-	/// Ensure that the instance is destroyed when the game is stopped in the Unity editor
-	/// Close all the OSC clients and servers
+	/// Ensure that the instance is destroyed properly, closing all ports and clients.
 	/// </summary>
-	void OnApplicationQuit() 
+	void OnDestroy() 
 	{
 		if ( server != null )
 		{

@@ -7,6 +7,10 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace SentienceLab.Input
 {
 	/// <summary>
@@ -49,6 +53,7 @@ namespace SentienceLab.Input
 
 
 		[Tooltip("Resource with mappings of inputs to keys/devices/etc.")]
+		[ContextMenuItem("Copy mapping to Clipboard", "CopyToClipboard")]
 		public TextAsset mappingFile;
 
 		[Tooltip("List of mappings of inputs to keys/devices/etc.")]
@@ -132,6 +137,31 @@ namespace SentienceLab.Input
 			}
 		}
 
+
+		public void OnDestroy()
+		{
+			handlers.Clear();
+		}
+
+
+#if UNITY_EDITOR
+
+		public void CopyToClipboard()
+		{
+			string json = "{\n\t\"Inputs\":[";
+			bool firstLine = true;
+			foreach(InputMap map in mappings)
+			{
+				if (!firstLine) json += ",";
+				json += "\n";
+				json += Regex.Replace(JsonUtility.ToJson(map, true), "^\\s*", "\t\t", RegexOptions.Multiline);
+				firstLine = false;
+			}
+			json += "\n\t]\n}";
+			EditorGUIUtility.systemCopyBuffer = json;
+		}
+
+#endif
 
 		/// <summary>
 		/// Retrieves a specific input handler based on the name.
