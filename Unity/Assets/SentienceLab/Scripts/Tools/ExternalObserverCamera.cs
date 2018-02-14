@@ -54,7 +54,7 @@ public class ExternalObserverCamera : MonoBehaviour
 		Camera camera = GetComponent<Camera>();
 
 		int displayIdx = (int)displayNumber;
-		if (Display.displays.Length > displayIdx)
+		if (displayIdx < Display.displays.Length)
 		{
 			Display d = Display.displays[displayIdx];
 			if (!d.active)
@@ -68,6 +68,7 @@ public class ExternalObserverCamera : MonoBehaviour
 			camera.nearClipPlane = mainCamera.nearClipPlane;
 			camera.farClipPlane  = mainCamera.farClipPlane;
 			camera.stereoTargetEye = StereoTargetEyeMask.None;
+			camera.backgroundColor = mainCamera.backgroundColor;
 
 			gameObject.SetActive(true);
 			tempLerpFactorOverride = 1; // immediately align

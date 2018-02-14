@@ -63,17 +63,25 @@ namespace SentienceLab.PostProcessing
 		/// 
 		public static List<ScreenFade> AttachToAllCameras()
 		{
-			Camera[] cameras = Camera.allCameras;
-			List<ScreenFade> faders = new List<ScreenFade>(cameras.Length);
+			// get all cameras
+			Camera[] cameras = new Camera[Camera.allCamerasCount];
+			Camera.GetAllCameras(cameras);
+
+			// find or add fade behaviour
+			List<ScreenFade> faders = new List<ScreenFade>();
 			foreach(Camera cam in cameras)
 			{
-				ScreenFade fade = cam.gameObject.GetComponent<ScreenFade>();
-				if (fade == null)
+				if (cam != null)
 				{
-					fade = cam.gameObject.AddComponent<ScreenFade>();
+					ScreenFade fade = cam.gameObject.GetComponent<ScreenFade>();
+					if (fade == null)
+					{
+						fade = cam.gameObject.AddComponent<ScreenFade>();
+					}
+					faders.Add(fade);
 				}
-				faders.Add(fade);
 			}
+
 			return faders;
 		}
 

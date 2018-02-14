@@ -25,6 +25,7 @@
 			float4    _Colour;
 			float     _Fade;
 			sampler2D _MainTex;
+			half4     _MainTex_ST;
 
 			struct v2f
 			{
@@ -45,7 +46,8 @@
 			fixed4 frag(v2f i) : COLOR
 			{
 				fixed  fade = _Colour.a * _Fade;
-				return fixed4(lerp(tex2D(_MainTex, i.uv).rgb, _Colour.rgb, fade), 1);
+				half4  col  = tex2D(_MainTex, UnityStereoScreenSpaceUVAdjust(i.uv, _MainTex_ST));
+				return fixed4(lerp(col.rgb, _Colour.rgb, fade), 1);
 			}
 			ENDCG
 
