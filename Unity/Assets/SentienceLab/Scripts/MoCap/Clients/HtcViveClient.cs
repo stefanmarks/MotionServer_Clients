@@ -226,10 +226,10 @@ namespace SentienceLab.MoCap
 					device.channels[5].value  = state.rAxis0.x;
 					device.channels[6].value  = state.rAxis0.y;
 					// touchpad as buttons
-					device.channels[7].value  = (state.rAxis0.x > +0.5f) ? touchpadPressed : 0;
-					device.channels[8].value  = (state.rAxis0.x < -0.5f) ? touchpadPressed : 0;
-					device.channels[9].value  = (state.rAxis0.y > +0.5f) ? touchpadPressed : 0;
-					device.channels[10].value = (state.rAxis0.y < -0.5f) ? touchpadPressed : 0;
+					device.channels[7].value  = (state.rAxis0.x > +0.1f) ? touchpadPressed : 0;
+					device.channels[8].value  = (state.rAxis0.x < -0.1f) ? touchpadPressed : 0;
+					device.channels[9].value  = (state.rAxis0.y > +0.1f) ? touchpadPressed : 0;
+					device.channels[10].value = (state.rAxis0.y < -0.1f) ? touchpadPressed : 0;
 				}
 			}
 			manager.NotifyListeners_Update(scene);
