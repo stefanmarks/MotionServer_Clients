@@ -219,17 +219,27 @@ namespace SentienceLab.MoCap
 					device.channels[1].value = (state.ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_ApplicationMenu)) != 0 ? 1 : 0;
 					// grip button
 					device.channels[2].value = (state.ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_Grip)) != 0 ? 1 : 0;
-					// touchpad (axis1/2 and axis1/2raw)
+					// touchpad (axis1/2 and axis1raw/2raw)
 					float touchpadPressed = (state.ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_SteamVR_Touchpad)) != 0 ? 1 : 0;
 					device.channels[3].value  = state.rAxis0.x * touchpadPressed;
 					device.channels[4].value  = state.rAxis0.y * touchpadPressed;
 					device.channels[5].value  = state.rAxis0.x;
 					device.channels[6].value  = state.rAxis0.y;
+					
 					// touchpad as buttons
-					device.channels[7].value  = (state.rAxis0.x > +0.5f) ? touchpadPressed : 0;
-					device.channels[8].value  = (state.rAxis0.x < -0.5f) ? touchpadPressed : 0;
-					device.channels[9].value  = (state.rAxis0.y > +0.5f) ? touchpadPressed : 0;
-					device.channels[10].value = (state.rAxis0.y < -0.5f) ? touchpadPressed : 0;
+					Vector2 touchpad = new Vector2(state.rAxis0.x, state.rAxis0.y) * touchpadPressed;
+					float distance = touchpad.magnitude;
+					if (distance < 0.3f) touchpad = Vector2.zero;
+					// using angle to determine which circular segment the finger is on
+					// instead of purely <> comparisons on coordinates
+					float angle = Mathf.Rad2Deg * Mathf.Atan2(touchpad.y, touchpad.x);
+					//    +135  +90  +45
+					// +180/-180       0   to allow for overlap, angles are 67.5 around a direction
+					//    -135  -90  -45
+					device.channels[7].value  = ((angle >   0 - 67.5f) && (angle <    0 + 67.5f)) ? touchpadPressed : 0; // right
+					device.channels[8].value  = ((angle > 180 - 67.5f) || (angle < -180 + 67.5f)) ? touchpadPressed : 0; // left
+					device.channels[9].value  = ((angle >  90 - 67.5f) && (angle <   90 + 67.5f)) ? touchpadPressed : 0; // up
+					device.channels[10].value = ((angle > -90 - 67.5f) && (angle <  -90 + 67.5f)) ? touchpadPressed : 0; // down
 				}
 			}
 			manager.NotifyListeners_Update(scene);
