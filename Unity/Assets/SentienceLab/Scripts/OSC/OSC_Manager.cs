@@ -22,6 +22,7 @@
 using SentienceLab.OSC;
 using System.Collections.Generic;
 using System.Net;
+using System.Text;
 using UnityEngine;
 using UnityOSC;
 
@@ -37,6 +38,9 @@ public class OSC_Manager : MonoBehaviour
 	public int      portIncoming    = 57110;
 	public int      portOutgoing    = 57111;
 	public string[] startClientList = { "127.0.0.1" };
+
+	[Tooltip("Enable to see output of incoming and outgoing messages")]
+	public bool debugDataStream = false;
 
 
 	/// <summary>
@@ -128,6 +132,7 @@ public class OSC_Manager : MonoBehaviour
 				variable.SetManager(this);
 			}
 		}
+
 		Debug.Log("OSC Variables: " + varNames);
 		UpdateAllClients();
 	}
@@ -146,6 +151,9 @@ public class OSC_Manager : MonoBehaviour
 	{
 		if (clients == null)
 			return;
+
+		if (debugDataStream) DumpPacket("Sending", packet);
+
 		foreach (OSCClient client in clients.Values)
 		{
 			if (client != clientToExclude)
@@ -179,6 +187,8 @@ public class OSC_Manager : MonoBehaviour
 			clientToExclude = clients[clientAddr];
 		}
 
+		if (debugDataStream) DumpPacket("Recevied", packet);
+
 		// check which variable will accept the packet
 		foreach (OSC_Variable var in variableList)
 		{
@@ -191,6 +201,19 @@ public class OSC_Manager : MonoBehaviour
 		}
 
 		clientToExclude = null;
+	}
+
+
+	private void DumpPacket(string prefix, OSCPacket packet)
+	{
+		string output = prefix + " '" + packet.Address + "': [";
+		for (int idx = 0; idx < packet.Data.Count; idx++)
+		{
+			if (idx > 0) output += ", ";
+			output += packet.Data[idx].GetType().ToString().Replace("System.", "");
+		}
+		output += "]";
+		Debug.Log(output);
 	}
 
 
