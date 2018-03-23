@@ -4,6 +4,7 @@
 #endregion Copyright Information
 
 using System.Collections.Generic;
+using UnityEngine;
 using UnityOSC;
 
 namespace SentienceLab.OSC
@@ -79,6 +80,7 @@ namespace SentienceLab.OSC
 				m_packetReceived = false;
 			}
 		}
+
 
 		private OSC_Manager m_manager;
 		private bool        m_packetReceived;
@@ -182,6 +184,91 @@ namespace SentienceLab.OSC
 		public override void Pack(OSCPacket _packet)
 		{
 			_packet.Append<float>(Value);
+		}
+	}
+
+
+	public class OSC_Vector2Variable : OSC_Variable
+	{
+		public Vector2 Value;
+
+
+		public OSC_Vector2Variable(string _name = "") : base(_name)
+		{
+			Value = Vector2.zero;
+		}
+
+
+		public override void Unpack(OSCPacket _packet)
+		{
+			for (int idx = 0; idx < _packet.Data.Count; idx++)
+			{
+				object obj = _packet.Data[idx];
+				System.Type type = obj.GetType();
+				float value = 0;
+				if      (type == typeof(byte)  ) { value = ((byte)obj); }
+				else if (type == typeof(int)   ) { value = ((int)obj); }
+				else if (type == typeof(long)  ) { value = ((long)obj); }
+				else if (type == typeof(float) ) { value = (float)obj; }
+				else if (type == typeof(double)) { value = (float)((double)obj); }
+
+				switch (idx)
+				{
+					case 0: Value.x = value; break;
+					case 1: Value.y = value; break;
+					default: break;
+				}
+			}
+		}
+
+		public override void Pack(OSCPacket _packet)
+		{
+			_packet.Append<float>(Value.x);
+			_packet.Append<float>(Value.y);
+		}
+	}
+
+
+	public class OSC_Vector3Variable : OSC_Variable
+	{
+		public Vector3 Value;
+
+
+		public OSC_Vector3Variable(string _name = "") : base(_name)
+		{
+			Value = Vector3.zero;
+		}
+
+
+		public override void Unpack(OSCPacket _packet)
+		{
+			for (int idx = 0; idx < _packet.Data.Count; idx++)
+			{
+				object obj = _packet.Data[idx];
+				System.Type type = obj.GetType();
+				float value = 0;
+				if      (type == typeof(byte)  ) { value = ((byte)obj); }
+				else if (type == typeof(int)   ) { value = ((int)obj); }
+				else if (type == typeof(long)  ) { value = ((long)obj); }
+				else if (type == typeof(float) ) { value = (float)obj; }
+				else if (type == typeof(double)) { value = (float)((double)obj); }
+
+				switch (idx)
+				{
+					case 0: Value.x = value; break;
+					case 1: Value.y = value; break;
+					case 2: Value.z = value; break;
+					default: break;
+				}
+			}
+		}
+
+
+		public override void Pack(OSCPacket _packet)
+		{
+			_packet.Append<float>(Value.x);
+			_packet.Append<float>(Value.y);
+			_packet.Append<float>(Value.z);
 		}
 	}
 
