@@ -37,12 +37,24 @@ namespace SentienceLab
 		public string activationAction = "";
 
 
+		/// <summary>
+		/// Interface to implement for objects that need to react to the pointer ray entering/exiting their colliders.
+		/// </summary>
+		///
+		public interface IPointerRayTarget
+		{
+			void OnPointerEnter(PointerRay _ray);
+			void OnPointerExit(PointerRay _ray);
+		}
+
+
 		void Start()
 		{
 			line = GetComponent<LineRenderer>();
 			line.positionCount = 2;
 			line.useWorldSpace = true;
 			overrideTarget = false;
+			activeTarget = null;
 
 			if ( activationAction.Trim().Length > 0 )
 			{
@@ -72,75 +84,107 @@ namespace SentienceLab
 				}
 			}
 
-			if (!line.enabled) return; // if ray is disabled, bail out right now
-
-			bool hit = false;
-			// construct ray
-			Ray ray = new Ray(transform.position, transform.forward);
-			Vector3 end = ray.origin + ray.direction * rayRange;
-			line.SetPosition(0, ray.origin);
-			Debug.DrawLine(ray.origin, end, Color.red);
-
-			if (!overrideTarget)
+			if (rayEnabled)
 			{
-				// do raycast
-				hit = Physics.Raycast(ray, out rayTarget, rayRange);
+				bool hit = false;
+				// construct ray
+				Ray ray = new Ray(transform.position, transform.forward);
+				Vector3 end = ray.origin + ray.direction * rayRange;
+				line.SetPosition(0, ray.origin);
+				Debug.DrawLine(ray.origin, end, Color.red);
 
-				// test tags
-				if (hit && (tagList.Length > 0))
+				if (!overrideTarget)
 				{
-					hit = false;
-					foreach (string tag in tagList)
+					// do raycast
+					hit = Physics.Raycast(ray, out rayTarget, rayRange);
+
+					// test tags
+					if (hit && (tagList.Length > 0))
 					{
-						if (rayTarget.transform.tag.CompareTo(tag) == 0)
+						hit = false;
+						foreach (string tag in tagList)
 						{
-							hit = true;
-							break;
+							if (rayTarget.transform.tag.CompareTo(tag) == 0)
+							{
+								hit = true;
+								break;
+							}
+						}
+						if (!hit)
+						{
+							// tag test negative > reset raycast structure
+							Physics.Raycast(ray, out rayTarget, 0);
 						}
 					}
-					if (!hit)
+
+					// are there collides to check for inside-collisions?
+					if (checkInsideColliders.Length > 0)
 					{
-						// tag test negative > reset raycast structure
-						Physics.Raycast(ray, out rayTarget, 0);
+						// checking inside collides: reverse ray
+						Ray reverse = new Ray(ray.origin + ray.direction * rayRange, -ray.direction);
+						float minDistance = hit ? rayTarget.distance : rayRange;
+						foreach (Collider c in checkInsideColliders)
+						{
+							RaycastHit hitReverse;
+							if (c.Raycast(reverse, out hitReverse, rayRange))
+							{
+								if (rayRange - hitReverse.distance < minDistance)
+								{
+									rayTarget = hitReverse;
+									minDistance = rayRange - hitReverse.distance;
+									hit = true;
+								}
+							}
+						}
 					}
 				}
-
-				Ray reverse = new Ray(ray.origin + ray.direction * rayRange, -ray.direction);
-				foreach (Collider c in checkInsideColliders)
+				else
 				{
-					RaycastHit hitReverse;
-					if ( c.Raycast(reverse, out hitReverse, rayRange) && (rayRange - hitReverse.distance < (hit ? rayTarget.distance : rayRange)) )
+					Physics.Raycast(ray, out rayTarget, 0); // reset structure
+					rayTarget.point = overridePoint;        // override point
+					hit = true;
+				}
+
+				if (hit)
+				{
+					// hit something > draw ray to there and render end point object
+					line.SetPosition(1, rayTarget.point);
+					if (activeEndPoint != null)
 					{
-						rayTarget = hitReverse;
-						hit = true;
+						activeEndPoint.position = rayTarget.point;
+						activeEndPoint.gameObject.SetActive(true);
+					}
+				}
+				else
+				{
+					// hit nothing > draw ray to end and disable end point object
+					line.SetPosition(1, end);
+					if (activeEndPoint != null)
+					{
+						activeEndPoint.gameObject.SetActive(false);
 					}
 				}
 			}
-			else
-			{
-				Physics.Raycast(ray, out rayTarget, 0); // reset structure
-				rayTarget.point = overridePoint;        // override point
-				hit = true;
-			}
+			
+			HandleEvents();
+		}
 
-			if (hit)
+
+		/// <summary>
+		/// Handles events like OnEnter/OnExit if the object that the ray points at
+		/// has implemented the IPointerRayTarget interface
+		/// </summary>
+		/// 
+		private void HandleEvents()
+		{
+			IPointerRayTarget currentTarget = (rayTarget.distance > 0 && (rayTarget.transform != null)) ?
+				rayTarget.transform.gameObject.GetComponent<IPointerRayTarget>() :
+				null;
+			if (currentTarget != activeTarget)
 			{
-				// hit something > draw ray to there and render end point object
-				line.SetPosition(1, rayTarget.point);
-				if (activeEndPoint != null)
-				{
-					activeEndPoint.position = rayTarget.point;
-					activeEndPoint.gameObject.SetActive(true);
-				}
-			}
-			else
-			{
-				// hit nothing > draw ray to end and disable end point object
-				line.SetPosition(1, end);
-				if (activeEndPoint != null)
-				{
-					activeEndPoint.gameObject.SetActive(false);
-				}
+				if (activeTarget != null) activeTarget.OnPointerExit(this);
+				activeTarget = currentTarget;
+				if (activeTarget != null) activeTarget.OnPointerEnter(this);
 			}
 		}
 
@@ -153,6 +197,17 @@ namespace SentienceLab
 		public RaycastHit GetRayTarget()
 		{
 			return rayTarget;
+		}
+
+
+		/// <summary>
+		/// Checks whether the ray is enabled or not.
+		/// </summary>
+		/// <returns><c>true</c> when the ray is enabled</returns>
+		/// 
+		public bool IsEnabled()
+		{
+			return rayEnabled;
 		}
 
 
@@ -174,10 +229,11 @@ namespace SentienceLab
 		}
 
 
-		private LineRenderer line;
-		private RaycastHit   rayTarget;
-		private bool         overrideTarget;
-		private Vector3      overridePoint;
-		private InputHandler handlerActivate;
+		private LineRenderer      line;
+		private RaycastHit        rayTarget;
+		private bool              overrideTarget;
+		private Vector3           overridePoint;
+		private InputHandler      handlerActivate;
+		private IPointerRayTarget activeTarget;
 	}
 }
