@@ -1,5 +1,5 @@
 {
-	"Inputs":[
+	"Inputs": [
 		{
 			"inputName": "trigger",
 			"inputType": 2,
@@ -9,6 +9,16 @@
 			"inputName": "trigger",
 			"inputType": 2,
 			"parameters": "ViveController1/button1"
+		},
+		{
+			"inputName": "teleport",
+			"inputType": 2,
+			"parameters": "Joystick1/button2"
+		},
+		{
+			"inputName": "teleport",
+			"inputType": 2,
+			"parameters": "ViveController1/button2"
 		}
 	]
 }
