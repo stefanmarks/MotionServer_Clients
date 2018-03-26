@@ -17,7 +17,7 @@ namespace SentienceLab
 	public class PhysicsManipulator : MonoBehaviour
 	{
 		[Tooltip("Name of the action to control the physics manipulator")]
-		public string actionName  = "fire";
+		public string actionName  = "trigger";
 
 		[Tooltip("Force per mass unit of the object to apply when moving")]
 		public float maxForce = 100;
