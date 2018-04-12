@@ -78,7 +78,7 @@ namespace SentienceLab.MoCap
 			}
 			catch (Exception e)
 			{
-				Debug.LogWarning("Could not read from MOT file '" + dataStream.GetName() + "' (" + e.Message + ").");
+				Debug.LogWarning("Could not read from MOT file '" + dataStream.GetName() + "' (" + e.Message + ").\n" + e.StackTrace);
 				dataStream.Close();
 				dataStream = null;
 			}
@@ -233,6 +233,7 @@ namespace SentienceLab.MoCap
 				if (a.name.Equals(name))
 				{
 					actor = a;
+					actor.id = id; // associate actor and rigid body ID
 				}
 			}
 			if (actor == null)
@@ -393,21 +394,28 @@ namespace SentienceLab.MoCap
 			for (int rigidBodyIdx = 0; rigidBodyIdx < nRigidBodies; rigidBodyIdx++)
 			{
 				int rigidBodyID = dataStream.GetNextInt(); // get rigid body ID
-				Bone bone = scene.FindActor(rigidBodyID).bones[0];
+				Actor actor = scene.FindActor(rigidBodyID);
+				if (actor != null)
+				{
+					Bone bone = actor.bones[0];
+					// Read position/rotation 
+					bone.px = dataStream.GetNextFloat(); // position
+					bone.py = dataStream.GetNextFloat();
+					bone.pz = dataStream.GetNextFloat();
+					bone.qx = dataStream.GetNextFloat(); // rotation
+					bone.qy = dataStream.GetNextFloat();
+					bone.qz = dataStream.GetNextFloat();
+					bone.qw = dataStream.GetNextFloat();
+					TransformToUnity(ref bone);
 
-				// Read position/rotation 
-				bone.px = dataStream.GetNextFloat(); // position
-				bone.py = dataStream.GetNextFloat();
-				bone.pz = dataStream.GetNextFloat();
-				bone.qx = dataStream.GetNextFloat(); // rotation
-				bone.qy = dataStream.GetNextFloat();
-				bone.qz = dataStream.GetNextFloat();
-				bone.qw = dataStream.GetNextFloat();
-				TransformToUnity(ref bone);
-
-				bone.length = dataStream.GetNextFloat(); // Mean error, used as length
-				int state = dataStream.GetNextInt();     // state
-				bone.tracked = (state & 0x01) != 0;
+					bone.length = dataStream.GetNextFloat(); // Mean error, used as length
+					int state = dataStream.GetNextInt();     // state
+					bone.tracked = (state & 0x01) != 0;
+				}
+				else
+				{
+					Debug.LogWarning("Could not find actor with ID " + rigidBodyID + " for rigid body");
+				}
 			}
 
 			// Read skeleton data
@@ -426,6 +434,7 @@ namespace SentienceLab.MoCap
 				for (int nBodyIdx = 0; nBodyIdx < nBones; nBodyIdx++)
 				{
 					int boneId = dataStream.GetNextInt();
+					// TODO: add sanity check
 					Bone bone = actor.bones[boneId];
 
 					// Read position/rotation 

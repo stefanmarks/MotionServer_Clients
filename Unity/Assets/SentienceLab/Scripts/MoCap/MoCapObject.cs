@@ -208,7 +208,8 @@ namespace SentienceLab.MoCap
 		public void SceneUpdated(Scene scene)
 		{
 			// nothing to do here
-			}
+		}
+
 
 		public void SceneChanged(Scene scene)
 		{
@@ -252,11 +253,11 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private Bone                              controllingBone;
-		private GameObject                        rootNode;
+		private Bone                         controllingBone;
+		private GameObject                   rootNode;
 		private Dictionary<Bone, GameObject> boneList;
 		private bool                         disabled;
-		private IMoCapDataModifier[]              modifiers; // list of modifiers for this renderer
+		private IMoCapDataModifier[]         modifiers; // list of modifiers for this renderer
 	}
 
 }
