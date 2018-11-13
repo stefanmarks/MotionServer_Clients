@@ -97,7 +97,7 @@ namespace SentienceLab.MoCap
 				XRNode device = trackedDevices[idx];
 				// update position, orientation, and tracking state
 				Bone bone = scene.actors[idx].bones[0];
-				bone.CopyTransform(InputTracking.GetLocalPosition(device), InputTracking.GetLocalRotation(device));
+				bone.CopyFrom(InputTracking.GetLocalPosition(device), InputTracking.GetLocalRotation(device));
 				bone.tracked = true;
 			}
 			manager.NotifyListeners_Update(scene);

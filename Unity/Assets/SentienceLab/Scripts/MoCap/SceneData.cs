@@ -355,6 +355,18 @@ namespace SentienceLab.MoCap
 		}
 
 		/// <summary>
+		/// Copies data from a Unity position and rotation into the structure
+		/// </summary>
+		/// <param name="pos">Position data</param>
+		/// <param name="rot">Rotation data</param>
+		/// 
+		public void CopyFrom(UnityEngine.Vector3 pos, UnityEngine.Quaternion rot)
+		{
+			px = pos.x; py = pos.y; pz = pos.z;
+			qx = rot.x; qy = rot.y; qz = rot.z; qw = rot.w;
+		}
+
+		/// <summary>
 		/// Copies data from the structure to a Unity position class
 		/// </summary>
 		/// <param name="pos">Position data to copy into</param>
@@ -371,6 +383,18 @@ namespace SentienceLab.MoCap
 		/// 
 		public void CopyTo(ref UnityEngine.Quaternion rot)
 		{
+			rot.x = qx; rot.y = qy; rot.z = qz; rot.w = qw;
+		}
+
+		/// <summary>
+		/// Copies data from the structure to a Unity position and rotation class
+		/// </summary>
+		/// <param name="pos">Position data to copy into</param>
+		/// <param name="rot">Rotation data to copy into</param>
+		/// 
+		public void CopyTo(ref UnityEngine.Vector3 pos, ref UnityEngine.Quaternion rot)
+		{
+			pos.x = px; pos.y = py; pos.z = pz;
 			rot.x = qx; rot.y = qy; rot.z = qz; rot.w = qw;
 		}
 	}

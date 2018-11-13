@@ -226,7 +226,7 @@ namespace SentienceLab.MoCap
 				m[1,0] = pose.m4; m[1,1] = pose.m5; m[1,2] = pose.m6;  m[1,3] = pose.m7;
 				m[2,0] = pose.m8; m[2,1] = pose.m9; m[2,2] = pose.m10; m[2,3] = pose.m11;
 				MathUtil.ToggleLeftRightHandedMatrix(ref m);
-				bone.CopyTransform(MathUtil.GetTranslation(m), MathUtil.GetRotation(m));
+				bone.CopyFrom(MathUtil.GetTranslation(m), MathUtil.GetRotation(m));
 
 				bone.tracked = poses[controllerIdx].bDeviceIsConnected && poses[controllerIdx].bPoseIsValid;
 
