@@ -2,7 +2,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Behaviour for checking several tranforms and adapting the transformatio of the first active transform.
+/// Behaviour for checking several transforms and adapting the transformation of the first active transform.
 /// This script can be used to combine, e.g., several optional hand controllers into one.
 /// </summary>
 /// 
