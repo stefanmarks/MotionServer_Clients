@@ -12,17 +12,17 @@ using Valve.VR;
 namespace SentienceLab.MoCap
 {
 	/// <summary>
-	/// Class for a MoCap client that uses tracking data from an HTC Vive.
+	/// Class for a MoCap client that uses OpenVR compatible devices.
 	/// </summary>
 	/// 
-	class HtcViveClient : IMoCapClient
+	class OpenVR_Client : IMoCapClient
 	{
 		/// <summary>
-		/// Constructs a MoCap client that tracks HTC Vive HMDs and controllers.
+		/// Constructs a MoCap client that tracks OpenVR compatible HMDs and controllers.
 		/// </summary>
 		/// <param name="manager">the MoCapManager instance</param>
 		///
-		public HtcViveClient(MoCapManager manager)
+		public OpenVR_Client(MoCapManager manager)
 		{
 			this.manager = manager;
 
@@ -61,26 +61,21 @@ namespace SentienceLab.MoCap
 					connected = false;
 					Debug.LogWarning("Could not find OpenVR System instance.");
 				}
+
 				compositor = OpenVR.Compositor;
 				if (compositor == null)
 				{
 					connected = false;
 					Debug.LogWarning("Could not find OpenVR Compositor instance.");
 				}
-				else
-				{
-					/* TODO: This doesn't work. Any other solution?
-					Compositor_FrameTiming timing = new Compositor_FrameTiming();
-					timing.m_nSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(Compositor_FrameTiming));
-					compositor.GetFrameTimings(ref timing, 1);
-					updateRate = 1000.0f / timing.m_flClientFrameIntervalMs;
-					*/
-					updateRate = 90; // hardcoded for now...
-				}
 			}
 
 			if (connected)
 			{
+				// query refresh rate
+				updateRate = XRDevice.refreshRate;
+				if (updateRate == 0) { updateRate = 60; } // fallback
+
 				// allocate structures
 				state = new VRControllerState_t();
 				poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
@@ -283,7 +278,6 @@ namespace SentienceLab.MoCap
 						dev.channels[2].value = (state.ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_SteamVR_Touchpad)) != 0 ? 1 : 0;
 						// menu button
 						dev.channels[3].value = (state.ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_ApplicationMenu)) != 0 ? 1 : 0;
-						Debug.Log(dev.name + state.rAxis0.x + "=" + dev.channels[0].value + "/"+ dev.channels[1].value);
 					}
 				}
 			}

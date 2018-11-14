@@ -65,12 +65,47 @@ namespace SentienceLab.Input
 		public bool AddMapping(InputManager.InputType type, string inputName)
 		{
 			IDevice device = null;
+			
+			// check for special devices
+			if (inputName.Contains("-|+"))
+			{
+				// plus/minus device
+				String[] parts = inputName.Split(new string[] { "-|+" }, StringSplitOptions.RemoveEmptyEntries);
+				if (parts.Length > 1)
+				{
+					IDevice deviceMinus = CreateDevice(type, parts[0]);
+					IDevice devicePlus  = CreateDevice(type, parts[1]);
+					if ((devicePlus != null) && (deviceMinus != null))
+					{
+						device = new Device_PlusMinus(devicePlus, deviceMinus);
+					}
+				}
+			}
+			else
+			{
+				// standard device
+				device = CreateDevice(type, inputName);
+			}
+
+			if (device != null) 
+			{
+				// success
+				devices.Add(device);
+			}
+
+			return (device != null);
+		}
+
+
+		private IDevice CreateDevice(InputManager.InputType type, string inputName)
+		{
+			IDevice device = null;
 			// create specific device subtype
 			switch (type)
 			{
 				case InputManager.InputType.UnityInput:  device = new Device_UnityInput(); break;
 				case InputManager.InputType.Keyboard:    device = new Device_Keyboard(); break;
-#if !NO_MOCAP_INPUT 
+#if !NO_MOCAP_INPUT
 				case InputManager.InputType.MoCapDevice: device = new Device_MoCap(); break;
 #endif
 				default:
@@ -80,17 +115,16 @@ namespace SentienceLab.Input
 					}
 			}
 			// try to initialise given the parameter string
-			if ((device != null) && device.Initialise(inputName))
+			if (device != null)
 			{
-				// success
-				devices.Add(device);
+				inputName = inputName.Trim();
+				if (!device.Initialise(inputName))
+				{
+					// failed
+					device = null;
+				}
 			}
-			else
-			{
-				// failed
-				device = null;
-			}
-			return (device != null);
+			return device;
 		}
 
 
@@ -303,7 +337,6 @@ namespace SentienceLab.Input
 			enum Mode
 			{
 				SingleKey,
-				PlusMinus,
 				Combination
 			}
 
@@ -318,20 +351,10 @@ namespace SentienceLab.Input
 				bool success = false;
 				try
 				{
-					if ((inputName.Length > 1) && inputName.Contains("/"))
+					if ((inputName.Length > 1) && inputName.Contains("+"))
 					{
-						// input name for a plus/minus combination (with a '/' separating them)
-						string[] parts = inputName.Split('/');
+						// TODO: Split by "+"
 
-						UnityEngine.Input.GetKey(parts[0]);
-						keyName1 = parts[0];
-						UnityEngine.Input.GetKey(parts[1]);
-						keyName2 = parts[1];
-
-						mode = Mode.PlusMinus;
-					}
-					else if ((inputName.Length > 1) && inputName.Contains("+"))
-					{
 						// input name for a combo name (with a '+' separating them)
 						string[] parts = inputName.Split('+');
 
@@ -370,10 +393,6 @@ namespace SentienceLab.Input
 			{
 				switch (mode)
 				{
-					case Mode.PlusMinus:
-						return UnityEngine.Input.GetKey(keyName1) ||
-							   UnityEngine.Input.GetKey(keyName2);
-
 					case Mode.Combination:
 						return (UnityEngine.Input.GetKey(keyName1) &&
 								UnityEngine.Input.GetKey(keyName2));
@@ -387,10 +406,6 @@ namespace SentienceLab.Input
 			{
 				switch (mode)
 				{
-					case Mode.PlusMinus:
-						return UnityEngine.Input.GetKeyDown(keyName1) ||
-							   UnityEngine.Input.GetKeyDown(keyName2);
-
 					case Mode.Combination:
 						return (UnityEngine.Input.GetKeyDown(keyName1) &&
 								UnityEngine.Input.GetKey(keyName2)) ||
@@ -406,10 +421,6 @@ namespace SentienceLab.Input
 			{
 				switch (mode)
 				{
-					case Mode.PlusMinus:
-						return UnityEngine.Input.GetKeyUp(keyName1) ||
-							   UnityEngine.Input.GetKeyUp(keyName2);
-
 					case Mode.Combination:
 						return (UnityEngine.Input.GetKeyUp(keyName1) &&
 								UnityEngine.Input.GetKey(keyName2)) ||
@@ -426,11 +437,6 @@ namespace SentienceLab.Input
 				float value;
 				switch (mode)
 				{
-					case Mode.PlusMinus:
-						value =   (UnityEngine.Input.GetKey(keyName1) ? -1 : 0)
-								+ (UnityEngine.Input.GetKey(keyName2) ? 1 : 0);
-						break;
-
 					case Mode.Combination:
 						value = (UnityEngine.Input.GetKey(keyName1) &&
 								 UnityEngine.Input.GetKey(keyName2)) ? 1 : 0;
@@ -452,9 +458,6 @@ namespace SentienceLab.Input
 			{
 				switch (mode)
 				{
-					case Mode.PlusMinus:
-						return "Keys '" + keyName1 + "'/'" + keyName2 + "'";
-
 					case Mode.Combination:
 						return "Keys '" + keyName1 + "'+'" + keyName2 + "'";
 
@@ -482,6 +485,7 @@ namespace SentienceLab.Input
 
 			public bool Initialise(string inputName)
 			{
+				// input name shoud be "device/channel" syntax
 				string[] parts = inputName.Split('/');
 				if ((parts.Length >= 2) && MoCap.MoCapManager.GetInstance() != null)
 				{
@@ -529,5 +533,61 @@ namespace SentienceLab.Input
 		}
 #endif
 
+		/// <summary>
+		/// Metaclass for an input device that takes a positive and negative input.
+		/// </summary>
+		///
+		private class Device_PlusMinus : IDevice
+		{
+			public Device_PlusMinus(IDevice _devicePlus, IDevice _deviceMinus)
+			{
+				devicePlus  = _devicePlus;
+				deviceMinus = _deviceMinus;
+			}
+
+			public bool Initialise(string inputName)
+			{
+				return true; // not used
+			}
+
+			public void Process()
+			{
+				devicePlus.Process();
+				deviceMinus.Process();
+			}
+
+			public bool IsActive()
+			{
+				return devicePlus.IsActive() || deviceMinus.IsActive();
+			}
+
+			public bool IsActivated()
+			{
+				return devicePlus.IsActivated() || deviceMinus.IsActivated();
+			}
+
+			public bool IsDeactivated()
+			{
+				return devicePlus.IsDeactivated() || deviceMinus.IsDeactivated();
+			}
+
+			public float GetValue()
+			{
+				return devicePlus.GetValue() - deviceMinus.GetValue();
+			}
+
+			public void SetPressThreshold(float value)
+			{
+				devicePlus.SetPressThreshold(value);
+				deviceMinus.SetPressThreshold(value);
+			}
+
+			public override string ToString()
+			{
+				return deviceMinus.ToString() + " -|+ " + devicePlus.ToString();
+			}
+
+			private IDevice devicePlus, deviceMinus;
+		}
 	}
 }

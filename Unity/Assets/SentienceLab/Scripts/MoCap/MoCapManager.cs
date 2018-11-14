@@ -29,8 +29,8 @@ namespace SentienceLab.MoCap
 		[Tooltip("Action name for pausing/running the client")]
 		public string pauseAction = "pause";
 
-		[Tooltip("Name of the MoCap Client (\"$scene\" will be replaced by the active scene name)")]
-		public string clientName = "$scene";
+		[Tooltip("Name of the MoCap Client (\"$SCENE\" will be replaced by the active scene name)")]
+		public string clientName = "$SCENE";
 
 		private byte[] clientAppVersion = new byte[] { 1, 3, 0, 0 };
 
@@ -281,7 +281,7 @@ namespace SentienceLab.MoCap
 							{
 								// construct client name
 								string appName = clientName;
-								appName = appName.Replace("$scene", SceneManager.GetActiveScene().name);
+								appName = appName.Replace("$SCENE", SceneManager.GetActiveScene().name);
 								client = new NatNetClient(this, appName, clientAppVersion);
 							}
 						}
@@ -301,10 +301,10 @@ namespace SentienceLab.MoCap
 						}
 					}
 
-					// no client yet > try VR
+					// no client yet > try OpenVR
 					if (((client == null) || !client.IsConnected()) && UnityEngine.XR.XRDevice.isPresent)
 					{
-						client = new HtcViveClient(this);
+						client = new OpenVR_Client(this);
 						client.Connect(null);
 					}
 

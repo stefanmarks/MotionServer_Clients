@@ -17,9 +17,8 @@ public class CombineTransforms : MonoBehaviour
 		{
 			if ((t != null) && (t.gameObject.activeInHierarchy))
 			{
-				this.transform.localPosition = t.localPosition;
-				this.transform.localRotation = t.localRotation;
-				this.transform.localScale    = t.localScale;
+				this.transform.position = t.position;
+				this.transform.rotation = t.rotation;
 				break;
 			}
 		}
