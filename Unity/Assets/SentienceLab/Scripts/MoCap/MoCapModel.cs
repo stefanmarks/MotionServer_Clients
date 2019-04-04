@@ -200,13 +200,13 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public void SceneUpdated(Scene scene)
+		public void SceneDataUpdated(Scene scene)
 		{
 			// nothing to do here
 		}
 
 
-		public void SceneChanged(Scene scene)
+		public void SceneDefinitionChanged(Scene scene)
 		{
 			// re-match bone names with the next update
 			boneList = null;

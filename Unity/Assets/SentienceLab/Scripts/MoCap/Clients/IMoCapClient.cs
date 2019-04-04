@@ -73,8 +73,10 @@ namespace SentienceLab.MoCap
 		/// <summary>
 		/// Retrieves the latest frame data.
 		/// </summary>
+		/// <param name="dataChanged">return <c>true</c> when tracking data in the scene has changed</param>
+		/// <param name="sceneChanged">return <c>true</c> when amount or structure of actors/devices in the scene has changed</param>
 		/// 
-		void Update();
+		void Update(ref bool dataChanged, ref bool sceneChanged);
 
 
 		/// <summary>

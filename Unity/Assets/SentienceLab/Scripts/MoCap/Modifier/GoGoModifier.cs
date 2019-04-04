@@ -8,14 +8,20 @@ using UnityEngine;
 namespace SentienceLab.MoCap
 {
 	/// <summary>
-	/// Component for scaling MoCap data based on the distance to another object.
+	/// Component for scaling MoCap positional data based on the distance to another object.
+	/// Applied to a hand controller, this is also known asn the Go-Go technique.
+	/// 
+	/// Poupyrev, Ivan, Mark Billinghurst, Suzanne Weghorst, and Tadao Ichikawa.
+	/// “The Go-Go Interaction Technique: Non-Linear Mapping for Direct Manipulation in VR.” 
+	/// In Proceedings of the 9th Annual ACM Symposium on User Interface Software and Technology, p79–80. 
+	/// UIST ’96. New York, NY, USA: ACM, 1996. https://doi.org/10.1145/237091.237102.
 	/// </summary>
 	///
 
 	[DisallowMultipleComponent]
-	[AddComponentMenu("Motion Capture/Modifier/Adaptive Scale")]
+	[AddComponentMenu("Motion Capture/Modifier/Go-Go")]
 
-	public class AdaptiveScaleModifier : MonoBehaviour, IMoCapDataModifier
+	public class GoGoModifier : MonoBehaviour, IMoCapDataModifier
 	{
 		[Tooltip("Transform to measure the relative distance to")]
 		public Transform centreObject;

@@ -22,8 +22,8 @@ namespace SentienceLab.MoCap
 		public double   timestamp;   // current timestamp
 		public float    latency;     // latency in seconds from camera capture to the SDK sending the data
 
-		public Actor[]  actors;      // actor data 
-		public Device[] devices;     // data for interaction devices
+		public List<Actor>  actors;  // actor data 
+		public List<Device> devices; // data for interaction devices
 
 		public readonly Mutex mutex; // mutex for controlling acceess to the scene data
 
@@ -37,8 +37,8 @@ namespace SentienceLab.MoCap
 			frameNumber = 0;
 			timestamp   = 0;
 			latency     = 0;
-			actors      = new Actor[0];
-			devices     = new Device[0];
+			actors      = new List<Actor>();
+			devices     = new List<Device>();
 			mutex       = new Mutex();
 		}
 
@@ -68,7 +68,7 @@ namespace SentienceLab.MoCap
 		public Actor FindActor(int id)
 		{
 			// quick check if id is an array index
-			if ( (id >= 0) && (id < actors.Length) && 
+			if ( (id >= 0) && (id < actors.Count) && 
 				 (actors[id] != null) && (actors[id].id == id) ) return actors[id];
 
 			// no > linear search
@@ -126,7 +126,7 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <param name="scene">the scene that has been updated</param>
 		/// 
-		void SceneUpdated(Scene scene);
+		void SceneDataUpdated(Scene scene);
 
 
 		/// <summary>
@@ -134,7 +134,7 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <param name="scene">the scene that has been updated</param>
 		/// 
-		void SceneChanged(Scene scene);
+		void SceneDefinitionChanged(Scene scene);
 	}
 
 
@@ -146,7 +146,7 @@ namespace SentienceLab.MoCap
 	{
 		public readonly Scene  scene; // scene this actor belongs to
 		public readonly string name;  // Name of the actor
-		public          int id;       // ID of the actor (not readonly because skeleton description might change it)
+		public          int    id;    // ID of the actor (not readonly because skeleton description might change it)
 
 		public Marker[] markers;      // Marker data
 		public Bone[]   bones;        // Bone data
@@ -157,13 +157,13 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <param name="scene">the scene the actor belongs to</param>
 		/// <param name="name">the name of the actor</param>
-		/// <param name="id">the ID of the actor</param>
+		/// <param name="id">the ID of the actor (-1: assign automatic ID based on order in actor list, starting at 1)</param>
 		/// 
-		public Actor(Scene scene, string name, int id)
+		public Actor(Scene scene, string name, int id = -1)
 		{
 			this.scene = scene;
-			this.id    = id;
 			this.name  = name;
+			this.id    = (id < 0) ? scene.actors.Count + 1 : id;
 
 			markers = new Marker[0];
 			bones   = new Bone[0]; 

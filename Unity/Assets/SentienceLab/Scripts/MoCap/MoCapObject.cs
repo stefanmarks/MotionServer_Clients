@@ -31,6 +31,9 @@ namespace SentienceLab.MoCap
 		[Tooltip("What to do when tracking of the actor is lost.")]
 		public TrackingLostBehaviour trackingLostBehaviour = TrackingLostBehaviour.Disable;
 
+		[Tooltip("When to update the object")]
+		public UpdateType updateType = UpdateType.Update;
+
 
 		/// <summary>
 		/// Possible actions for when a markerset loses tracking.
@@ -46,6 +49,17 @@ namespace SentienceLab.MoCap
 			/// Disable the game object and re-enable when tracking continues.
 			/// </summary>
 			Disable
+		};
+
+
+		/// <summary>
+		/// When to do the object update.
+		/// </summary>
+		public enum UpdateType
+		{
+			Update,
+			LateUpdate,
+			UpdateAndLateUpdate
 		};
 
 
@@ -83,6 +97,8 @@ namespace SentienceLab.MoCap
 			controllingBone = null;
 			boneList        = new Dictionary<Bone, GameObject>();
 			disabled        = false;
+
+			notFoundWarningIssued = false;
 
 			// find any MoCap data modifiers and store them
 			modifiers = GetComponents<IMoCapDataModifier>();
@@ -157,7 +173,33 @@ namespace SentienceLab.MoCap
 		/// Called once per frame.
 		/// </summary>
 		/// 
-		void Update()
+		public void Update()
+		{
+			if ( (updateType == UpdateType.Update) || 
+			     (updateType == UpdateType.UpdateAndLateUpdate) )
+			{
+				MoCapManager.GetInstance().Update();
+				UpdateObject();
+			}
+		}
+
+
+		//// <summary>
+		/// Called once per frame before the end of the frame.
+		/// </summary>
+		/// 
+		public void LateUpdate()
+		{
+			if ( (updateType == UpdateType.LateUpdate) ||
+			     (updateType == UpdateType.UpdateAndLateUpdate))
+			{
+				MoCapManager.GetInstance().LateUpdate();
+				UpdateObject();
+			}
+		}
+
+
+		private void UpdateObject()
 		{
 			// create node hierarchy if not already built.
 			// but only when tracking is OK, otherwise the bone lengths are undefined
@@ -205,13 +247,13 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public void SceneUpdated(Scene scene)
+		public void SceneDataUpdated(Scene scene)
 		{
 			// nothing to do here
 		}
 
 
-		public void SceneChanged(Scene scene)
+		public void SceneDefinitionChanged(Scene scene)
 		{
 			// actor has changed > rebuild hierarchy on next update
 			if (rootNode != null)
@@ -240,10 +282,15 @@ namespace SentienceLab.MoCap
 					Debug.Log("MoCap Object '" + this.name + "' controlled by MoCap actor/bone '" +
 						actorName + "/" + controllingBone.name + "'.");
 				}
+				this.gameObject.SetActive(true);
 			}
 			else
 			{
-				Debug.LogWarning("Mocap Object '" + this.name + "' cannot find MoCap actor '" + actorName + "'.");
+				if (!notFoundWarningIssued)
+				{
+					Debug.LogWarning("Mocap Object '" + this.name + "' cannot find MoCap actor '" + actorName + "'.");
+					notFoundWarningIssued = true; // shut up now
+				}
 				if (trackingLostBehaviour == TrackingLostBehaviour.Disable)
 				{
 					// MoCap Actor not found at all > time to disable object?
@@ -258,6 +305,7 @@ namespace SentienceLab.MoCap
 		private Dictionary<Bone, GameObject> boneList;
 		private bool                         disabled;
 		private IMoCapDataModifier[]         modifiers; // list of modifiers for this renderer
+		private bool                         notFoundWarningIssued;
 	}
 
 }

@@ -20,12 +20,9 @@ namespace SentienceLab.MoCap
 		/// <summary>
 		/// Constructs a MoCap client that tracks OpenVR compatible HMDs and controllers.
 		/// </summary>
-		/// <param name="manager">the MoCapManager instance</param>
 		///
-		public OpenVR_Client(MoCapManager manager)
+		public OpenVR_Client()
 		{
-			this.manager = manager;
-
 			scene          = new Scene();
 			trackedDevices = new List<TrackedDevice>();
 			connected      = false;
@@ -55,18 +52,26 @@ namespace SentienceLab.MoCap
 
 			if (connected)
 			{
-				system = OpenVR.System;
-				if (system == null)
+				try
 				{
-					connected = false;
-					Debug.LogWarning("Could not find OpenVR System instance.");
-				}
+					system = OpenVR.System;
+					if (system == null)
+					{
+						connected = false;
+						Debug.LogWarning("Could not find OpenVR System instance.");
+					}
 
-				compositor = OpenVR.Compositor;
-				if (compositor == null)
+					compositor = OpenVR.Compositor;
+					if ((system != null) && (compositor == null))
+					{
+						connected = false;
+						Debug.LogWarning("Could not find OpenVR Compositor instance.");
+					}
+				}
+				catch (DllNotFoundException)
 				{
+					// well, can't do anything about this
 					connected = false;
-					Debug.LogWarning("Could not find OpenVR Compositor instance.");
 				}
 			}
 
@@ -147,21 +152,19 @@ namespace SentienceLab.MoCap
 				}
 
 				// construct scene description
-				scene.actors  = new Actor[trackedDevices.Count];
-				scene.devices = new Device[inputDeviceIdx];
-				int deviceIndex = 0;
-				for (int idx = 0; idx < trackedDevices.Count; idx++)
+				scene.actors.Clear();
+				scene.devices.Clear();
+				foreach (TrackedDevice td in trackedDevices)
 				{
-					Actor actor = new Actor(scene, trackedDevices[idx].name, idx);
+					Actor actor = new Actor(scene, td.name);
 					actor.bones = new Bone[1];
 					actor.bones[0] = new Bone(actor, "root", 0);
-					scene.actors[idx] = actor;
+					scene.actors.Add(actor);
 
 					// is this an input device, too?
-					if (trackedDevices[idx].device != null)
+					if (td.device != null)
 					{
-						scene.devices[deviceIndex] = trackedDevices[idx].device;
-						deviceIndex++;
+						scene.devices.Add(td.device);
 					}
 				}
 			}
@@ -201,7 +204,7 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public void Update()
+		public void Update(ref bool dataChanged, ref bool sceneChanged)
 		{
 			compositor.GetLastPoses(poses, gamePoses);
 
@@ -281,7 +284,7 @@ namespace SentienceLab.MoCap
 					}
 				}
 			}
-			manager.NotifyListeners_Update(scene);
+			dataChanged = true;
 		}
 
 
@@ -290,8 +293,6 @@ namespace SentienceLab.MoCap
 			return scene;
 		}
 
-
-		private readonly MoCapManager manager;
 
 		private bool                   connected;
 		private Scene                  scene;

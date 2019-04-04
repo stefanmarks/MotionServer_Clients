@@ -16,12 +16,9 @@ namespace SentienceLab.MoCap
 		/// <summary>
 		/// Constructs a dummy MoCap client
 		/// </summary>
-		/// <param name="manager">the MoCapManager instance</param>
 		///
-		public DummyClient(MoCapManager manager)
+		public DummyClient()
 		{
-			this.manager = manager;
-
 			scene     = new Scene();
 			connected = false;
 		}
@@ -31,8 +28,7 @@ namespace SentienceLab.MoCap
 		{
 			// successful every time
 			connected = true;
-			manager.NotifyListeners_Change(scene);
-			return true;
+			return connected;
 		}
 
 
@@ -63,12 +59,13 @@ namespace SentienceLab.MoCap
 
 		public void SetPaused(bool pause)
 		{
+			// can't pause this
 		}
 
 
-		public void Update()
+		public void Update(ref bool dataChanged, ref bool sceneChanged)
 		{
-			manager.NotifyListeners_Update(scene);
+			// nothing happening here
 		}
 
 
@@ -78,7 +75,6 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private readonly MoCapManager manager;
 		private          bool         connected;
 		private          Scene        scene;
 	}

@@ -39,12 +39,9 @@ namespace SentienceLab.MoCap
 		/// <summary>
 		/// Constructs a .MOT file client instance.
 		/// </summary>
-		/// <param name="manager">the MoCapManager instance</param>
 		///
-		public FileClient(MoCapManager manager)
+		public FileClient()
 		{
-			this.manager = manager;
-
 			scene          = new Scene();
 			dataStream     = null;
 			streamingTimer = null;
@@ -70,7 +67,6 @@ namespace SentienceLab.MoCap
 
 					// immediately get first packet of frame data
 					GetFrameData();
-					manager.NotifyListeners_Change(scene);
 
 					streamingTimer = new Timer(new TimerCallback(StreamingTimerCallback));
 					streamingTimer.Change(0, 1000 / updateRate);
@@ -129,9 +125,12 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public void Update()
+		public void Update(ref bool dataChanged, ref bool sceneChanged)
 		{
-			// nothing to do here
+			// timer takes care of the data reading
+			// flag signals new data
+			dataChanged = newFrameData;
+			newFrameData = false;
 		}
 
 
@@ -167,8 +166,8 @@ namespace SentienceLab.MoCap
 			}
 			int descriptionCount = dataStream.GetNextInt();
 
-			List<Actor>  actors  = new List<Actor>();
-			List<Device> devices = new List<Device>();
+			scene.actors.Clear();
+			scene.devices.Clear();
 			for (int descrIdx = 0; descrIdx <  descriptionCount; descrIdx++)
 			{
 				int descrParts = dataStream.ReadNextLine();
@@ -180,15 +179,13 @@ namespace SentienceLab.MoCap
 
 				switch (dataStream.GetNextString()[0])
 				{
-					case 'M': ReadMarkersetDescription( ref actors); break;
-					case 'R': ReadRigidBodyDescription( ref actors); break;
-					case 'S': ReadSkeletonDescription(  ref actors); break;
-					case 'F': ReadForcePlateDescription(ref devices); break;
+					case 'M': ReadMarkersetDescription( scene.actors); break;
+					case 'R': ReadRigidBodyDescription( scene.actors); break;
+					case 'S': ReadSkeletonDescription(  scene.actors); break;
+					case 'F': ReadForcePlateDescription(scene.devices); break;
 					default : throw new FileLoadException("Invalid description block #" + descrIdx);
 				}
 			}
-			scene.actors  = actors.ToArray();
-			scene.devices = devices.ToArray();
 			
 			// here comes the frame data
 			int frameParts = dataStream.ReadNextLine();
@@ -203,7 +200,7 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private void ReadMarkersetDescription(ref List<Actor> actors)
+		private void ReadMarkersetDescription(List<Actor> actors)
 		{
 			int    id    = 0;                          // no ID for markersets
 			string name  = dataStream.GetNextString(); // markerset name
@@ -221,7 +218,7 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private void ReadRigidBodyDescription(ref List<Actor> actors)
+		private void ReadRigidBodyDescription(List<Actor> actors)
 		{
 			int    id   = dataStream.GetNextInt();    // ID
 			string name = dataStream.GetNextString(); // name
@@ -256,7 +253,7 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private void ReadSkeletonDescription(ref List<Actor> actors)
+		private void ReadSkeletonDescription(List<Actor> actors)
 		{
 			int    skeletonId   = dataStream.GetNextInt();    // ID
 			string skeletonName = dataStream.GetNextString(); // name
@@ -312,7 +309,7 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private void ReadForcePlateDescription(ref List<Device> devices)
+		private void ReadForcePlateDescription(List<Device> devices)
 		{
 			int    id     = dataStream.GetNextInt();     // ID
 			string name   = dataStream.GetNextString();  // name
@@ -505,16 +502,14 @@ namespace SentienceLab.MoCap
 		{
 			if (paused) return;
 			GetFrameData();
-			manager.NotifyListeners_Update(scene);
+			newFrameData = true;
 		}
 
-
-		private readonly MoCapManager manager;
 
 		private Scene      scene;
 		private DataStream dataStream;
 		private int        fileVersion, updateRate;
 		private Timer      streamingTimer;
-		private bool       paused;
+		private bool       paused, newFrameData;
 	}
 }

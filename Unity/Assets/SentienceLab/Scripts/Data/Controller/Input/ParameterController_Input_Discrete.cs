@@ -8,11 +8,12 @@ using SentienceLab.Input;
 
 namespace SentienceLab.Data
 {
-	[AddComponentMenu("Parameter/Controller/Input (discrete)")]
+	[AddComponentMenu("Parameter/Controller/Input/Discrete")]
 
 	public class ParameterController_Input_Discrete : MonoBehaviour
 	{
 		[Tooltip("The parameter to control with the input (default: the first component in this game object)")]
+		[TypeConstraint(typeof(IParameterModify))]
 		public ParameterBase Parameter;
 
 		[Tooltip("The index of the value to change (e.g., 0: min, 1: max. Default: 0)")]
@@ -37,15 +38,17 @@ namespace SentienceLab.Data
 			}
 			if (Parameter != null)
 			{
-				m_modifyParameter = (IParameterModify)Parameter;
-				if (m_modifyParameter == null)
+				m_modify = (IParameterModify)Parameter;
+				if (m_modify == null)
 				{
-					Debug.LogWarning("Parameter cannot be modified");
+					Debug.LogWarning("Parameter can't be modified");
+					this.enabled = false;
 				}
 			}
 			else
 			{
 				Debug.LogWarning("Parameter not defined");
+				this.enabled = false;
 			}
 
 			m_handlerInc = InputHandler.Find(InputNameIncrease);
@@ -55,21 +58,20 @@ namespace SentienceLab.Data
 
 		public void Update()
 		{
-			if (m_modifyParameter != null)
+			if (m_modify != null)
 			{
 				if ((m_handlerInc != null) && m_handlerInc.IsActivated())
 				{
-					m_modifyParameter.ChangeValue(Multiplier, ValueIndex);
+					m_modify.ChangeValue(Multiplier, ValueIndex);
 				}
 				if ((m_handlerDec != null) && m_handlerDec.IsActivated())
 				{
-					m_modifyParameter.ChangeValue(-Multiplier, ValueIndex);
+					m_modify.ChangeValue(-Multiplier, ValueIndex);
 				}
 			}
 		}
 
-
-		private IParameterModify m_modifyParameter;
+		private IParameterModify m_modify;
 		private InputHandler     m_handlerInc, m_handlerDec;
 	}
 }

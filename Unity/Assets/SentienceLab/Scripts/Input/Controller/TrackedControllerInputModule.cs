@@ -30,6 +30,8 @@ namespace SentienceLab
 		[Tooltip("Tracked controllers and their action name for clicking")]
 		public ControllerInfo[] controllers;
 
+		public bool ForceModuleActive = false;
+
 
 		public override bool ShouldActivateModule()
 		{
@@ -50,6 +52,7 @@ namespace SentienceLab
 				// if so, activate this module
 				activate = controllersActive;
 			}
+			activate |= ForceModuleActive;
 			return activate;
 		}
 
@@ -72,10 +75,13 @@ namespace SentienceLab
 				prc.eventMask = layerMask;
 
 				// assign event camera to all canvasses
-				Canvas[] canvases = GameObject.FindObjectsOfType<Canvas>();
+				Canvas[] canvases = Resources.FindObjectsOfTypeAll<Canvas>();
 				foreach (Canvas canvas in canvases)
 				{
-					canvas.worldCamera = controllerCamera;
+					if (canvas.renderMode == RenderMode.WorldSpace)
+					{
+						canvas.worldCamera = controllerCamera;
+					}
 				}
 
 				// create controller data strctures

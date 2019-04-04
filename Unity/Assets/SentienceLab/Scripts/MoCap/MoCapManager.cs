@@ -32,7 +32,7 @@ namespace SentienceLab.MoCap
 		[Tooltip("Name of the MoCap Client (\"$SCENE\" will be replaced by the active scene name)")]
 		public string clientName = "$SCENE";
 
-		private byte[] clientAppVersion = new byte[] { 1, 3, 0, 0 };
+		private byte[] clientAppVersion = new byte[] { 1, 4, 1, 0 };
 
 
 		/// <summary>
@@ -75,6 +75,8 @@ namespace SentienceLab.MoCap
 				sceneListeners.Clear();
 			}
 			clientMutex.ReleaseMutex();
+			// MoCap Objects might have registered Coroutines here
+			StopAllCoroutines();
 		}
 
 
@@ -94,23 +96,55 @@ namespace SentienceLab.MoCap
 
 		/// <summary>
 		/// Called once per rendered frame. 
-		/// Get new frame data now.
-		/// Make sure the MoCapManager script is executed before any other script in "Project Settings/Script Execution Order".
 		/// </summary>
 		///
 		public void Update()
 		{
-			if (client != null)
+			if (lastUpdateFrame < Time.frameCount)
 			{
-				if (client.IsConnected())
-			{
-				client.Update();
+				UpdateScene();
+				lastUpdateFrame = Time.frameCount;
 			}
-		}
-			if ( (pauseHandler != null) && pauseHandler.IsActivated())
+
+			if ((pauseHandler != null) && pauseHandler.IsActivated())
 			{
 				pauseClient = !pauseClient;
 				OnApplicationPause(pauseClient);
+			}
+		}
+
+
+		/// <summary>
+		/// Called once per rendered frame at the end of the frame. 
+		/// </summary>
+		///
+		public void LateUpdate()
+		{
+			if (lastLateUpdateFrame < Time.frameCount)
+			{
+				UpdateScene();
+				lastLateUpdateFrame = Time.frameCount;
+			}
+		}
+
+
+		/// <summary>
+		/// Get new scene data now.
+		/// </summary>
+		///
+		public void UpdateScene()
+		{
+			if (client != null)
+			{
+				if (client.IsConnected())
+				{
+					bool dataChanged  = false;
+					bool sceneChanged = false;
+					client.Update(ref dataChanged, ref sceneChanged);
+
+					if (sceneChanged) NotifyListeners_Change(GetScene());
+					if (dataChanged)  NotifyListeners_Update(GetScene());
+				}
 			}
 		}
 
@@ -177,7 +211,7 @@ namespace SentienceLab.MoCap
 				{
 					Scene scene = GetScene();
 					scene.mutex.WaitOne();
-					listener.SceneChanged(scene);
+					listener.SceneDefinitionChanged(scene);
 					scene.mutex.ReleaseMutex();
 				}
 			}
@@ -202,7 +236,7 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <param name="scene"> the scene has been updated</param>
 		/// 
-		public void NotifyListeners_Update(Scene scene)
+		private void NotifyListeners_Update(Scene scene)
 		{
 			scene.mutex.WaitOne();
 			// pump latest data through the buffers before calling listeners
@@ -210,12 +244,12 @@ namespace SentienceLab.MoCap
 			{
 				foreach (Marker m in a.markers) { m.buffer.Push(); }
 				foreach (Bone   b in a.bones)   { b.buffer.Push(); }
-		}
+			}
 
 			// call listeners
 			foreach (SceneListener listener in sceneListeners)
 			{
-				listener.SceneUpdated(scene);
+				listener.SceneDataUpdated(scene);
 			}
 			scene.mutex.ReleaseMutex();
 		}
@@ -226,18 +260,15 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <param name="scene"> the scene has been changed</param>
 		/// 
-		public void NotifyListeners_Change(Scene scene)
+		private void NotifyListeners_Change(Scene scene)
 		{
 			scene.mutex.WaitOne();
 			foreach (SceneListener listener in sceneListeners)
 			{
-				listener.SceneChanged(scene);
+				listener.SceneDefinitionChanged(scene);
 			}
 			scene.mutex.ReleaseMutex();
 		}
-
-
-
 
 
 		/// <summary>
@@ -267,6 +298,10 @@ namespace SentienceLab.MoCap
 				// only connect when this script is actually enabled
 				if (this.isActiveAndEnabled)
 				{
+					// construct client name
+					string appName = clientName;
+					appName = appName.Replace("$SCENE", SceneManager.GetActiveScene().name);
+
 					// build list of data sources
 					ICollection<IMoCapClient_ConnectionInfo> sources = GetSourceList();
 
@@ -279,10 +314,7 @@ namespace SentienceLab.MoCap
 							// is client already the right type?
 							if (!(client is NatNetClient))
 							{
-								// construct client name
-								string appName = clientName;
-								appName = appName.Replace("$SCENE", SceneManager.GetActiveScene().name);
-								client = new NatNetClient(this, appName, clientAppVersion);
+								client = new NatNetClient(appName, clientAppVersion);
 							}
 						}
 						else if (info is FileClient.ConnectionInfo) 
@@ -290,7 +322,7 @@ namespace SentienceLab.MoCap
 							// is client already the right type?
 							if (!(client is FileClient))
 							{
-								client = new FileClient(this);
+								client = new FileClient();
 							}
 						}
 
@@ -304,8 +336,15 @@ namespace SentienceLab.MoCap
 					// no client yet > try OpenVR
 					if (((client == null) || !client.IsConnected()) && UnityEngine.XR.XRDevice.isPresent)
 					{
-						client = new OpenVR_Client(this);
+						client = new OpenVR_Client();
 						client.Connect(null);
+						
+						// did OpenVR work? If not, try he more generic Unity XR client
+						if (!client.IsConnected())
+						{
+							client = new UnityXR_Client();
+							client.Connect(null);
+						}
 					}
 
 					if ((client != null) && client.IsConnected())
@@ -315,7 +354,7 @@ namespace SentienceLab.MoCap
 
 						// print list of actor and device names
 						Scene scene = client.GetScene();
-						if (scene.actors.Length > 0)
+						if (scene.actors.Count > 0)
 						{
 							string actorNames = "";
 							foreach (Actor a in scene.actors)
@@ -323,9 +362,9 @@ namespace SentienceLab.MoCap
 								if (actorNames.Length > 0) { actorNames += ", "; }
 								actorNames += a.name;
 							}
-							Debug.Log("Actors (" + scene.actors.Length + "): " + actorNames);
+							Debug.Log("Actors (" + scene.actors.Count + "): " + actorNames);
 						}
-						if (scene.devices.Length > 0)
+						if (scene.devices.Count > 0)
 						{
 							string deviceNames = "";
 							foreach (Device d in scene.devices)
@@ -333,7 +372,7 @@ namespace SentienceLab.MoCap
 								if (deviceNames.Length > 0) { deviceNames += ", "; }
 								deviceNames += d.name;
 							}
-							Debug.Log("Devices (" + scene.devices.Length + "): " + deviceNames);
+							Debug.Log("Devices (" + scene.devices.Count + "): " + deviceNames);
 						}
 					}
 				}
@@ -341,7 +380,13 @@ namespace SentienceLab.MoCap
 				if ((client == null) || !client.IsConnected())
 				{
 					// not active or not able to connect to any data source: create dummy singleton 
-					client = new DummyClient(this);
+					client = new DummyClient();
+				}
+
+				// all fine, notify listeners of scene change
+				if ((client != null) && client.IsConnected())
+				{
+					NotifyListeners_Change(GetScene());
 				}
 			}
 			clientMutex.ReleaseMutex();
@@ -420,6 +465,8 @@ namespace SentienceLab.MoCap
 		private static bool         warningIssued = false;
 		private static IMoCapClient client        = null;
 		private static Mutex        clientMutex   = new Mutex();
+
+		private long lastUpdateFrame, lastLateUpdateFrame;
 
 		private InputHandler pauseHandler;
 		private bool         pauseClient; 

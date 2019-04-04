@@ -23,7 +23,6 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Collections.Generic;
 
 namespace UnityOSC
 {
@@ -39,7 +38,7 @@ namespace UnityOSC
         #endregion
 
         #region Constructors
-        public OSCServer (int localPort)
+        public OSCServer(int localPort)
 		{
             PacketReceivedEvent += delegate(OSCServer s, OSCPacket p) { };
 
@@ -148,13 +147,16 @@ namespace UnityOSC
         /// </summary>
         public void Connect()
 		{
-			if(this._udpClient != null) Close();
-			
+			if (this._udpClient != null)
+			{
+				Close();
+			}
+
 			try
 			{
 				_udpClient = new UdpClient(_localPort);
-                _udpClient.Client.ReceiveBufferSize = _bufferSize;
-                _receiverThread = new Thread(new ThreadStart(this.ReceivePool));
+				_udpClient.Client.ReceiveBufferSize = _bufferSize;
+				_receiverThread = new Thread(new ThreadStart(this.ReceivePool));
 				_receiverThread.Start();
 			}
 			catch(Exception e)
@@ -168,10 +170,16 @@ namespace UnityOSC
 		/// </summary>
 		public void Close()
 		{
-			if(_receiverThread !=null) _receiverThread.Abort();
-			_receiverThread = null;
-			_udpClient.Close();
-			_udpClient = null;
+			if (_receiverThread != null)
+			{
+				_receiverThread.Abort();
+				_receiverThread = null;
+			}
+			lock (_udpClient)
+			{
+				_udpClient.Close();
+				_udpClient = null;
+			}
 		}
 		
 
@@ -185,9 +193,16 @@ namespace UnityOSC
 			
 			try
 			{
-				byte[] bytes = _udpClient.Receive(ref ip);
+				byte[] bytes = null;
+				if (_udpClient != null)
+				{
+					lock (_udpClient)
+					{
+						bytes = _udpClient.Receive(ref ip);
+					}
+				}
 
-				if(bytes != null && bytes.Length > 0)
+				if (bytes != null && bytes.Length > 0)
 				{
                     OSCPacket packet = OSCPacket.Unpack(bytes);
 
@@ -197,8 +212,13 @@ namespace UnityOSC
                     PacketReceivedEvent(this, _lastReceivedPacket);	
 				}
 			}
-			catch{
-				throw new Exception(String.Format("Can't create server at port {0}", _localPort));
+			catch (ThreadAbortException)
+			{
+				// ignore
+			}
+			catch (Exception e)
+			{
+				throw new Exception(String.Format("Can't receive OSC data on port {0} (reason: {1})", _localPort, e.ToString()));
   			}
 		}
 		
@@ -210,9 +230,16 @@ namespace UnityOSC
 			while( true )
 			{
 				Receive();
-				
-                if (_udpClient.Available == 0)
-				    Thread.Sleep(_sleepMilliseconds);
+
+				long available = 0;
+				lock(_udpClient)
+				{
+					if (_udpClient != null) available = _udpClient.Available;
+				}
+				if (available == 0)
+				{
+					Thread.Sleep(_sleepMilliseconds);
+				}
 			}
 		}
 		#endregion

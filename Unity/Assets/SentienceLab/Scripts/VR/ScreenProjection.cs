@@ -35,7 +35,7 @@ namespace SentienceLab
 			}
 
 			// retrieve the camera this script is attached to
-			camera = GetComponent<Camera>();
+			m_camera = GetComponent<Camera>();
 		}
 
 
@@ -50,8 +50,8 @@ namespace SentienceLab
 
 			// eye position
 			Vector3 pe = transform.position;
-			float n = camera.nearClipPlane;
-			float f = camera.farClipPlane;
+			float n = m_camera.nearClipPlane;
+			float f = m_camera.farClipPlane;
 
 			// some intermediate claculations
 			Vector3 va = pa - pe; // from pe to pa
@@ -131,8 +131,8 @@ namespace SentienceLab
 			tm.m33 = 1;
 
 			// set matrices
-			camera.projectionMatrix = p;
-			camera.worldToCameraMatrix = rm * tm;
+			m_camera.projectionMatrix = p;
+			m_camera.worldToCameraMatrix = rm * tm;
 
 			// The original paper puts everything into the projection matrix 
 			// (i.e. sets it to p * rm * tm and the other matrix to the identity), 
@@ -144,24 +144,24 @@ namespace SentienceLab
 				// rotate camera to screen for culling to work
 				Quaternion q = Quaternion.LookRotation((0.5f * (pb + pc) - pe), vu);
 				// look at center of screen
-				camera.transform.rotation = q;
+				m_camera.transform.rotation = q;
 
 				// set fieldOfView to a conservative estimate to make frustum tall enough
-				if (camera.aspect >= 1.0)
+				if (m_camera.aspect >= 1.0)
 				{
-					camera.fieldOfView = Mathf.Rad2Deg *
+					m_camera.fieldOfView = Mathf.Rad2Deg *
 						Mathf.Atan(((pb - pa).magnitude + (pc - pa).magnitude) / va.magnitude);
 				}
 				else
 				{
 					// take the camera aspect into account to  make the frustum wide enough 
-					camera.fieldOfView =
-						Mathf.Rad2Deg / camera.aspect *
+					m_camera.fieldOfView =
+						Mathf.Rad2Deg / m_camera.aspect *
 						Mathf.Atan(((pb - pa).magnitude + (pc - pa).magnitude) / va.magnitude);
 				}
 			}
 		}
 
-		private new Camera camera;
+		private Camera m_camera;
 	}
 }

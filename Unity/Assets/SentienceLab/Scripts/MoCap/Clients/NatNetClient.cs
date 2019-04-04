@@ -79,9 +79,8 @@ namespace SentienceLab.MoCap
 		/// <param name="clientAppName">Name of the client to report to the server</param>
 		/// <param name="clientAppVersion">Version number of the client to report to the server</param>
 		/// 
-		public NatNetClient(MoCapManager manager, string clientAppName, byte[] clientAppVersion)
+		public NatNetClient(string clientAppName, byte[] clientAppVersion)
 		{
-			this.manager             = manager;
 			this.clientAppName       = clientAppName;
 			this.clientAppVersion    = clientAppVersion;
 			this.clientNatNetVersion = new byte[] {2, 9, 0, 0};
@@ -221,7 +220,7 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public void Update()
+		public void Update(ref bool dataChanged, ref bool sceneChanged)
 		{
 			if (connected)
 			{
@@ -246,6 +245,10 @@ namespace SentienceLab.MoCap
 							// otherwise slow framerates lead to even longer delays
 						}
 					}
+
+					// transfer and reset flags for updates
+					dataChanged  = frameReceived;      frameReceived      = false;
+					sceneChanged = definitionReceived; definitionReceived = false; 
 				}
 
 				if ( !streamingEnabled )
@@ -451,17 +454,17 @@ namespace SentienceLab.MoCap
 		{
 			int numDescriptions = packet.GetInt32();
 
-			List<Actor>  actors  = new List<Actor>();
-			List<Device> devices = new List<Device>();
+			scene.actors.Clear();
+			scene.devices.Clear();
 			for ( int dIdx = 0 ; dIdx < numDescriptions ; dIdx++ )
 			{
 				int datasetType = packet.GetInt32();
 				switch ( datasetType )
 				{
-					case DATASET_TYPE_MARKERSET  : ParseMarkerset(packet, actors); break;
-					case DATASET_TYPE_RIGIDBODY  : ParseRigidBody(packet, actors); break;
-					case DATASET_TYPE_SKELETON   : ParseSkeleton(packet, actors); break;
-					case DATASET_TYPE_FORCEPLATE : ParseForcePlate(packet, devices); break;
+					case DATASET_TYPE_MARKERSET  : ParseMarkerset(packet, scene.actors); break;
+					case DATASET_TYPE_RIGIDBODY  : ParseRigidBody(packet, scene.actors); break;
+					case DATASET_TYPE_SKELETON   : ParseSkeleton(packet, scene.actors); break;
+					case DATASET_TYPE_FORCEPLATE : ParseForcePlate(packet, scene.devices); break;
 					default: 
 					{
 						Debug.LogWarning("Invalid dataset type " + datasetType + " in model definition respose.");
@@ -469,12 +472,8 @@ namespace SentienceLab.MoCap
 					}
 				}
 			}
-
-			scene.actors  = actors.ToArray();
-			scene.devices = devices.ToArray();
-
-			// scene description has possibly changed > update device and actor listeners
-			manager.NotifyListeners_Change(scene);
+			
+			definitionReceived = true;
 
 			return true;
 		}
@@ -696,7 +695,7 @@ namespace SentienceLab.MoCap
 
 				// find the corresponding actor
 				Bone bone = DUMMY_BONE;
-				if ( (rigidBodyID >=0) && (rigidBodyID < scene.actors.Length) )
+				if ( (rigidBodyID >=0) && (rigidBodyID < scene.actors.Count) )
 				{
 					//TODO: What if there is no bone in that actor?
 					bone = scene.actors[rigidBodyID].bones[0];
@@ -892,7 +891,7 @@ namespace SentienceLab.MoCap
 				scene.timestamp = timestampDoublePrecision ? packet.GetDouble() : packet.GetFloat();
 			}
 
-			manager.NotifyListeners_Update(scene);
+			frameReceived = true;
 
 			return true;
 		}
@@ -922,8 +921,6 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private readonly MoCapManager manager;
-
 		private string              clientAppName;
 		private byte[]              clientAppVersion;
 		private byte[]              clientNatNetVersion;
@@ -933,7 +930,7 @@ namespace SentienceLab.MoCap
 		private ServerInfo          serverInfo;
 		private IPAddress           multicastAddress;
 		private string              serverResponse;
-		private bool                connected, streamingEnabled;
+		private bool                connected, streamingEnabled, frameReceived, definitionReceived;
 		private Scene               scene;
 		private float               updateRate;
 

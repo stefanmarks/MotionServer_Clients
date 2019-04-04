@@ -9,9 +9,9 @@ using UnityEngine.UI;
 namespace SentienceLab.Data
 {
 	[RequireComponent(typeof(Slider))]
-	[AddComponentMenu("Parameter/Controller/Slider")]
+	[AddComponentMenu("Parameter/Controller/UI/Slider")]
 
-	public class ParameterController_Slider : MonoBehaviour
+	public class ParameterController_UI_Slider : MonoBehaviour
 	{
 		public Parameter_Double Parameter;
 
@@ -40,6 +40,7 @@ namespace SentienceLab.Data
 			else
 			{
 				Debug.LogWarning("Parameter not defined");
+				this.enabled = false;
 			}
 
 			m_updating = false;

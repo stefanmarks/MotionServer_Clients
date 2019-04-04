@@ -22,7 +22,10 @@ namespace SentienceLab
 			Standalone,
 			MoCapRoom,
 			OculusRift,
-			HTC_Vive
+			HTC_Vive,
+			WindowsMixedReality,
+			Hololens,
+			MagicLeap
 		}
 
 
@@ -69,6 +72,10 @@ namespace SentienceLab
 				else if (model.Contains("vive"))
 				{
 					configuration = Configuration.HTC_Vive;
+				}
+				else if (model.Contains("windows"))
+				{
+					configuration = Configuration.WindowsMixedReality;
 				}
 				else
 				{

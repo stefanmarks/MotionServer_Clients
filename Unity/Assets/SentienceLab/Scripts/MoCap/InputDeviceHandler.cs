@@ -35,6 +35,7 @@ namespace SentienceLab.MoCap
 
 			value    = 0;
 			oldValue = 0;
+			warningIssued = false;
 
 			PressThreshold = 1.0f;
 
@@ -86,7 +87,7 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public void SceneChanged(Scene scene)
+		public void SceneDefinitionChanged(Scene scene)
 		{
 			// scene description has changed > search for channel again
 			oldValue = 0;
@@ -105,7 +106,11 @@ namespace SentienceLab.MoCap
 			}
 			else
 			{
-				Debug.LogWarning("Could not register handler for input device '" + deviceName + "', channel '" + channelName + "'");
+				if (!warningIssued)
+				{
+					Debug.LogWarning("Could not register handler for input device '" + deviceName + "', channel '" + channelName + "'");
+					warningIssued = true;
+				}
 			}
 		}
 
@@ -125,7 +130,7 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public void SceneUpdated(Scene scene)
+		public void SceneDataUpdated(Scene scene)
 		{
 			// store values and flags for queries
 			if (channel != null)
@@ -148,5 +153,6 @@ namespace SentienceLab.MoCap
 		private Channel channel;
 		private float   value, oldValue;
 		private bool    pressed, released;
+		private bool    warningIssued;
 	}
 }

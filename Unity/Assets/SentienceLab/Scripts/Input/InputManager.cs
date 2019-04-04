@@ -171,11 +171,14 @@ namespace SentienceLab.Input
 		/// 
 		public static InputHandler GetInputHandler(string name)
 		{
-			InputHandler handler;
-			if (!handlers.TryGetValue(name, out handler))
+			InputHandler handler = null;
+			if (name != "")
 			{
-				handler = new InputHandler(name);
-				handlers[name] = handler;
+				if (!handlers.TryGetValue(name, out handler))
+				{
+					handler = new InputHandler(name);
+					handlers[name] = handler;
+				}
 			}
 			return handler;
 		}

@@ -10,9 +10,9 @@ using UnityEngine.UI;
 namespace SentienceLab.Data
 {
 	[RequireComponent(typeof(Dropdown))]
-	[AddComponentMenu("Parameter/Controller/Dropdown")]
+	[AddComponentMenu("Parameter/Controller/UI/Dropdown")]
 
-	public class ParameterController_Dropdown : MonoBehaviour
+	public class ParameterController_UI_Dropdown : MonoBehaviour
 	{
 		public Parameter_List Parameter;
 
@@ -37,6 +37,7 @@ namespace SentienceLab.Data
 			else
 			{
 				Debug.LogWarning("Parameter not defined");
+				this.enabled = false;
 			}
 
 			m_updating = false;

@@ -8,11 +8,12 @@ using SentienceLab.Input;
 
 namespace SentienceLab.Data
 {
-	[AddComponentMenu("Parameter/Controller/Input (toggle)")]
+	[AddComponentMenu("Parameter/Controller/Input/Toggle")]
 
 	public class ParameterController_Input_Toggle : MonoBehaviour
 	{
 		[Tooltip("The parameter to control with the input (default: the first component in this game object)")]
+		[TypeConstraint(typeof(IParameterToggle))]
 		public ParameterBase Parameter;
 
 		[Tooltip("Name of the input that controls this parameter")]
@@ -27,15 +28,17 @@ namespace SentienceLab.Data
 			}
 			if (Parameter != null)
 			{
-				m_toggleParameter = (IParameterToggle)Parameter;
-				if (m_toggleParameter == null)
+				m_toggle = (IParameterToggle)Parameter;
+				if (m_toggle == null)
 				{
-					Debug.LogWarning("Parameter cannot be toggled");
+					Debug.LogWarning("Parameter can't be toggled");
+					this.enabled = false;
 				}
 			}
 			else
 			{
 				Debug.LogWarning("Parameter not defined");
+				this.enabled = false;
 			}
 
 			m_handler = InputHandler.Find(InputName);
@@ -44,17 +47,17 @@ namespace SentienceLab.Data
 
 		public void Update()
 		{
-			if ((m_toggleParameter != null) && (m_handler != null))
+			if ((m_toggle != null) && (m_handler != null))
 			{
 				if (m_handler.IsActivated())
 				{
-					m_toggleParameter.Toggle();
+					m_toggle.Toggle();
 				}
 			}
 		}
 
 
-		private IParameterToggle m_toggleParameter;
+		private IParameterToggle m_toggle;
 		private InputHandler     m_handler;
 	}
 }

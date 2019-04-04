@@ -3,11 +3,6 @@
 [RequireComponent(typeof(Camera))]
 public class ExternalObserverCamera : MonoBehaviour
 {
-	public enum DisplayNumber
-	{
-		Display1, Display2, Display3, Display4, Display5, Display6, Display7, Display8
-	}
-
 	[Tooltip("The camera that this observer camera should mirror")]
 	public Camera mainCamera = null;
 
@@ -17,10 +12,7 @@ public class ExternalObserverCamera : MonoBehaviour
 	[Tooltip("Check to avoid roll movement of the external camera")]
 	public bool noRoll = true;
 
-	[Tooltip("Which display should the external camera open up")]
-	public DisplayNumber displayNumber = DisplayNumber.Display2;
-
-
+	
 	public void Start()
 	{
 		// use default camera if not explicitely stated
@@ -53,7 +45,7 @@ public class ExternalObserverCamera : MonoBehaviour
 	{
 		Camera camera = GetComponent<Camera>();
 
-		int displayIdx = (int)displayNumber;
+		int displayIdx = camera.targetDisplay;
 		if (displayIdx < Display.displays.Length)
 		{
 			Display d = Display.displays[displayIdx];
@@ -61,10 +53,9 @@ public class ExternalObserverCamera : MonoBehaviour
 			{
 				d.Activate();
 			}
-			Debug.Log("Activated external observer camera on " + displayNumber + " with " + d.systemWidth + "x" + d.systemHeight);
+			Debug.Log("Activated external observer camera on display #" + displayIdx + " with " + d.systemWidth + "x" + d.systemHeight);
 
 			// set some parameters
-			camera.targetDisplay = displayIdx;
 			camera.nearClipPlane = mainCamera.nearClipPlane;
 			camera.farClipPlane  = mainCamera.farClipPlane;
 			camera.stereoTargetEye = StereoTargetEyeMask.None;
@@ -77,7 +68,7 @@ public class ExternalObserverCamera : MonoBehaviour
 		{
 			// no external display > shut down this node
 			gameObject.SetActive(false);
-			Debug.Log("Could not activate external observer camera on " + displayNumber);
+			Debug.Log("Could not activate external observer camera on display #" + displayIdx);
 		}
 	}
 

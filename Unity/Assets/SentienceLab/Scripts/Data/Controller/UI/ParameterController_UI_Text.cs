@@ -9,9 +9,9 @@ using UnityEngine.UI;
 namespace SentienceLab.Data
 {
 	[RequireComponent(typeof(Text))]
-	[AddComponentMenu("Parameter/Controller/Text")]
+	[AddComponentMenu("Parameter/Controller/UI/Text")]
 
-	public class ParameterController_Text : MonoBehaviour
+	public class ParameterController_UI_Text : MonoBehaviour
 	{
 		[Tooltip("The parameter to convert into text")]
 		public ParameterBase Parameter;
@@ -35,6 +35,7 @@ namespace SentienceLab.Data
 			else
 			{
 				Debug.LogWarning("Parameter not defined");
+				this.enabled = false;
 			}
 
 			m_textComponent = GetComponent<Text>();

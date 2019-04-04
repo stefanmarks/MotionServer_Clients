@@ -117,13 +117,13 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public void SceneUpdated(Scene scene)
+		public void SceneDataUpdated(Scene scene)
 		{
 			// nothing to do here
 		}
 
 
-		public void SceneChanged(Scene scene)
+		public void SceneDefinitionChanged(Scene scene)
 		{
 			// actor has changed > rebuild markers on next update
 			if (markerNode != null)

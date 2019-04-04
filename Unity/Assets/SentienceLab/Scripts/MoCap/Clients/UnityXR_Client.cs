@@ -19,20 +19,12 @@ namespace SentienceLab.MoCap
 		/// <summary>
 		/// Constructs a MoCap client that uses Unity XR devices.
 		/// </summary>
-		/// <param name="manager">the MoCapManager instance</param>
 		///
-		public UnityXR_Client(MoCapManager manager)
+		public UnityXR_Client()
 		{
-			this.manager = manager;
-
-			trackedDevices = new List<XRNode>(
-				new XRNode[] {
-					XRNode.LeftHand, XRNode.RightHand,
-					XRNode.Head,
-					XRNode.GameController, XRNode.HardwareTracker});
-
-			scene = new Scene();
-			connected = false;
+			nodeStates = new List<XRNodeState>();
+			scene      = new Scene();
+			connected  = false;
 		}
 
 
@@ -42,17 +34,34 @@ namespace SentienceLab.MoCap
 
 			if (connected)
 			{
+				InputTracking.GetNodeStates(nodeStates);
+				actors = new Dictionary<ulong, Actor>();
+
 				// construct scene description
-				scene.actors = new Actor[trackedDevices.Count];
-				for (int idx = 0; idx < trackedDevices.Count; idx++)
+				scene.actors.Clear();
+				foreach (XRNodeState state in nodeStates)
 				{
-					Actor actor = new Actor(scene, trackedDevices[idx].ToString(), idx);
-					actor.bones = new Bone[1];
-					actor.bones[0] = new Bone(actor, "root", 0);
-					scene.actors[idx] = actor;
+					CreateActor(state);
 				}
 			}
 			return connected;
+		}
+
+
+		private Actor CreateActor(XRNodeState state)
+		{
+			// some names are a bit too complex
+			String name = InputTracking.GetNodeName(state.uniqueID);
+			name = name.Replace("Windows Mixed Reality", "WMR");
+			name = name.Replace(" ", "").Replace("-", "");
+
+			// create actor
+			Actor actor = new Actor(scene, name);
+			actor.bones = new Bone[1];
+			actor.bones[0] = new Bone(actor, "root", 0);
+			scene.actors.Add(actor);
+			actors.Add(state.uniqueID, actor);
+			return actor;
 		}
 
 
@@ -70,7 +79,7 @@ namespace SentienceLab.MoCap
 		
 		public String GetDataSourceName()
 		{
-			return "UnityXR";
+			return "UnityXR/" + XRDevice.model;
 		}
 
 
@@ -86,21 +95,47 @@ namespace SentienceLab.MoCap
 		}
 
 
-		public void Update()
+		public void Update(ref bool dataChanged, ref bool sceneChanged)
 		{
 			// frame number and timestamp
 			scene.frameNumber = Time.frameCount;
 			scene.timestamp   = Time.time;
 
-			for (int idx = 0; idx < trackedDevices.Count; idx++)
+			// poll hand controllers to force detection 
+			InputTracking.GetLocalPosition(XRNode.LeftHand);
+			InputTracking.GetLocalPosition(XRNode.RightHand);
+
+			// get new node data
+			InputTracking.GetNodeStates(nodeStates);
+
+			foreach (XRNodeState state in nodeStates)
 			{
-				XRNode device = trackedDevices[idx];
-				// update position, orientation, and tracking state
-				Bone bone = scene.actors[idx].bones[0];
-				bone.CopyFrom(InputTracking.GetLocalPosition(device), InputTracking.GetLocalRotation(device));
-				bone.tracked = true;
+				Actor actor = null;
+				if (actors.TryGetValue(state.uniqueID, out actor))
+				{
+					// update position, orientation, and tracking state
+					Bone bone = actor.bones[0];
+					bone.tracked = state.tracked;
+					if (bone.tracked)
+					{
+						Vector3 pos;
+						if (state.TryGetPosition(out pos)) bone.CopyFrom(pos);
+						else bone.tracked = false;
+						Quaternion rot;
+						if (state.TryGetRotation(out rot)) bone.CopyFrom(rot);
+						else bone.tracked = false;
+					}
+					dataChanged = true;
+				}
+				else
+				{
+					actor = CreateActor(state);
+					Debug.Log("New actor added: " + actor.name);
+					sceneChanged = true;
+				}
 			}
-			manager.NotifyListeners_Update(scene);
+
+			dataChanged = true;
 		}
 
 
@@ -110,11 +145,10 @@ namespace SentienceLab.MoCap
 		}
 
 
-		private readonly MoCapManager manager;
-
-		private bool         connected;
-		private Scene        scene;
-		private List<XRNode> trackedDevices;
+		private bool                      connected;
+		private Scene                     scene;
+		private Dictionary<ulong, Actor>  actors;
+		private List<XRNodeState>         nodeStates;
 	}
 
 }

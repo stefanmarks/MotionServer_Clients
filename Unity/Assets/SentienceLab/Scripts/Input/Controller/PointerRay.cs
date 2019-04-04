@@ -177,9 +177,11 @@ namespace SentienceLab
 		/// 
 		private void HandleEvents()
 		{
-			IPointerRayTarget currentTarget = (rayTarget.distance > 0 && (rayTarget.transform != null)) ?
-				rayTarget.transform.gameObject.GetComponent<IPointerRayTarget>() :
-				null;
+			IPointerRayTarget currentTarget = null;
+			if (rayTarget.distance > 0 && (rayTarget.transform != null))
+			{
+				currentTarget = rayTarget.collider.gameObject.GetComponent<IPointerRayTarget>();
+			}
 			if (currentTarget != activeTarget)
 			{
 				if (activeTarget != null) activeTarget.OnPointerExit(this);
