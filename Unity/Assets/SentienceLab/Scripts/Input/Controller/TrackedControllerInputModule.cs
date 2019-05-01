@@ -30,27 +30,20 @@ namespace SentienceLab
 		[Tooltip("Tracked controllers and their action name for clicking")]
 		public ControllerInfo[] controllers;
 
+		[Tooltip("Range of the raycasts for the controllers")]
+		public float maxRange = 10;
+
+		[Tooltip("Forcibly enable this module")]
 		public bool ForceModuleActive = false;
 
 
 		public override bool ShouldActivateModule()
 		{
 			bool activate = base.ShouldActivateModule();
-			if (activate && !activated && (controllers != null))
+			if (activate && !activated)
 			{
-				// is at least one of the controller objects active?
-				bool controllersActive = false;
-				foreach (ControllerInfo controller in controllers)
-				{
-					if ((controller.trackedObject != null) &&
-						controller.trackedObject.gameObject.activeInHierarchy)
-					{
-						controllersActive = true;
-						break;
-					}
-				}
-				// if so, activate this module
-				activate = controllersActive;
+				// XR device should be present to have tracked controllers
+				activate = UnityEngine.XR.XRDevice.isPresent;
 			}
 			activate |= ForceModuleActive;
 			return activate;
@@ -69,7 +62,7 @@ namespace SentienceLab
 				controllerCamera.cullingMask     = layerMask;
 				controllerCamera.depth           = -100;
 				controllerCamera.nearClipPlane   = 0.05f;
-				controllerCamera.farClipPlane    = 10.0f;
+				controllerCamera.farClipPlane    = maxRange;
 				controllerCamera.stereoTargetEye = StereoTargetEyeMask.None;
 				PhysicsRaycaster prc = (PhysicsRaycaster) controllerCamera.gameObject.AddComponent<PhysicsRaycaster>();
 				prc.eventMask = layerMask;

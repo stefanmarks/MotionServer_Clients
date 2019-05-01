@@ -115,15 +115,15 @@ namespace SentienceLab.MoCap
 
 
 		/// <summary>
-		/// Called once per rendered frame at the end of the frame. 
+		/// Called just before the scene renders. 
 		/// </summary>
 		///
-		public void LateUpdate()
+		public void OnPreRender()
 		{
-			if (lastLateUpdateFrame < Time.frameCount)
+			if (lastPreRenderFrame < Time.frameCount)
 			{
 				UpdateScene();
-				lastLateUpdateFrame = Time.frameCount;
+				lastPreRenderFrame = Time.frameCount;
 			}
 		}
 
@@ -466,7 +466,7 @@ namespace SentienceLab.MoCap
 		private static IMoCapClient client        = null;
 		private static Mutex        clientMutex   = new Mutex();
 
-		private long lastUpdateFrame, lastLateUpdateFrame;
+		private long lastUpdateFrame, lastPreRenderFrame;
 
 		private InputHandler pauseHandler;
 		private bool         pauseClient; 

@@ -4,6 +4,7 @@
 #endregion Copyright Information
 
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 /// <summary>
@@ -47,13 +48,16 @@ namespace SentienceLab.MoCap
 		/// Finds an actor by name.
 		/// </summary>
 		/// <returns>The actor with the given name or <code>null</code> if the actor doesn't exist</returns>
-		/// <param name="name">The name of the actor to find</param>
+		/// <param name="nameRegEx">The name of the actor to find as a regular expression</param>
 		/// 
-		public Actor FindActor(string name)
+		public Actor FindActor(string nameRegEx)
 		{
-			foreach ( Actor a in actors )
+			foreach (Actor a in actors)
 			{
-				if ( (a != null) && (a.name.CompareTo(name) == 0) ) return a;
+				if (a != null)
+				{
+					if (Regex.Matches(a.name, nameRegEx).Count > 0) return a;
+				}
 			}
 			return null;
 		}

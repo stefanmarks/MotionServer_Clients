@@ -58,8 +58,8 @@ namespace SentienceLab.MoCap
 		public enum UpdateType
 		{
 			Update,
-			LateUpdate,
-			UpdateAndLateUpdate
+			PreRender,
+			UpdateAndPreRender
 		};
 
 
@@ -176,7 +176,7 @@ namespace SentienceLab.MoCap
 		public void Update()
 		{
 			if ( (updateType == UpdateType.Update) || 
-			     (updateType == UpdateType.UpdateAndLateUpdate) )
+			     (updateType == UpdateType.UpdateAndPreRender) )
 			{
 				MoCapManager.GetInstance().Update();
 				UpdateObject();
@@ -185,15 +185,15 @@ namespace SentienceLab.MoCap
 
 
 		//// <summary>
-		/// Called once per frame before the end of the frame.
+		/// Called just before the frame renders.
 		/// </summary>
 		/// 
-		public void LateUpdate()
+		public void OnPreRender()
 		{
-			if ( (updateType == UpdateType.LateUpdate) ||
-			     (updateType == UpdateType.UpdateAndLateUpdate))
+			if ( (updateType == UpdateType.PreRender) ||
+			     (updateType == UpdateType.UpdateAndPreRender))
 			{
-				MoCapManager.GetInstance().LateUpdate();
+				MoCapManager.GetInstance().OnPreRender();
 				UpdateObject();
 			}
 		}
@@ -274,13 +274,13 @@ namespace SentienceLab.MoCap
 				if (controllingBone == null)
 				{
 					// not found, or not defined > use root bone
-					Debug.Log("MoCap Object '" + this.name + "' controlled by MoCap actor '" + actorName + "'.");
+					Debug.Log("MoCap Object '" + this.name + "' controlled by MoCap actor '" + actor.name + "'.");
 					controllingBone = actor.bones[0];
 				}
 				else
 				{
 					Debug.Log("MoCap Object '" + this.name + "' controlled by MoCap actor/bone '" +
-						actorName + "/" + controllingBone.name + "'.");
+						actor.name + "/" + controllingBone.name + "'.");
 				}
 				this.gameObject.SetActive(true);
 			}
