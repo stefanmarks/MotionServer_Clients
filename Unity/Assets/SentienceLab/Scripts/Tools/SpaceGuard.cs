@@ -47,6 +47,8 @@ namespace SentienceLab
 		[Tooltip("Floor offset along Y axis")]
 		public float floorOffsetY = 0.01f;
 
+		public float forceSize = 0;
+
 
 		/// <summary>
 		/// Called at start of the script.
@@ -94,18 +96,27 @@ namespace SentienceLab
 					break;
 
 				case ConfigurationManager.Configuration.MoCapRoom:
-					CreateWall(-2, -2, 2, -2, "Front");
-					CreateWall(2, -2, 2, 2, "Right");
-					CreateWall(2, 2, -2, 2, "Back");
-					CreateWall(-2, 2, -2, -2, "Left");
-					CreateFloor(-2, -2, 2, 2);
+					CreateCube(2);
 					break;
 
 				default:
+					if (forceSize > 0)
+					{
+						CreateCube(forceSize);
+					}
 					break;
 			}
 		}
 
+
+		private void CreateCube(float _size)
+		{
+			CreateWall(-_size, -_size,  _size, -_size, "Front");
+			CreateWall( _size, -_size,  _size,  _size, "Right");
+			CreateWall( _size,  _size, -_size,  _size, "Back");
+			CreateWall(-_size,  _size, -_size, -_size, "Left");
+			CreateFloor(-_size, -_size, _size, _size);
+		}
 
 		private void CreateWall(float x1, float z1, float x2, float z2, string name)
 		{

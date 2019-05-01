@@ -15,6 +15,9 @@ namespace SentienceLab.Tools
 		[Tooltip("Name of the input that starts the grab action")]
 		public string InputName;
 
+		[Tooltip("Force to apply")]
+		public float Force = 10;
+
 		[Tooltip("Tag of elements that can be grabbed")]
 		public string CanGrabTag = "grab";
 
@@ -36,22 +39,36 @@ namespace SentienceLab.Tools
 
 		public void Update()
 		{
-			if (m_handlerActive.IsActivated() && (m_candidate != null))
+			if (m_handlerActive.IsActivated())
 			{
 				m_activeBody = m_candidate;
 				if (m_activeBody != null)
 				{
-					m_startPoint = this.transform.position;
-					m_grabPoint  = m_activeBody.transform.InverseTransformPoint(m_startPoint);
+					m_localGrabPoint = m_activeBody.transform.InverseTransformPoint(this.transform.position);
 				}
 			}
-			else if (m_handlerActive.IsActive() && (m_activeBody != null))
+			else if (m_handlerActive.IsDeactivated())
 			{
-				Vector3 newPos   = this.transform.position;
-				Vector3 deltaPos = newPos - m_activeBody.transform.TransformPoint(m_grabPoint);
-				deltaPos -= m_activeBody.velocity * 0.2f; // don't overshoot
-				Vector3 vel = deltaPos / Time.deltaTime;
-				m_activeBody.AddForceAtPosition(vel, this.transform.position, ForceMode.Acceleration);
+				m_activeBody = null;
+			}
+		}
+
+
+		public void FixedUpdate()
+		{
+			if (m_handlerActive.IsActive() && (m_activeBody != null))
+			{
+				// calculate necessary velocity to maintain grab
+				Vector3 newPos    = this.transform.position;
+				Vector3 grabPoint = m_activeBody.transform.TransformPoint(m_localGrabPoint);
+				Vector3 deltaPos  = newPos - grabPoint;
+				
+				// compensate by body movement
+				Vector3 velocity = m_activeBody.GetPointVelocity(grabPoint);
+				deltaPos -= 0.5f * velocity;
+				if (deltaPos.magnitude > 1) deltaPos.Normalize();
+				Vector3 force = deltaPos * Force;
+				m_activeBody.AddForceAtPosition(force, this.transform.position, ForceMode.Force);
 			}
 		}
 
@@ -72,8 +89,7 @@ namespace SentienceLab.Tools
 
 
 		private InputHandler m_handlerActive;
-		private Vector3      m_startPoint, m_grabPoint;
+		private Vector3      m_localGrabPoint;
 		private Rigidbody    m_candidate, m_activeBody;
-		private Rigidbody    m_noColliderCandidate;
 	}
 }

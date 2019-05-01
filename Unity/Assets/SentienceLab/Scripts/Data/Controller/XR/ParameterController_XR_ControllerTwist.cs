@@ -45,26 +45,36 @@ namespace SentienceLab.Data
 			{
 				if (m_handlerActive.IsActivated())
 				{
-					m_startRotation = transform.rotation.eulerAngles;
+					m_rotation     = 0;
+					m_lastRotation = transform.rotation.eulerAngles;
 				}
 				else if (m_handlerActive.IsActive())
 				{
 					Vector3 newRot = transform.rotation.eulerAngles;
 					// find delta rotation
-					float angle = m_startRotation.z - newRot.z; // minus: clockwise = positive number
+					float deltaRot = newRot.z - m_lastRotation.z;
 					// account for 360 degree jump
-					while (angle < -180) angle += 360;
-					while (angle > +180) angle -= 360;
+					while (deltaRot < -180) deltaRot += 360;
+					while (deltaRot > +180) deltaRot -= 360;
 					// This should only work when controller points horizontally
 					// > diminish when |Y| component of forwards vector increases
-					angle *= 1 - Mathf.Abs(transform.forward.y);
+					float changeFactor = 1 - Mathf.Abs(transform.forward.y);
+					deltaRot *= changeFactor;
+					// accumulate change (minus: clockwise = positive number)
+					m_rotation += -deltaRot;
+					// constrain to control curve limits
+					m_rotation = Mathf.Clamp(m_rotation,
+						Curve.keys[0].time,
+						Curve.keys[Curve.length - 1].time);
 					// actually change parameter
-					Parameter.ChangeValue(Time.deltaTime * Curve.Evaluate(angle), 0);
+					Parameter.ChangeValue(Time.deltaTime * Curve.Evaluate(m_rotation) * changeFactor, 0);
+					m_lastRotation = newRot;
 				}
 			}
 		}
 
 		private InputHandler m_handlerActive;
-		private Vector3      m_startRotation;
+		private Vector3      m_lastRotation;
+		private float        m_rotation;
 	}
 }
