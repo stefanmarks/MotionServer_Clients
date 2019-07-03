@@ -8,7 +8,7 @@ using UnityEngine;
 namespace SentienceLab.Data
 {
 	[AddComponentMenu("Parameter/Boolean")]
-	public class Parameter_Boolean : ParameterBase, IParameterToggle
+	public class Parameter_Boolean : ParameterBase, IParameterAsBoolean
 	{
 		/// <summary>
 		/// The actual value.
@@ -45,9 +45,15 @@ namespace SentienceLab.Data
 		}
 
 
-		public void Toggle()
+		public bool GetBooleanValue()
 		{
-			Value = !Value;
+			return Value;
+		}
+
+
+		public void SetBooleanValue(bool _value)
+		{
+			Value = _value;
 		}
 
 

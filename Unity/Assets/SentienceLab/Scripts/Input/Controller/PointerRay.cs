@@ -3,6 +3,7 @@
 // (C) Sentience Lab (sentiencelab@aut.ac.nz), Auckland University of Technology, Auckland, New Zealand 
 #endregion Copyright Information
 
+using SentienceLab.Data;
 using SentienceLab.Input;
 using UnityEngine;
 
@@ -36,6 +37,12 @@ namespace SentienceLab
 		[Tooltip("(Optional) Action to activate the ray")]
 		public string activationAction = "";
 
+		[Tooltip("(Optional) Parameter that activates the ray")]
+		public Parameter_Boolean activationParameter = null;
+
+		[Tooltip("(Optional) Parameter for relative ray direction")]
+		public Parameter_Vector3 rayDirection = null;
+
 
 		/// <summary>
 		/// Interface to implement for objects that need to react to the pointer ray entering/exiting their colliders.
@@ -56,7 +63,7 @@ namespace SentienceLab
 			overrideTarget = false;
 			activeTarget = null;
 
-			if ( activationAction.Trim().Length > 0 )
+			if (activationAction.Trim().Length > 0)
 			{
 				handlerActivate = InputHandler.Find(activationAction);
 				rayEnabled = false;
@@ -73,6 +80,10 @@ namespace SentienceLab
 			{
 				rayEnabled = handlerActivate.IsActive();
 			}
+			if (activationParameter != null)
+			{
+				rayEnabled = activationParameter.Value;
+			}
 
 			// change in enabled flag
 			if (line.enabled != rayEnabled)
@@ -88,7 +99,9 @@ namespace SentienceLab
 			{
 				bool hit = false;
 				// construct ray
-				Ray ray = new Ray(transform.position, transform.forward);
+				Vector3 forward = (rayDirection == null) ? Vector3.forward : rayDirection.Value;
+				forward = transform.TransformDirection(forward); // relative forward to "world forward"
+				Ray ray = new Ray(transform.position, forward);
 				Vector3 end = ray.origin + ray.direction * rayRange;
 				line.SetPosition(0, ray.origin);
 				Debug.DrawLine(ray.origin, end, Color.red);

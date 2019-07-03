@@ -4,6 +4,7 @@
 #endregion Copyright Information
 
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace SentienceLab.Data
 {
@@ -25,6 +26,10 @@ namespace SentienceLab.Data
 		/// 
 		public void Start()
 		{
+			// make sure name is defined
+			Assert.IsNotNull(Name);
+			Assert.IsTrue(Name.Length > 0);
+
 			m_checkForChange = false;
 		}
 
@@ -83,12 +88,13 @@ namespace SentienceLab.Data
 
 
 	/// <summary>
-	/// Interface for a parameter that can be toggled.
+	/// Interface for a parameter that can be treated as a boolean.
 	/// </summary>
 	/// 
-	public interface IParameterToggle
+	public interface IParameterAsBoolean
 	{
-		void Toggle();
+		bool GetBooleanValue();
+		void SetBooleanValue(bool _value);
 	}
 
 

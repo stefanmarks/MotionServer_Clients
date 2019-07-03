@@ -9,7 +9,7 @@ using UnityEngine;
 namespace SentienceLab.Data
 {
 	[AddComponentMenu("Parameter/Double")]
-	public class Parameter_Double : ParameterBase, IParameterModify, IParameterToggle
+	public class Parameter_Double : ParameterBase, IParameterModify, IParameterAsBoolean
 	{
 		public delegate void LimitChanged(ParameterBase _value);
 		public event LimitChanged OnLimitChanged;
@@ -173,17 +173,16 @@ namespace SentienceLab.Data
 		}
 
 
-		public void Toggle()
+		public bool GetBooleanValue()
 		{
-			// threshold for toggling is the middle limit
-			if (Value > (value.limitMin + value.limitMax) / 2)
-			{
-				Value = value.limitMin;
-			}
-			else
-			{
-				Value = value.limitMax;
-			}
+			// threshold for bool value is the middle limit
+			return Value > ((value.limitMin + value.limitMax) / 2);
+		}
+
+
+		public void SetBooleanValue(bool _value)
+		{ 
+			Value = _value ? value.limitMax : value.limitMin;
 		}
 
 

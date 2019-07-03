@@ -56,6 +56,9 @@ namespace SentienceLab.MoCap
 
 			pauseHandler = InputHandler.Find(pauseAction);
 			pauseClient  = false;
+
+			lastUpdateFrame    = -1;
+			lastPreRenderFrame = -1;
 		}
 
 

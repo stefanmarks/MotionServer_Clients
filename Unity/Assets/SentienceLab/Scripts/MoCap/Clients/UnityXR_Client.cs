@@ -102,8 +102,8 @@ namespace SentienceLab.MoCap
 			scene.timestamp   = Time.time;
 
 			// poll hand controllers to force detection 
-			InputTracking.GetLocalPosition(XRNode.LeftHand);
-			InputTracking.GetLocalPosition(XRNode.RightHand);
+			// InputTracking.GetLocalPosition(XRNode.LeftHand);
+			// InputTracking.GetLocalPosition(XRNode.RightHand);
 
 			// get new node data
 			InputTracking.GetNodeStates(nodeStates);
