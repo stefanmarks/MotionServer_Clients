@@ -70,7 +70,7 @@ namespace SentienceLab.Input
 			if (inputName.Contains("-|+"))
 			{
 				// plus/minus device
-				String[] parts = inputName.Split(new string[] { "-|+" }, StringSplitOptions.RemoveEmptyEntries);
+				string[] parts = inputName.Split(new string[] { "-|+" }, StringSplitOptions.RemoveEmptyEntries);
 				if (parts.Length > 1)
 				{
 					IDevice deviceMinus = CreateDevice(type, parts[0]);
