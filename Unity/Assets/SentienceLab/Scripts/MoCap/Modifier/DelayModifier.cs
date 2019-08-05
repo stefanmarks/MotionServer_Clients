@@ -24,7 +24,7 @@ namespace SentienceLab.MoCap
 
 		public void Start()
 		{
-			framerate = MoCapManager.GetInstance().GetFramerate();
+			framerate = MoCapManager.Instance.Framerate;
 		}
 
 

@@ -233,6 +233,12 @@ namespace SentienceLab.Input
 		}
 
 
+		public bool HasDevices()
+		{
+			return devices.Count > 0;
+		}
+
+
 		private List<IDevice> devices;
 		private float         pressThreshold;
 
@@ -487,7 +493,7 @@ namespace SentienceLab.Input
 			{
 				// input name shoud be "device/channel" syntax
 				string[] parts = inputName.Split('/');
-				if ((parts.Length >= 2) && MoCap.MoCapManager.GetInstance() != null)
+				if ((parts.Length >= 2) && MoCap.MoCapManager.Instance != null)
 				{
 					device = new MoCap.InputDeviceHandler(parts[0], parts[1]);
 				}

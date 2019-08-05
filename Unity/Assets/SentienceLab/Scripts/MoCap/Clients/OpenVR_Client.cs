@@ -101,9 +101,9 @@ namespace SentienceLab.MoCap
 						controllerCount++;
 						trackedDevice = new TrackedDevice("ViveController" + controllerCount);
 						
-						// controller has 12 input channels
+						// controller has 12 input channels and 1 output
 						Device dev = new Device(scene, trackedDevice.name, inputDeviceIdx);
-						dev.channels = new Channel[12];
+						dev.channels = new Channel[13];
 						dev.channels[0]  = new Channel(dev, "button1");  // fire
 						dev.channels[1]  = new Channel(dev, "button2");  // menu
 						dev.channels[2]  = new Channel(dev, "button3");  // grip
@@ -116,6 +116,7 @@ namespace SentienceLab.MoCap
 						dev.channels[9]  = new Channel(dev, "left");
 						dev.channels[10] = new Channel(dev, "up");
 						dev.channels[11] = new Channel(dev, "down");
+						dev.channels[12] = new Channel(dev, "rumble");   // rumble output
 						trackedDevice.device = dev;
 					}
 					else if (deviceClass == ETrackedDeviceClass.GenericTracker)
@@ -123,13 +124,14 @@ namespace SentienceLab.MoCap
 						trackerCount++;
 						trackedDevice = new TrackedDevice("ViveTracker" + trackerCount);
 
-						// tracker has 4 input channels
+						// tracker has 4 input channels and 1 output channel
 						Device dev = new Device(scene, trackedDevice.name, inputDeviceIdx);
-						dev.channels = new Channel[4];
-						dev.channels[0] = new Channel(dev, "button1"); // pin 3: grip
-						dev.channels[1] = new Channel(dev, "button2"); // pin 4: trigger
-						dev.channels[2] = new Channel(dev, "button3"); // pin 5: touchpad press
-						dev.channels[3] = new Channel(dev, "button4"); // pin 6: menu
+						dev.channels = new Channel[5];
+						dev.channels[0] = new Channel(dev, "input1"); // pin 3: grip
+						dev.channels[1] = new Channel(dev, "input2"); // pin 4: trigger
+						dev.channels[2] = new Channel(dev, "input3"); // pin 5: touchpad press
+						dev.channels[3] = new Channel(dev, "input4"); // pin 6: menu
+						dev.channels[4] = new Channel(dev, "output1"); // pin 1: rumble output
 						trackedDevice.device = dev; 
 					}
 					else if (deviceClass == ETrackedDeviceClass.HMD)
@@ -269,6 +271,10 @@ namespace SentienceLab.MoCap
 						dev.channels[9].value  = ((angle > 180 - 67.5f) || (angle < -180 + 67.5f)) ? touchpadPressed : 0; // left
 						dev.channels[10].value = ((angle >  90 - 67.5f) && (angle <   90 + 67.5f)) ? touchpadPressed : 0; // up
 						dev.channels[11].value = ((angle > -90 - 67.5f) && (angle <  -90 + 67.5f)) ? touchpadPressed : 0; // down
+						// rumble output > convert value [0...1] to time 																						  // rumble output > convert value [0...1] to time 
+						float duration = Mathf.Clamp01(dev.channels[12].value) * 1000.0f * 1000.0f / updateRate;
+						duration = Mathf.Clamp(duration, 0, 30000);
+						system.TriggerHapticPulse((uint)controllerIdx, 0, (ushort)duration);
 					}
 					else if (trackedDevices[idx].deviceClass == ETrackedDeviceClass.GenericTracker)
 					{
@@ -281,6 +287,10 @@ namespace SentienceLab.MoCap
 						dev.channels[2].value = (state.ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_SteamVR_Touchpad)) != 0 ? 1 : 0;
 						// menu button
 						dev.channels[3].value = (state.ulButtonPressed & (1ul << (int)EVRButtonId.k_EButton_ApplicationMenu)) != 0 ? 1 : 0;
+						// rumble output > convert value [0...1] to time 
+						float duration = Mathf.Clamp01(dev.channels[4].value) * 1.0f;
+						duration = Mathf.Clamp(duration, 0, 30000);
+						system.TriggerHapticPulse((uint) controllerIdx, 0, (ushort) duration);
 					}
 				}
 			}

@@ -25,7 +25,7 @@ namespace SentienceLab.MoCap
 	{
 		[Tooltip("Name of the file with MotionServer IP Addresses or .MOT files to query")]
 		public TextAsset dataSourceFile = null;
-		
+
 		[Tooltip("Action name for pausing/running the client")]
 		public string pauseAction = "pause";
 
@@ -145,8 +145,8 @@ namespace SentienceLab.MoCap
 					bool sceneChanged = false;
 					client.Update(ref dataChanged, ref sceneChanged);
 
-					if (sceneChanged) NotifyListeners_Change(GetScene());
-					if (dataChanged)  NotifyListeners_Update(GetScene());
+					if (sceneChanged) NotifyListeners_Change(Scene);
+					if (dataChanged ) NotifyListeners_Update(Scene);
 				}
 			}
 		}
@@ -157,20 +157,25 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <returns><c>true</c> if the client is connected</returns>
 		/// 
-		public bool IsConnected()
+		public bool IsConnected
 		{
-			return (client != null) && client.IsConnected();
+			get
+			{
+				return (client != null) && client.IsConnected();
+			}
 		}
-
 
 		/// <summary>
 		/// Gets the name of the connected data source.
 		/// </summary>
 		/// <returns>Name of the connected data source</returns>
 		/// 
-		public string GetDataSourceName()
+		public string DataSourceName
 		{
-			return (client != null) ? client.GetDataSourceName() : "";
+			get
+			{
+				return (client != null) ? client.GetDataSourceName() : "";
+			}
 		}
 
 
@@ -179,20 +184,24 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <returns>Update rate of the Mocap system in frames per second</returns>
 		/// 
-		public float GetFramerate()
+		public float Framerate
 		{
-			return (client != null) ? client.GetFramerate() : 0.0f;
+			get
+			{
+				return (client != null) ? client.GetFramerate() : 0.0f;
+			}
 		}
-
 
 		/// <summary>
 		/// Gets the latest scene data structure.
 		/// </summary>
 		/// <returns>Scene data or <c>null</c> if client is not connected</returns>
 		/// 
-		public Scene GetScene()
-		{
-			return (client != null) ? client.GetScene() : null;
+		public Scene Scene {
+			get
+			{
+				return (client != null) ? client.GetScene() : null;
+			}
 		}
 
 
@@ -212,7 +221,7 @@ namespace SentienceLab.MoCap
 				// immediately trigger callback
 				if (client != null)
 				{
-					Scene scene = GetScene();
+					Scene scene = Scene;
 					scene.mutex.WaitOne();
 					listener.SceneDefinitionChanged(scene);
 					scene.mutex.ReleaseMutex();
@@ -389,7 +398,7 @@ namespace SentienceLab.MoCap
 				// all fine, notify listeners of scene change
 				if ((client != null) && client.IsConnected())
 				{
-					NotifyListeners_Change(GetScene());
+					NotifyListeners_Change(Scene);
 				}
 			}
 			clientMutex.ReleaseMutex();
@@ -447,18 +456,21 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <returns>the MoCapManager instance</returns>
 		/// 
-		public static MoCapManager GetInstance()
+		public static MoCapManager Instance
 		{
-			if (instance == null)
+			get
 			{
-				if (!warningIssued)
+				if (instance == null)
 				{
-					Debug.LogWarning("No MoCapManager in scene");
-					warningIssued = true;
+					if (!warningIssued)
+					{
+						Debug.LogWarning("No MoCapManager in scene");
+						warningIssued = true;
+					}
 				}
-			}
 
-			return instance;
+				return instance;
+			}
 		}
 
 

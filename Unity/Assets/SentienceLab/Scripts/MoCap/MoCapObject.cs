@@ -104,9 +104,9 @@ namespace SentienceLab.MoCap
 			modifiers = GetComponents<IMoCapDataModifier>();
 
 			// let the MoCap manager handle the forced Update calls
-			MoCapManager.GetInstance().StartCoroutine(ForceUpdateCall(this));
+			MoCapManager.Instance.StartCoroutine(ForceUpdateCall(this));
 
-			MoCapManager.GetInstance().AddSceneListener(this);
+			MoCapManager.Instance.AddSceneListener(this);
 		}
 
 
@@ -178,7 +178,7 @@ namespace SentienceLab.MoCap
 			if ( (updateType == UpdateType.Update) || 
 			     (updateType == UpdateType.UpdateAndPreRender) )
 			{
-				MoCapManager.GetInstance().Update();
+				MoCapManager.Instance.Update();
 				UpdateObject();
 			}
 		}
@@ -193,7 +193,7 @@ namespace SentienceLab.MoCap
 			if ( (updateType == UpdateType.PreRender) ||
 			     (updateType == UpdateType.UpdateAndPreRender))
 			{
-				MoCapManager.GetInstance().OnPreRender();
+				MoCapManager.Instance.OnPreRender();
 				UpdateObject();
 			}
 		}

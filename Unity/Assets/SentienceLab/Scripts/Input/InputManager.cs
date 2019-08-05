@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using System.Collections;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -65,14 +66,47 @@ namespace SentienceLab.Input
 		{
 			ReadMappings();
 			ParseMappings();
+			StartCoroutine(DiagnosticOutput());
+		}
 
+
+		protected IEnumerator DiagnosticOutput()
+		{
+			// wait two frames so any Start method had a chance to request handlers
+			yield return new WaitForEndOfFrame();
+			yield return new WaitForEndOfFrame();
+			PrintMappings();
+			PrintUnhandledMappings();
+		}
+
+
+		public void PrintMappings()
+		{
 			// output list of input handlers
 			string logTxt = "";
 			foreach (InputHandler h in handlers.Values)
 			{
 				logTxt += ((logTxt.Length > 0) ? ", " : "") + h.ToString();
 			}
-			Debug.Log("Loaded input handlers: " + logTxt);
+			Debug.Log("List of input handlers: " + logTxt);
+		}
+
+
+		public void PrintUnhandledMappings()
+		{
+			// output list of input handlers
+			string logTxt = "";
+			foreach (InputHandler h in handlers.Values)
+			{
+				if (!h.HasDevices())
+				{
+					logTxt += ((logTxt.Length > 0) ? ", " : "") + h.ToString();
+				}
+			}
+			if (logTxt.Length > 0)
+			{
+				Debug.LogWarning("List of input handlers without active devices: " + logTxt);
+			}
 		}
 
 

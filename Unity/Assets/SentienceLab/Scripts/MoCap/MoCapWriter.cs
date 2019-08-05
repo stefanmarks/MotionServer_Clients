@@ -53,7 +53,7 @@ namespace SentienceLab.MoCap
 			writers.Clear();
 			int index = 1;
 
-			Scene s = MoCapManager.GetInstance().GetScene();
+			Scene s = MoCapManager.Instance.Scene;
 			foreach(Actor a in s.actors)
 			{
 				writers.Add(new MoCapActorWriter(a));
@@ -121,7 +121,7 @@ namespace SentienceLab.MoCap
 			writer
 				.WriteTag(MOT_FILE_IDENTIFIER) // header
 				.Write(MOT_FILE_VERSION) // version
-				.Write(MoCapManager.GetInstance().GetFramerate()) // framerate
+				.Write(MoCapManager.Instance.Framerate) // framerate
 				.EndLine();
 
 			// write description section

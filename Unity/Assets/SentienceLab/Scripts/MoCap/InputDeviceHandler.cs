@@ -39,7 +39,7 @@ namespace SentienceLab.MoCap
 
 			PressThreshold = 1.0f;
 
-			MoCapManager.GetInstance().AddSceneListener(this);
+			MoCapManager.Instance.AddSceneListener(this);
 		}
 
 

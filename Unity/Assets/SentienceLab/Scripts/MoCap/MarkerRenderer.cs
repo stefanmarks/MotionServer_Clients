@@ -41,7 +41,7 @@ namespace SentienceLab.MoCap
 			modifiers = GetComponents<IMoCapDataModifier>();
 
 			// start receiving MoCap data
-			MoCapManager.GetInstance().AddSceneListener(this);
+			MoCapManager.Instance.AddSceneListener(this);
 		}
 
 

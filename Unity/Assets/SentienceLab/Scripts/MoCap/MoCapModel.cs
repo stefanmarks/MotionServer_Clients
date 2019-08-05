@@ -71,7 +71,7 @@ namespace SentienceLab.MoCap
 			// find any MoCap data modifiers and store them
 			modifiers = GetComponents<IMoCapDataModifier>();
 
-			MoCapManager.GetInstance().AddSceneListener(this);
+			MoCapManager.Instance.AddSceneListener(this);
 		}
 
 

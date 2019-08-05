@@ -42,7 +42,7 @@ namespace SentienceLab.MoCap
 			// calculate maximum filter size if necessary
 			if (maximumFilterSize <= 0)
 			{
-				maximumFilterSize = (int) (filterTime * MoCapManager.GetInstance().GetFramerate());
+				maximumFilterSize = (int) (filterTime * MoCapManager.Instance.Framerate);
 				maximumFilterSize = Mathf.Max(maximumFilterSize, 1);
 			}
 
@@ -56,7 +56,7 @@ namespace SentienceLab.MoCap
 		/// 
 		private void InitialiseFilter()
 		{
-			float framerate = MoCapManager.GetInstance().GetFramerate();
+			float framerate = MoCapManager.Instance.Framerate;
 			int filterSize = Mathf.Clamp((int) (framerate * filterTime), 1, maximumFilterSize);
 			filter = new float[filterSize];
 			for (int i = 0; i < filterSize; i++)
