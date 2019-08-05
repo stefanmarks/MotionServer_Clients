@@ -18,8 +18,8 @@ namespace SentienceLab.MoCap
 
 	public class MoCapWriter : MonoBehaviour
 	{
-		[Tooltip("Filename to use for the recorded data ({timestamp} will be replaced by an actual timestamp)")]
-		public string OutputFilename = "MoCapFile_{timestamp}.mot";
+		[Tooltip("Filename to use for the recorded data (The string \"{TIMESTAMP}\" will be replaced by an actual timestamp)")]
+		public string OutputFilename = "MoCapFile_{TIMESTAMP}.mot";
 
 		[Tooltip("List of transforms to log to the file")]
 		public List<Transform> Transforms;
@@ -111,7 +111,7 @@ namespace SentienceLab.MoCap
 		private void OpenLogfile()
 		{
 			// save pure data
-			string filename = OutputFilename.Replace("{timestamp}", System.DateTime.Now.ToString("yyyyMMdd_HHmmss"));
+			string filename = OutputFilename.Replace("{TIMESTAMP}", System.DateTime.Now.ToString("yyyyMMdd_HHmmss"));
 			writer = new MoCapFileWriter(new StreamWriter(filename));
 			Debug.Log("Opened MoCap logfile '" + filename + "'");
 

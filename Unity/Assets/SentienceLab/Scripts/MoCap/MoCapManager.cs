@@ -23,16 +23,26 @@ namespace SentienceLab.MoCap
 
 	public class MoCapManager : MonoBehaviour
 	{
-		[Tooltip("Name of the file with MotionServer IP Addresses or .MOT files to query")]
-		public TextAsset dataSourceFile = null;
+		[System.Serializable]
+		public class Configuration : ConfigFileBase
+		{
+			public Configuration() : base("MoCapConfig.txt", "MoCap") { }
+
+			public List<string> Sources;
+		}
+
+		[ContextMenuItem("Load configuration from config file", "LoadConfiguration")]
+		[ContextMenuItem("Save configuration to config file", "SaveConfiguration")]
+		public Configuration configuration;
 
 		[Tooltip("Action name for pausing/running the client")]
 		public string pauseAction = "pause";
 
-		[Tooltip("Name of the MoCap Client (\"$SCENE\" will be replaced by the active scene name)")]
-		public string clientName = "$SCENE";
+		[Tooltip("Name of the MoCap Client\n(The string \"{SCENE}\" will be replaced by the active scene name)")]
+		public string clientName = "{SCENE}";
 
-		private byte[] clientAppVersion = new byte[] { 1, 4, 1, 0 };
+
+		private byte[] clientAppVersion = new byte[] { 1, 4, 2, 0 };
 
 
 		/// <summary>
@@ -284,17 +294,6 @@ namespace SentienceLab.MoCap
 
 
 		/// <summary>
-		/// Structure for loading sources from a JSON file.
-		/// </summary>
-		///
-		[System.Serializable]
-		private class MoCapDataSourceList
-		{
-			public List<string> sources = new List<string>();
-		}
-
-
-		/// <summary>
 		/// Gets the internal NatNet client instance singelton.
 		/// When creating the singleton for the first time, 
 		/// tries to connect to a local MoCap server, and if not successful, a remote MoCap server.
@@ -312,7 +311,7 @@ namespace SentienceLab.MoCap
 				{
 					// construct client name
 					string appName = clientName;
-					appName = appName.Replace("$SCENE", SceneManager.GetActiveScene().name);
+					appName = appName.Replace("{SCENE}", SceneManager.GetActiveScene().name);
 
 					// build list of data sources
 					ICollection<IMoCapClient_ConnectionInfo> sources = GetSourceList();
@@ -414,19 +413,8 @@ namespace SentienceLab.MoCap
 		{
 			LinkedList<IMoCapClient_ConnectionInfo> sources = new LinkedList<IMoCapClient_ConnectionInfo>();
 
-			if ( dataSourceFile.text.StartsWith("MotionServer Data File") )
-			{
-				// the source is directly a .MOT file
-				sources.AddLast(new FileClient.ConnectionInfo(dataSourceFile));
-			}
-			else
-			{
-				// read file
-				MoCapDataSourceList sourceList = JsonUtility.FromJson<MoCapDataSourceList>(dataSourceFile.text);
-				if (sourceList != null)
-				{
 					// construct sources list with connection data structures
-					foreach (string source in sourceList.sources)
+			foreach (string source in configuration.Sources)
 					{
 						if (source.Contains("/"))
 						{
@@ -444,8 +432,6 @@ namespace SentienceLab.MoCap
 							}
 						}
 					}
-				}
-			}
 			return sources;
 		}
 
@@ -471,6 +457,17 @@ namespace SentienceLab.MoCap
 
 				return instance;
 			}
+
+
+		public void LoadConfiguration()
+		{
+			configuration.LoadConfiguration();
+		}
+
+
+		public void SaveConfiguration()
+		{
+			configuration.SaveConfiguration();
 		}
 
 
