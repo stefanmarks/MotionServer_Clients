@@ -457,6 +457,7 @@ namespace SentienceLab.MoCap
 
 				return instance;
 			}
+		}
 
 
 		public void LoadConfiguration()
